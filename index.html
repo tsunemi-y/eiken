@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>えいけんチャレンジ 5きゅう</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== ヘッダー(どこの画面でも見える) ===== -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-left" id="btnHome" role="button" aria-label="ホームへ">
+      <span class="logo">🏆</span><span class="logo-text">えいけんチャレンジ</span>
+    </div>
+    <div class="topbar-right">
+      <div class="stat-chip" title="スター">⭐ <span id="starCount">0</span></div>
+      <div class="stat-chip" title="たからばこ">🎁 <span id="chestCount">0</span></div>
+      <div class="stat-chip" title="レベル">🚩 Lv.<span id="levelNum">1</span></div>
+    </div>
+  </header>
+
+  <!-- ===== ホーム画面 ===== -->
+  <section class="screen" id="screen-home">
+    <div class="countdown-card">
+      <div class="countdown-title">えいけん5きゅう ほんばんまで</div>
+      <div class="countdown-days"><span id="daysLeft">--</span> にち</div>
+      <div class="countdown-sub" id="paceMessage">きょうの もくひょうを かくにんしよう!</div>
+    </div>
+
+    <div class="home-grid">
+      <button class="big-tile tile-orange" id="btnStartLearn">
+        <div class="tile-emoji">📖</div>
+        <div class="tile-title">たんごを おぼえる</div>
+        <div class="tile-sub" id="nextZoneLabel">ゾーン 1</div>
+      </button>
+
+      <button class="big-tile tile-blue" id="btnMap">
+        <div class="tile-emoji">🗺️</div>
+        <div class="tile-title">たんごマップ</div>
+        <div class="tile-sub">ぜんぶの ゾーンを みる</div>
+      </button>
+
+      <button class="big-tile tile-pink" id="btnReview">
+        <div class="tile-emoji">🔁</div>
+        <div class="tile-title">ふくしゅうテスト</div>
+        <div class="tile-sub" id="reviewBadge">いまは ありません</div>
+      </button>
+
+      <button class="big-tile tile-green" id="btnRanking">
+        <div class="tile-emoji">📈</div>
+        <div class="tile-title">きろく</div>
+        <div class="tile-sub">じぶんの ベストを こえよう</div>
+      </button>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-card-title">ぜんたいの すすみぐあい</div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="overallBar"></div></div>
+      <div class="progress-card-sub"><span id="clearedZoneCount">0</span> / <span id="totalZoneCount">0</span> ゾーン クリア</div>
+    </div>
+  </section>
+
+  <!-- ===== たんごマップ ===== -->
+  <section class="screen hidden" id="screen-map">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="screen-title">🗺️ たんごマップ</h2>
+    <p class="screen-desc">ゾーンを クリアして さきに すすもう!</p>
+    <div class="map-path" id="mapPath"></div>
+  </section>
+
+  <!-- ===== おぼえる画面(フラッシュカード) ===== -->
+  <section class="screen hidden" id="screen-learn">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <div class="learn-progress">
+      <span id="learnZoneTitle">ゾーン 1</span>
+      <span id="learnCardPos">1 / 10</span>
+    </div>
+    <div class="flashcard" id="flashcard">
+      <div class="flashcard-emoji" id="cardEmoji">🍎</div>
+      <div class="flashcard-en" id="cardEn">apple</div>
+      <button class="speak-btn" id="btnSpeak" aria-label="はつおんを きく">🔊 きく</button>
+      <div class="flashcard-ja hidden" id="cardJa">りんご</div>
+      <div class="flashcard-ex hidden" id="cardEx"></div>
+      <div class="flashcard-hint" id="cardHint">タップして いみを みよう</div>
+    </div>
+    <div class="learn-nav">
+      <button class="nav-btn" id="btnPrevCard">← まえ</button>
+      <button class="nav-btn nav-btn-primary" id="btnNextCard">つぎ →</button>
+    </div>
+    <button class="quiz-go-btn hidden" id="btnGoQuiz">✅ クイズに ちょうせん!</button>
+  </section>
+
+  <!-- ===== クイズ画面 ===== -->
+  <section class="screen hidden" id="screen-quiz">
+    <div class="quiz-progress-wrap">
+      <div class="quiz-progress-bar"><div class="quiz-progress-inner" id="quizProgressBar"></div></div>
+      <div class="quiz-progress-label"><span id="quizPos">1</span> / <span id="quizTotal">10</span> もん</div>
+    </div>
+    <div class="quiz-card">
+      <div class="quiz-question-label">この たんごの いみは?</div>
+      <div class="quiz-emoji" id="quizEmoji">🍎</div>
+      <div class="quiz-en" id="quizEn">apple</div>
+      <button class="speak-btn" id="btnQuizSpeak" aria-label="はつおんを きく">🔊 きく</button>
+    </div>
+    <div class="quiz-choices" id="quizChoices"></div>
+    <div class="quiz-feedback hidden" id="quizFeedback"></div>
+  </section>
+
+  <!-- ===== けっか画面 ===== -->
+  <section class="screen hidden" id="screen-result">
+    <div class="result-card">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">よくできました!</div>
+      <div class="result-score"><span id="resultScore">10</span> / <span id="resultTotalQ">10</span> もんせいかい</div>
+      <div class="chest-anim" id="chestAnim">🎁</div>
+      <div class="result-detail" id="resultDetail"></div>
+      <button class="primary-btn" id="btnResultContinue">つぎへ すすむ</button>
+      <button class="secondary-btn" id="btnResultRetry">もういちど ちょうせんする</button>
+      <button class="secondary-btn" id="btnResultHome">ホームへ もどる</button>
+    </div>
+  </section>
+
+  <!-- ===== ふくしゅう画面 ===== -->
+  <section class="screen hidden" id="screen-review">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="screen-title">🔁 ふくしゅうテスト</h2>
+    <p class="screen-desc">1しゅうかん まえに おぼえた たんご、まだ おぼえてるかな?</p>
+    <div class="review-list" id="reviewList"></div>
+  </section>
+
+  <!-- ===== きろく画面 ===== -->
+  <section class="screen hidden" id="screen-ranking">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="screen-title">📈 じぶんの きろく</h2>
+    <div class="ranking-stats">
+      <div class="rank-stat-card">
+        <div class="rank-stat-emoji">⭐</div>
+        <div class="rank-stat-num" id="rankStars">0</div>
+        <div class="rank-stat-label">スター ごうけい</div>
+      </div>
+      <div class="rank-stat-card">
+        <div class="rank-stat-emoji">🎁</div>
+        <div class="rank-stat-num" id="rankChests">0</div>
+        <div class="rank-stat-label">たからばこ</div>
+      </div>
+      <div class="rank-stat-card">
+        <div class="rank-stat-emoji">📚</div>
+        <div class="rank-stat-num" id="rankWords">0</div>
+        <div class="rank-stat-label">おぼえた たんご</div>
+      </div>
+      <div class="rank-stat-card">
+        <div class="rank-stat-emoji">🔥</div>
+        <div class="rank-stat-num" id="rankStreak">0</div>
+        <div class="rank-stat-label">れんぞく べんきょう にっすう</div>
+      </div>
+    </div>
+    <div class="badge-title">🏅 メダル コレクション</div>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </section>
+
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="words-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
