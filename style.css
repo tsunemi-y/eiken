@@ -230,6 +230,56 @@ button {
   box-shadow: 0 0 0 2px #000;
 }
 
+/* ---------- A/B メインボタン ---------- */
+.ab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.ab-btn {
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 8px;
+  position: relative;
+  min-height: 140px;
+}
+.ab-letter {
+  font-family: "Press Start 2P", monospace;
+  font-size: 26px;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #000;
+}
+
+/* ---------- Ⓐ はんいカード ---------- */
+.range-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.range-card {
+  background: var(--panel);
+  padding: 12px;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
+}
+.range-card.done { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--emerald); }
+.range-title { font-size: 14px; }
+.range-sub { font-size: 10px; color: var(--text-dim); margin: 4px 0 8px; word-break: break-all; }
+.range-card .mc-bar { height: 10px; }
+.range-foot { font-size: 11px; color: var(--text-dim); text-align: right; margin-top: 6px; }
+
+/* ---------- Ⓑ ようびボックス ---------- */
+.box-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.box-card {
+  background: var(--panel);
+  padding: 16px 6px;
+  text-align: center;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
+}
+.box-card.today { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--gold); }
+.box-card.empty { opacity: .45; }
+.box-ic { font-size: 26px; }
+.box-label { font-size: 12px; margin: 6px 0 4px; }
+.box-today-tag { display: block; font-size: 9px; color: var(--gold); }
+.box-count { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--diamond); }
+
+/* ---------- マスタリー ドット ---------- */
+.mastery-tag { font-size: 12px; color: var(--text-dim); }
+.dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+.dot { width: 12px; height: 12px; background: var(--slot-dk); box-shadow: 0 0 0 2px #000; }
+.dot.on { background: var(--gold); box-shadow: 0 0 0 2px #000, 0 0 6px var(--gold); }
+
 /* ---------- しんちょくバー ---------- */
 .mc-bar {
   height: 18px;

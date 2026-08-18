@@ -24,7 +24,7 @@
     </div>
   </header>
 
-  <!-- ===== けいけんちバー(マイクラの XPバー) ===== -->
+  <!-- ===== けいけんちバー ===== -->
   <div class="xp-wrap">
     <div class="xp-level" id="xpLevel">0</div>
     <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
@@ -38,54 +38,54 @@
       <div class="cd-pace" id="paceMessage"></div>
     </div>
 
-    <button class="mc-btn mc-btn-main" id="btnContinue">
-      <span class="mc-btn-icon">⛏️</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">つづきから ほる</span>
-        <span class="mc-btn-sub" id="continueLabel">ワールド 1</span>
-      </span>
-    </button>
-
-    <div class="menu-grid">
-      <button class="mc-btn" id="btnChapters"><span class="mc-btn-icon">📜</span><span class="mc-btn-title">たんごを えらぶ</span></button>
-      <button class="mc-btn" id="btnMap"><span class="mc-btn-icon">🗺️</span><span class="mc-btn-title">ワールドマップ</span></button>
-      <button class="mc-btn" id="btnReview"><span class="mc-btn-icon">🔁</span><span class="mc-btn-title">ふくしゅう</span><span class="notif hidden" id="reviewNotif">0</span></button>
-      <button class="mc-btn" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
+    <div class="ab-grid">
+      <button class="mc-btn ab-btn" id="btnA">
+        <span class="ab-letter">A</span>
+        <span class="mc-btn-title">たんごを れんしゅう</span>
+        <span class="mc-btn-sub">はんいを えらんで ちょうせん</span>
+      </button>
+      <button class="mc-btn ab-btn primary" id="btnB">
+        <span class="ab-letter">B</span>
+        <span class="mc-btn-title">ようびボックス</span>
+        <span class="mc-btn-sub" id="todayBoxLabel">きょうの ふくしゅう</span>
+        <span class="notif hidden" id="boxNotif">0</span>
+      </button>
     </div>
+
+    <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
 
     <div class="panel">
       <div class="panel-head">🌍 ぜんたいの すすみ</div>
       <div class="mc-bar"><div class="mc-bar-fill" id="overallBar"></div></div>
-      <div class="panel-foot"><span id="learnedWords">0</span> / <span id="totalWords">0</span> ご クリア</div>
+      <div class="panel-foot"><span id="learnedWords">0</span> / <span id="totalWords">0</span> ご ボックスへ</div>
     </div>
   </section>
 
-  <!-- ===== チャプターえらび(30ごずつ) ===== -->
-  <section class="screen hidden" id="screen-chapters">
+  <!-- ===== A: はんいえらび ===== -->
+  <section class="screen hidden" id="screen-ranges">
     <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">📜 たんごを えらぶ</h2>
-    <p class="scr-desc">プリントと おなじ 30ごずつの まとまり。<br>だいじな じゅんばんに ならんでるよ。</p>
-    <div class="chapter-list" id="chapterList"></div>
+    <h2 class="scr-title">Ⓐ たんごを えらぶ</h2>
+    <p class="scr-desc">15ごずつ。だいじな じゅんばんに ならんでるよ。<br>3かい せいかいすると Ⓑボックスへ そつぎょう!</p>
+    <div class="range-grid" id="rangeGrid"></div>
   </section>
 
-  <!-- ===== ワールドマップ ===== -->
-  <section class="screen hidden" id="screen-map">
+  <!-- ===== B: ようびボックス ===== -->
+  <section class="screen hidden" id="screen-boxes">
     <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">🗺️ ワールドマップ</h2>
-    <p class="scr-desc">したへ ほりすすむと レアな ブロックが 出てくるぞ!</p>
-    <div class="map-list" id="mapList"></div>
+    <h2 class="scr-title">Ⓑ ようびボックス</h2>
+    <p class="scr-desc">そつぎょうした たんごが、おぼえた ようびの はこに はいるよ。<br>まちがえると Ⓐに もどるから きをつけて!</p>
+    <div class="box-grid" id="boxGrid"></div>
   </section>
 
   <!-- ===== おぼえる(カード) ===== -->
   <section class="screen hidden" id="screen-learn">
     <button class="back-btn" data-back="home">◀ やめる</button>
     <div class="learn-head">
-      <span class="zone-tag" id="learnZoneTag">ワールド 1</span>
+      <span class="zone-tag" id="learnZoneTag">Ⓐ 1〜15ばん</span>
       <span class="learn-pos" id="learnPos">1 / 10</span>
     </div>
 
     <div class="card" id="card">
-      <!-- おもて:えいご -->
       <div class="card-face" id="cardFront">
         <div class="card-no" id="cardNo">No.1</div>
         <div class="slot big" id="cardSlotQ">❓</div>
@@ -93,7 +93,6 @@
         <button class="sound-btn" id="btnSpeak">🔊 もういちど きく</button>
         <div class="card-hint">タップして こたえを みる 👆</div>
       </div>
-      <!-- うら:こたえ -->
       <div class="card-face hidden" id="cardBack">
         <div class="card-en small" id="cardEnBack">house</div>
         <div class="slot big" id="cardEmoji">🏠</div>
@@ -114,7 +113,7 @@
   <!-- ===== クイズ ===== -->
   <section class="screen hidden" id="screen-quiz">
     <div class="quiz-head">
-      <div class="hearts" id="hearts"></div>
+      <div class="mastery-tag" id="masteryTag"></div>
       <div class="quiz-pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></div>
     </div>
     <div class="mc-bar thin"><div class="mc-bar-fill" id="quizBar"></div></div>
@@ -126,6 +125,7 @@
       <div class="slot big" id="quizSlot">❓</div>
       <div class="quiz-en" id="quizEn">house</div>
       <button class="sound-btn" id="btnQuizSpeak">🔊 きく</button>
+      <div class="dots" id="dots"></div>
     </div>
 
     <div class="choices" id="choices"></div>
@@ -140,19 +140,12 @@
       <div class="result-score"><span id="resultScore">0</span> / <span id="resultTotal">10</span> せいかい</div>
       <div class="loot" id="loot"></div>
       <div class="result-msg" id="resultMsg"></div>
-      <button class="mc-btn wide primary" id="btnNextZone">つぎの ワールドへ ▶</button>
+      <button class="mc-btn wide primary" id="btnBackRanges">Ⓐ はんいいちらんへ</button>
+      <button class="mc-btn wide primary hidden" id="btnBackBoxes">Ⓑ ボックスいちらんへ</button>
       <button class="mc-btn wide" id="btnRetry">⚔️ もういちど</button>
       <button class="mc-btn wide" id="btnReviewWrong">📕 まちがえた たんごを みる</button>
       <button class="mc-btn wide" id="btnResultHome">🏠 ホームへ</button>
     </div>
-  </section>
-
-  <!-- ===== ふくしゅう ===== -->
-  <section class="screen hidden" id="screen-review">
-    <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">🔁 ふくしゅう</h2>
-    <p class="scr-desc">1しゅうかん たった ワールド。<br>もういちど ほって たしかめよう!</p>
-    <div class="map-list" id="reviewList"></div>
   </section>
 
   <!-- ===== せいせき ===== -->
@@ -162,11 +155,11 @@
     <div class="stat-grid">
       <div class="panel stat"><div class="stat-ic">🟩</div><div class="stat-num" id="sBlocks">0</div><div class="stat-lb">ブロック</div></div>
       <div class="panel stat"><div class="stat-ic">🧰</div><div class="stat-num" id="sChests">0</div><div class="stat-lb">チェスト</div></div>
-      <div class="panel stat"><div class="stat-ic">📚</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">おぼえた ご</div></div>
+      <div class="panel stat"><div class="stat-ic">📦</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">ボックスの ご</div></div>
       <div class="panel stat"><div class="stat-ic">🔥</div><div class="stat-num" id="sStreak">0</div><div class="stat-lb">れんぞく日</div></div>
     </div>
     <div class="panel">
-      <div class="panel-head">💎 あつめた ブロック</div>
+      <div class="panel-head">📦 ようびボックスの なかみ</div>
       <div class="inventory" id="inventory"></div>
     </div>
   </section>
@@ -180,7 +173,6 @@
 
 </div>
 
-<!-- しんちょくの トースト(マイクラの しんちょく) -->
 <div class="advancement hidden" id="adv">
   <div class="adv-ic" id="advIc">🏆</div>
   <div class="adv-body"><div class="adv-head" id="advHead">しんちょくの たっせい!</div><div class="adv-name" id="advName"></div></div>

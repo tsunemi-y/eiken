@@ -1,27 +1,7 @@
 /* =========================================================
    えいけんマイクラ 5きゅう - たんごデータ
    パス単5級の じゅんばん(1〜150)どおりに ならんでいます。
-   10ごずつ「ワールド」に わけられます(じどうけいさん)。
    ========================================================= */
-
-/* ---- ワールド(ゾーン)のテーマ:マイクラの ブロックが すすんでいく ---- */
-const ZONE_THEMES = [
-  { name: "くさはら",       icon: "🟩", color: "#5EA827", dark: "#3E7A19" },
-  { name: "もりのなか",     icon: "🌳", color: "#6B8E23", dark: "#4A631A" },
-  { name: "すなはま",       icon: "🟨", color: "#D9C38A", dark: "#B09A62" },
-  { name: "いしのどうくつ", icon: "⬜", color: "#9A9A9A", dark: "#6E6E6E" },
-  { name: "せきたんこう",   icon: "⬛", color: "#4A4A4A", dark: "#2C2C2C" },
-  { name: "どうこうせき",   icon: "🟧", color: "#C87137", dark: "#94511F" },
-  { name: "てつこうせき",   icon: "🤍", color: "#D8AF93", dark: "#A57F63" },
-  { name: "きんこうせき",   icon: "🟨", color: "#FCEE4B", dark: "#C2B41C" },
-  { name: "レッドストーン", icon: "🟥", color: "#E03434", dark: "#9E1D1D" },
-  { name: "ラピスラズリ",   icon: "🟦", color: "#2D5FCE", dark: "#1B3E92" },
-  { name: "エメラルド",     icon: "💚", color: "#17DD62", dark: "#0E9E44" },
-  { name: "ダイヤモンド",   icon: "💎", color: "#4AEDD9", dark: "#26AA9B" },
-  { name: "ネザー",         icon: "🔥", color: "#B02E26", dark: "#6E1712" },
-  { name: "エンド",         icon: "🟪", color: "#8C5FCF", dark: "#5C3A8C" },
-  { name: "エンダードラゴン", icon: "🐉", color: "#22162B", dark: "#120B17" },
-];
 
 const WORD_LIST = [
   // ===== 1〜10 =====
@@ -257,41 +237,38 @@ const VISUALS = {
   street:    { icons: ["🏠","🛣️","🏪"], label: "たてものの あいだの みち" },
 };
 
-/* ---- ゾーンは 10ごずつ じどうで わりあて ---- */
+/* ---- ばんごうを ふる ---- */
 WORD_LIST.forEach((w, i) => {
   w.id = i;
   w.no = i + 1;             // パス単の たんごばんごう
-  w.zone = Math.floor(i / 10) + 1;
   if (VISUALS[w.en]) w.vis = VISUALS[w.en];
 });
 
-const TOTAL_ZONES = Math.ceil(WORD_LIST.length / 10);
-
-function zoneTheme(zoneId) {
-  return ZONE_THEMES[(zoneId - 1) % ZONE_THEMES.length];
+/* =========================================================
+   A: れんしゅう はんい(パス単プリントの じゅんばんに あわせて
+   15ごずつに くぎる。ぜんぶで 10はんい)
+   ========================================================= */
+const RANGES = [];
+for (let r = 0; r * 15 < WORD_LIST.length; r++) {
+  const from = r * 15 + 1;
+  const to = Math.min((r + 1) * 15, WORD_LIST.length);
+  RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
+}
+function wordsInRange(rangeId) {
+  const r = RANGES[rangeId - 1];
+  return WORD_LIST.filter((w) => w.no >= r.from && w.no <= r.to);
 }
 
 /* =========================================================
-   チャプター(パス単プリントと おなじ 30ごずつの まとまり)
-   1チャプター = 3ゾーン
+   B: ようびボックス(げつ〜にち の 7こ)
+   JSの Date.getDay() の ばんごうに あわせる (0=にち,1=げつ...6=ど)
    ========================================================= */
-const CHAPTERS = [];
-for (let c = 0; c * 30 < WORD_LIST.length; c++) {
-  const from = c * 30 + 1;
-  const to = Math.min((c + 1) * 30, WORD_LIST.length);
-  CHAPTERS.push({
-    id: c + 1,
-    from,
-    to,
-    title: `${from}〜${to}ばん`,
-    zones: Array.from(
-      { length: Math.ceil((to - from + 1) / 10) },
-      (_, i) => Math.floor((from - 1) / 10) + 1 + i
-    ),
-  });
-}
-
-function wordsInChapter(chapterId) {
-  const ch = CHAPTERS[chapterId - 1];
-  return WORD_LIST.filter((w) => w.no >= ch.from && w.no <= ch.to);
-}
+const WEEKDAYS = [
+  { day: 1, label: "げつ", icon: "🌙" },
+  { day: 2, label: "か",   icon: "🔥" },
+  { day: 3, label: "すい", icon: "💧" },
+  { day: 4, label: "もく", icon: "🌳" },
+  { day: 5, label: "きん", icon: "🪙" },
+  { day: 6, label: "ど",   icon: "🪨" },
+  { day: 0, label: "にち", icon: "☀️" },
+];

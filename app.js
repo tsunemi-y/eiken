@@ -1,11 +1,12 @@
 /* =========================================================
    えいごクラフト 5きゅう - app.js
+   Ⓐ れんしゅう(はんい・15ごずつ)→ 3かい せいかいで Ⓑへ そつぎょう
+   Ⓑ ようびボックス(7こ)→ その ようびに ふくしゅう。まちがえたら Ⓐへ もどる
    ========================================================= */
 
 const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
-const KEY = "eigo_craft_v2";
-const HEARTS_MAX = 3;                      // 3かい まちがえたら しっぱい(=8/10で ごうかく)
-const REVIEW_DAYS = 7;
+const KEY = "eigo_craft_v3";
+const MASTER_COUNT = 3;                    // これだけ せいかいすると Ⓑへ そつぎょう
 
 /* ---------- ほぞん ---------- */
 function today() {
@@ -22,33 +23,23 @@ function load() {
     chests: d.chests || 0,
     xp: d.xp || 0,
     level: d.level || 0,
-    zones: d.zones || {},
     streak: d.streak || { n: 0, last: null },
-    lastZone: d.lastZone || 1,
-    advSeen: d.advSeen || {},
+    mastery: d.mastery || {},   // wordId -> 0..2 (Aでの れんぞく せいかいすう)
+    box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
+    lastRange: d.lastRange || 1,
   };
 }
 
 let P = load();
 function save() { localStorage.setItem(KEY, JSON.stringify(P)); }
 
-function zoneState(z) {
-  if (!P.zones[z]) P.zones[z] = { cleared: false, best: 0, nextReview: null, medal: null, reviews: 0 };
-  return P.zones[z];
-}
-const wordsInZone = (z) => WORD_LIST.filter((w) => w.zone === z);
-const isUnlocked = (z) => z === 1 || zoneState(z - 1).cleared;
-const clearedCount = () => Object.values(P.zones).filter((z) => z.cleared).length;
+const TOTAL = WORD_LIST.length;
 
-function dueZones() {
-  const now = Date.now();
-  const out = [];
-  for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const s = zoneState(z);
-    if (s.cleared && s.nextReview && s.nextReview <= now) out.push(z);
-  }
-  return out;
+function wordsStillLearning(ids) { return ids.filter((id) => P.box[id] === undefined); }
+function wordsInBox(day) {
+  return WORD_LIST.filter((w) => P.box[w.id] === day);
 }
+function boxedCount() { return Object.keys(P.box).length; }
 
 function bumpStreak() {
   const t = today();
@@ -61,10 +52,7 @@ function bumpStreak() {
   save();
 }
 
-const MEDALS = { gold: "💎", silver: "🥈", bronze: "🥉" };
-const medalRank = (m) => ({ bronze: 1, silver: 2, gold: 3 }[m] || 0);
-
-/* ---------- おと(WebAudio:マイクラふうの ぷちっと おと) ---------- */
+/* ---------- おと(WebAudio) ---------- */
 let actx = null;
 function beep(freq, dur = 0.08, type = "square", vol = 0.06) {
   try {
@@ -86,6 +74,7 @@ const sfxOk = () => { beep(880, 0.08); setTimeout(() => beep(1320, 0.12), 70); }
 const sfxNg = () => beep(160, 0.25, "sawtooth", 0.05);
 const sfxLevel = () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.14), i * 90)); };
 const sfxChest = () => { beep(300, 0.1); setTimeout(() => beep(500, 0.1), 90); setTimeout(() => beep(700, 0.2), 180); };
+const sfxGraduate = () => { [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => beep(f, 0.1, "triangle"), i * 70)); };
 
 /* ---------- はつおん ----------
    Androidは たんまつに はいっている おんせいエンジンしだいで
@@ -95,12 +84,12 @@ const sfxChest = () => { beep(300, 0.1); setTimeout(() => beep(500, 0.1), 90); s
 let voices = [];
 function voiceScore(v) {
   let s = 0;
-  if (/^en/i.test(v.lang)) s += 10; else return -1; // 英語いがいは のぞく
+  if (/^en/i.test(v.lang)) s += 10; else return -1;
   if (v.lang.toLowerCase() === "en-us") s += 20;
-  if (/google/i.test(v.name)) s += 50;              // Googleの ネットワークおんせい(しぜん)
-  if (v.localService === false) s += 15;            // ネットワークけいは しぜんな こえが おおい
+  if (/google/i.test(v.name)) s += 50;
+  if (v.localService === false) s += 15;
   if (/us english/i.test(v.name)) s += 10;
-  if (/compact|espeak|pico/i.test(v.name)) s -= 30;  // きかいてきな こえは じゅんい さげる
+  if (/compact|espeak|pico/i.test(v.name)) s -= 30;
   return s;
 }
 function pickVoice() {
@@ -137,7 +126,6 @@ function orbs(n = 6, emoji = "🟢") {
     setTimeout(() => el.remove(), 1400);
   }
 }
-
 function blockBreak(x, y, color = "#5EA827") {
   for (let i = 0; i < 10; i++) {
     const p = document.createElement("div");
@@ -151,7 +139,6 @@ function blockBreak(x, y, color = "#5EA827") {
     setTimeout(() => p.remove(), 900);
   }
 }
-
 function advancement(name, icon = "🏆", head = "しんちょくの たっせい!") {
   const el = document.getElementById("adv");
   document.getElementById("advIc").textContent = icon;
@@ -164,15 +151,14 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "chapters", "map", "learn", "quiz", "result", "review", "stats", "wrong"].forEach((n) => {
+["home", "ranges", "boxes", "learn", "quiz", "result", "stats", "wrong"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
-
 function show(name) {
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
-  ({ home: renderHome, chapters: renderChapters, map: renderMap, review: renderReview, stats: renderStats }[name] || (() => {}))();
+  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes, stats: renderStats }[name] || (() => {}))();
 }
 
 /* ---------- HUD ---------- */
@@ -184,7 +170,6 @@ function updateHUD() {
   const need = 10 + P.level * 2;
   document.getElementById("xpFill").style.width = Math.min(100, (P.xp / need) * 100) + "%";
 }
-
 function addXP(n) {
   P.xp += n;
   let leveled = false;
@@ -199,7 +184,6 @@ function addXP(n) {
     sfxLevel();
     advancement(`レベル ${P.level} に なった!`, "⬆️", "レベルアップ!");
   }
-  return leveled;
 }
 
 /* ---------- ホーム ---------- */
@@ -211,102 +195,91 @@ function renderHome() {
   const days = Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
   document.getElementById("daysLeft").textContent = days;
 
-  const done = clearedCount();
-  const remain = TOTAL_ZONES - done;
+  const boxed = boxedCount();
+  const remain = TOTAL - boxed;
   const pace = document.getElementById("paceMessage");
   if (remain <= 0) {
-    pace.textContent = "🎉 ぜんぶ クリア!すごい!";
+    pace.textContent = "🎉 ぜんぶ ボックスに はいったよ!すごい!";
   } else if (days <= 0) {
     pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
   } else {
     const perWeek = Math.max(1, Math.ceil(remain / Math.max(1, Math.ceil(days / 7))));
-    pace.textContent = `のこり ${remain}ワールド。1しゅうに ${perWeek}ワールドで まにあうよ!`;
+    pace.textContent = `のこり ${remain}ご。1しゅうに ${perWeek}ごで まにあうよ!`;
   }
 
-  const nz = Math.min(P.lastZone, TOTAL_ZONES);
-  const th = zoneTheme(nz);
-  document.getElementById("continueLabel").textContent =
-    done >= TOTAL_ZONES ? "ぜんぶ クリアずみ!" : `ワールド ${nz}・${th.name}`;
+  const wd = new Date().getDay();
+  const todayInfo = WEEKDAYS.find((w) => w.day === wd);
+  const todayCount = wordsInBox(wd).length;
+  document.getElementById("todayBoxLabel").textContent = `${todayInfo.icon} きょう(${todayInfo.label})の ふくしゅう`;
+  const notif = document.getElementById("boxNotif");
+  notif.textContent = todayCount;
+  notif.classList.toggle("hidden", todayCount === 0);
 
-  const due = dueZones();
-  const notif = document.getElementById("reviewNotif");
-  notif.textContent = due.length;
-  notif.classList.toggle("hidden", due.length === 0);
-
-  document.getElementById("learnedWords").textContent = done * 10;
-  document.getElementById("totalWords").textContent = WORD_LIST.length;
-  document.getElementById("overallBar").style.width = (done / TOTAL_ZONES) * 100 + "%";
+  document.getElementById("learnedWords").textContent = boxed;
+  document.getElementById("totalWords").textContent = TOTAL;
+  document.getElementById("overallBar").style.width = (boxed / TOTAL) * 100 + "%";
 }
 
-/* ---------- チャプターえらび ---------- */
-function renderChapters() {
-  const wrap = document.getElementById("chapterList");
+/* ---------- Ⓐ はんいえらび ---------- */
+function renderRanges() {
+  const wrap = document.getElementById("rangeGrid");
   wrap.innerHTML = "";
-  CHAPTERS.forEach((ch) => {
-    const done = ch.zones.filter((z) => zoneState(z).cleared).length;
-    const pct = (done / ch.zones.length) * 100;
-    const first = wordsInChapter(ch.id)[0];
+  RANGES.forEach((r) => {
+    const ws = wordsInRange(r.id);
+    const done = ws.filter((w) => P.box[w.id] !== undefined).length;
+    const pct = (done / ws.length) * 100;
     const el = document.createElement("div");
-    el.className = "chapter";
+    el.className = "range-card" + (done === ws.length ? " done" : "");
     el.innerHTML = `
-      <div class="chapter-ic">${done === ch.zones.length ? "✅" : first.emoji}</div>
-      <div class="chapter-body">
-        <div class="chapter-title">${ch.title}</div>
-        <div class="chapter-sub">${first.en} から ${ch.to - ch.from + 1}ご ・ ${done}/${ch.zones.length} ワールド</div>
-        <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
-      </div>
+      <div class="range-title">${r.title}</div>
+      <div class="range-sub">${ws[0].en} 〜 ${ws[ws.length - 1].en}</div>
+      <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
+      <div class="range-foot">${done}/${ws.length} ${done === ws.length ? "✅" : "📦"}</div>
     `;
     el.addEventListener("click", () => {
       sfxClick();
-      const next = ch.zones.find((z) => !zoneState(z).cleared) || ch.zones[0];
-      P.lastZone = next;
+      P.lastRange = r.id;
       save();
-      startLearn(next);
+      startLearn(r.id);
     });
     wrap.appendChild(el);
   });
 }
 
-/* ---------- マップ ---------- */
-function renderMap() {
-  const wrap = document.getElementById("mapList");
+/* ---------- Ⓑ ようびボックス ---------- */
+function renderBoxes() {
+  const wrap = document.getElementById("boxGrid");
   wrap.innerHTML = "";
-  const due = new Set(dueZones());
-
-  for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const s = zoneState(z);
-    const open = isUnlocked(z);
-    const th = zoneTheme(z);
-    const ws = wordsInZone(z);
+  const wd = new Date().getDay();
+  WEEKDAYS.forEach((info) => {
+    const ws = wordsInBox(info.day);
+    const isToday = info.day === wd;
     const el = document.createElement("div");
-    el.className = "map-node" + (open ? "" : " locked") + (due.has(z) ? " due" : "");
+    el.className = "box-card" + (isToday ? " today" : "") + (ws.length === 0 ? " empty" : "");
     el.innerHTML = `
-      <div class="map-block" style="background:${th.color}">${open ? (s.cleared ? "✅" : th.icon) : "🔒"}</div>
-      <div class="map-body">
-        <div class="map-name">ワールド ${z}・${th.name}</div>
-        <div class="map-sub">No.${ws[0].no}〜${ws[ws.length - 1].no} ・ ${ws[0].en} など${due.has(z) ? " ・🔁 ふくしゅう!" : ""}</div>
-      </div>
-      <div class="map-medal">${s.medal ? MEDALS[s.medal] : ""}</div>
+      <div class="box-ic">${info.icon}</div>
+      <div class="box-label">${info.label}よう${isToday ? "<span class='box-today-tag'>きょう</span>" : ""}</div>
+      <div class="box-count">${ws.length}ご</div>
     `;
-    if (open) {
-      el.addEventListener("click", () => {
-        sfxClick();
-        P.lastZone = z;
-        save();
-        startLearn(z);
-      });
+    if (ws.length > 0) {
+      el.addEventListener("click", () => { sfxClick(); startBoxQuiz(info.day); });
     }
     wrap.appendChild(el);
-  }
+  });
 }
 
 /* ---------- おぼえる(カード) ---------- */
-let L = { zone: 1, words: [], i: 0, flipped: false };
+let L = { range: 1, words: [], i: 0, flipped: false };
 
-function startLearn(z) {
-  L = { zone: z, words: wordsInZone(z), i: 0, flipped: false };
-  const th = zoneTheme(z);
-  document.getElementById("learnZoneTag").textContent = `ワールド ${z}・${th.name}`;
+function startLearn(rangeId) {
+  const ws = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
+  if (ws.length === 0) {
+    advancement("この はんいは ぜんぶ ボックスに あるよ!", "🎉", "コンプリート!");
+    show("ranges");
+    return;
+  }
+  L = { range: rangeId, words: ws, i: 0, flipped: false };
+  document.getElementById("learnZoneTag").textContent = `Ⓐ ${RANGES[rangeId - 1].title}`;
   show("learn");
   renderCard();
 }
@@ -332,12 +305,8 @@ function renderCard() {
   document.getElementById("cardEx").innerHTML = `${w.ex}<br>${w.exJa}`;
 
   const vis = document.getElementById("cardVis");
-  if (w.vis) {
-    vis.innerHTML = visHTML(w.vis);
-    vis.classList.remove("hidden");
-  } else {
-    vis.classList.add("hidden");
-  }
+  if (w.vis) { vis.innerHTML = visHTML(w.vis); vis.classList.remove("hidden"); }
+  else { vis.classList.add("hidden"); }
 
   document.getElementById("cardFront").classList.remove("hidden");
   document.getElementById("cardBack").classList.add("hidden");
@@ -347,7 +316,7 @@ function renderCard() {
   document.getElementById("btnGoQuiz").classList.toggle("hidden", !last);
   document.getElementById("btnNext").textContent = last ? "さいしょへ" : "つぎ ▶";
 
-  speak(w.en);   // えいごを 出したら すぐ ネイティブはつおん
+  speak(w.en);
 }
 
 function flipCard() {
@@ -372,9 +341,9 @@ document.getElementById("btnNext").addEventListener("click", () => {
   sfxClick();
   renderCard();
 });
-document.getElementById("btnGoQuiz").addEventListener("click", () => startQuiz(L.zone, "learn"));
+document.getElementById("btnGoQuiz").addEventListener("click", () => startQuiz(L.range, "A"));
 
-/* ---------- クイズ ---------- */
+/* ---------- クイズ(Ⓐ・Ⓑ きょうつう) ---------- */
 let Q = null;
 
 function shuffle(a) {
@@ -386,32 +355,39 @@ function shuffle(a) {
   return b;
 }
 
-function startQuiz(z, mode) {
-  Q = {
-    zone: z,
-    mode,
-    words: shuffle(wordsInZone(z)),
-    i: 0,
-    correct: 0,
-    hearts: HEARTS_MAX,
-    combo: 0,
-    maxCombo: 0,
-    wrong: [],
-    locked: false,
-  };
+function startQuiz(rangeId, mode) {
+  const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
+  Q = { mode, rangeId, words: shuffle(pool), i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false };
   document.getElementById("quizTotal").textContent = Q.words.length;
   show("quiz");
   renderQuiz();
 }
 
-function renderHearts() {
-  const wrap = document.getElementById("hearts");
+function startBoxQuiz(day) {
+  const pool = wordsInBox(day);
+  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false };
+  document.getElementById("quizTotal").textContent = Q.words.length;
+  show("quiz");
+  renderQuiz();
+}
+
+function renderMasteryTag(w) {
+  const tag = document.getElementById("masteryTag");
+  if (Q.mode === "B") { tag.textContent = "📦 ボックスの ふくしゅう"; return; }
+  const n = P.mastery[w.id] || 0;
+  tag.textContent = `せいかい ${n}/${MASTER_COUNT}`;
+}
+
+function renderDots(w) {
+  const wrap = document.getElementById("dots");
   wrap.innerHTML = "";
-  for (let i = 0; i < HEARTS_MAX; i++) {
-    const s = document.createElement("span");
-    s.className = "heart" + (i < Q.hearts ? "" : " lost");
-    s.textContent = "❤️";
-    wrap.appendChild(s);
+  if (Q.mode === "B") { wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  const n = P.mastery[w.id] || 0;
+  for (let i = 0; i < MASTER_COUNT; i++) {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < n ? " on" : "");
+    wrap.appendChild(d);
   }
 }
 
@@ -419,7 +395,8 @@ function renderQuiz() {
   const w = Q.words[Q.i];
   Q.locked = false;
 
-  renderHearts();
+  renderMasteryTag(w);
+  renderDots(w);
   document.getElementById("quizPos").textContent = Q.i + 1;
   document.getElementById("quizBar").style.width = (Q.i / Q.words.length) * 100 + "%";
   document.getElementById("quizSlot").textContent = "❓";
@@ -430,9 +407,8 @@ function renderQuiz() {
   cb.classList.toggle("hidden", Q.combo < 2);
   document.getElementById("comboNum").textContent = Q.combo;
 
-  // まちがい せんたくしは おなじ ワールド + ちかい たんごから
   const pool = WORD_LIST.filter((x) => x.id !== w.id && x.ja !== w.ja);
-  const near = pool.filter((x) => Math.abs(x.zone - w.zone) <= 2);
+  const near = pool.filter((x) => Math.abs(x.no - w.no) <= 20);
   const wrongs = shuffle(near.length >= 3 ? near : pool).slice(0, 3);
   const choices = shuffle([w, ...wrongs]);
 
@@ -442,7 +418,7 @@ function renderQuiz() {
     const b = document.createElement("button");
     b.className = "choice";
     b.textContent = c.ja;
-    b.addEventListener("click", (ev) => answer(b, c, w, ev));
+    b.addEventListener("click", () => answer(b, c, w));
     wrap.appendChild(b);
   });
 
@@ -451,7 +427,7 @@ function renderQuiz() {
 
 document.getElementById("btnQuizSpeak").addEventListener("click", () => Q && speak(Q.words[Q.i].en));
 
-function answer(btn, chosen, correct, ev) {
+function answer(btn, chosen, correct) {
   if (Q.locked) return;
   Q.locked = true;
   const ok = chosen.id === correct.id;
@@ -466,125 +442,134 @@ function answer(btn, chosen, correct, ev) {
 
   const fb = document.getElementById("feedback");
   fb.classList.remove("hidden", "ok", "ng");
+  let graduatedNow = false;
 
   if (ok) {
     Q.correct++;
     Q.combo++;
-    Q.maxCombo = Math.max(Q.maxCombo, Q.combo);
     P.blocks++;
-    save();
-    updateHUD();
     sfxOk();
     const r = btn.getBoundingClientRect();
     blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
     orbs(Q.combo >= 3 ? 6 : 3, "🟢");
+
+    if (Q.mode === "A") {
+      const n = (P.mastery[correct.id] || 0) + 1;
+      if (n >= MASTER_COUNT) {
+        delete P.mastery[correct.id];
+        P.box[correct.id] = new Date().getDay();
+        Q.graduated.push(correct);
+        graduatedNow = true;
+        sfxGraduate();
+      } else {
+        P.mastery[correct.id] = n;
+      }
+    }
+    save();
+    updateHUD();
+
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ ブロック ゲット!${Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : ""}`;
-    if (Q.combo === 5) advancement("5れんぞく せいかい!", "🔥", "コンボ たっせい!");
+    if (graduatedNow) {
+      const info = WEEKDAYS.find((w2) => w2.day === P.box[correct.id]);
+      fb.innerHTML = `🎉 そつぎょう!<span class="fb-ja">${info.icon} ${info.label}ようボックスへ うつったよ!</span>`;
+    } else {
+      fb.innerHTML = `⛏️ ブロック ゲット!${Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : ""}`;
+    }
   } else {
     Q.combo = 0;
-    Q.hearts--;
     Q.wrong.push(correct);
-    renderHearts();
     sfxNg();
     document.getElementById("app").classList.add("shake");
     setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+
+    if (Q.mode === "A") {
+      P.mastery[correct.id] = 0;
+    } else {
+      delete P.box[correct.id];
+      P.mastery[correct.id] = 0;
+      Q.demoted.push(correct);
+    }
+    save();
+
     fb.classList.add("ng");
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${correct.emoji} ${correct.en} = ${correct.ja}</span>`;
+    const extra = Q.mode === "B" ? "<br>Ⓐの れんしゅうに もどったよ" : "";
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${correct.emoji} ${correct.en} = ${correct.ja}${extra}</span>`;
     speak(correct.en);
   }
 
   setTimeout(() => {
-    if (Q.hearts <= 0) { finish(false); return; }
     Q.i++;
     if (Q.i >= Q.words.length) {
       document.getElementById("quizBar").style.width = "100%";
-      finish(true);
+      finish();
     } else {
       renderQuiz();
     }
-  }, ok ? 900 : 1900);
+  }, ok && !graduatedNow ? 900 : 1900);
 }
 
 /* ---------- けっか ---------- */
-function finish(finished) {
+function finish() {
   bumpStreak();
   const total = Q.words.length;
   const score = Q.correct;
-  const passed = finished && score / total >= 0.8;
 
-  const s = zoneState(Q.zone);
-  const rate = score / total;
-  const medal = rate === 1 ? "gold" : rate >= 0.9 ? "silver" : passed ? "bronze" : null;
+  addXP(score * 2);
 
-  const loot = [];
+  const loot = [{ ic: "🟩", t: `ブロック ×${score}` }];
   let title, msg;
 
-  if (passed) {
-    if (medal && medalRank(medal) > medalRank(s.medal)) s.medal = medal;
-    s.best = Math.max(s.best, score);
-    s.nextReview = Date.now() + REVIEW_DAYS * 86400000;
-
-    const first = !s.cleared;
-    s.cleared = true;
-    P.chests++;
-    loot.push({ ic: "🧰", t: "チェスト ×1" });
-    loot.push({ ic: "🟩", t: `ブロック ×${score}` });
-    if (medal) loot.push({ ic: MEDALS[medal], t: "メダル" });
-
-    if (first) {
-      P.lastZone = Math.min(TOTAL_ZONES, Q.zone + 1);
-      const th = zoneTheme(Q.zone);
-      title = `⛏️ ワールド${Q.zone} クリア!`;
-      msg = `${th.name}を せいはした!\n1しゅうかんごに ふくしゅうが 出るよ。`;
-      advancement(`${th.name} を クリア!`, th.icon);
-    } else {
-      title = Q.mode === "review" ? "🔁 ふくしゅう せいこう!" : "⛏️ また クリア!";
-      msg = "また 1しゅうかんごに ふくしゅうが 出るよ。";
+  if (Q.mode === "B") {
+    const keep = total - Q.demoted.length;
+    title = "📦 ふくしゅう かんりょう!";
+    msg = `${keep}ご ボックスに のこった。\n${Q.demoted.length}ご Ⓐに もどった。`;
+    if (Q.demoted.length === 0 && total > 0) {
+      P.chests++;
+      loot.push({ ic: "🧰", t: "チェスト ×1" });
+      sfxChest();
+      orbs(10, "💎");
     }
-    save();
-    addXP(score * 2);
-    sfxChest();
-    orbs(10, "💎");
   } else {
-    title = Q.hearts <= 0 ? "💔 ハートが なくなった!" : "もうすこし!";
-    msg = `${HEARTS_MAX}かいまで まちがえて OK。\nまちがえた たんごを みてから もういちど!`;
-    loot.push({ ic: "🟩", t: `ブロック ×${score}` });
-    save();
-    addXP(score);
+    title = Q.graduated.length > 0 ? `🎉 ${Q.graduated.length}ご そつぎょう!` : "⛏️ れんしゅう かんりょう!";
+    msg = `${score}/${total} せいかい。\nのこりも がんばろう!`;
+    if (Q.graduated.length > 0) {
+      P.chests += Q.graduated.length;
+      loot.push({ ic: "🧰", t: `チェスト ×${Q.graduated.length}` });
+      sfxChest();
+      orbs(10, "💎");
+    }
   }
+  save();
 
-  document.getElementById("resultChest").textContent = passed ? "🧰" : "💔";
+  document.getElementById("resultChest").textContent = Q.mode === "A" && Q.graduated.length > 0 ? "🧰" : "⛏️";
   document.getElementById("resultTitle").textContent = title;
   document.getElementById("resultScore").textContent = score;
   document.getElementById("resultTotal").textContent = total;
   document.getElementById("resultMsg").innerText = msg;
 
-  const lootEl = document.getElementById("loot");
-  lootEl.innerHTML = loot
+  document.getElementById("loot").innerHTML = loot
     .map((l) => `<div class="loot-item"><span>${l.ic}</span><span>${l.t}</span></div>`)
     .join("");
 
-  document.getElementById("btnNextZone").classList.toggle("hidden", !passed);
-  document.getElementById("btnRetry").classList.toggle("hidden", passed);
-  document.getElementById("btnReviewWrong").classList.toggle("hidden", Q.wrong.length === 0);
+  document.getElementById("btnBackRanges").classList.toggle("hidden", Q.mode !== "A");
+  document.getElementById("btnBackBoxes").classList.toggle("hidden", Q.mode !== "B");
+  const nothingLeft =
+    Q.mode === "A"
+      ? wordsStillLearning(wordsInRange(Q.rangeId).map((w) => w.id)).length === 0
+      : wordsInBox(Q.day).length === 0;
+  document.getElementById("btnRetry").classList.toggle("hidden", nothingLeft);
+  document.getElementById("btnReviewWrong").classList.toggle("hidden", Q.wrong.length === 0 && (!Q.demoted || Q.demoted.length === 0));
 
   show("result");
   updateHUD();
 }
 
-document.getElementById("btnNextZone").addEventListener("click", () => {
-  sfxClick();
-  if (Q.mode === "review") { show("review"); return; }
-  const nz = Q.zone + 1;
-  if (nz > TOTAL_ZONES) { show("home"); return; }
-  P.lastZone = nz;
-  save();
-  startLearn(nz);
-});
+document.getElementById("btnBackRanges").addEventListener("click", () => { sfxClick(); show("ranges"); });
+document.getElementById("btnBackBoxes").addEventListener("click", () => { sfxClick(); show("boxes"); });
 document.getElementById("btnRetry").addEventListener("click", () => {
   sfxClick();
-  startLearn(Q.zone);
+  if (Q.mode === "B") startBoxQuiz(Q.day);
+  else startLearn(Q.rangeId);
 });
 document.getElementById("btnResultHome").addEventListener("click", () => { sfxClick(); show("home"); });
 document.getElementById("btnReviewWrong").addEventListener("click", () => { sfxClick(); renderWrong(); });
@@ -594,8 +579,9 @@ document.getElementById("btnWrongBack").addEventListener("click", () => show("re
 function renderWrong() {
   const wrap = document.getElementById("wrongList");
   wrap.innerHTML = "";
+  const list = (Q.demoted && Q.demoted.length ? Q.demoted : Q.wrong);
   const seen = new Set();
-  Q.wrong.forEach((w) => {
+  list.forEach((w) => {
     if (seen.has(w.id)) return;
     seen.add(w.id);
     const el = document.createElement("div");
@@ -614,67 +600,31 @@ function renderWrong() {
   show("wrong");
 }
 
-/* ---------- ふくしゅう ---------- */
-function renderReview() {
-  const due = dueZones();
-  const wrap = document.getElementById("reviewList");
-  wrap.innerHTML = "";
-  if (!due.length) {
-    wrap.innerHTML = `<div class="panel" style="text-align:center;color:var(--text-dim);font-size:13px;line-height:1.9">
-      いま ふくしゅうする ワールドは ないよ。<br>あたらしい たんごを ほりに いこう!⛏️</div>`;
-    return;
-  }
-  due.forEach((z) => {
-    const th = zoneTheme(z);
-    const ws = wordsInZone(z);
-    const el = document.createElement("div");
-    el.className = "map-node due";
-    el.innerHTML = `
-      <div class="map-block" style="background:${th.color}">🔁</div>
-      <div class="map-body">
-        <div class="map-name">ワールド ${z}・${th.name}</div>
-        <div class="map-sub">No.${ws[0].no}〜${ws[ws.length - 1].no}</div>
-      </div>
-      <div class="map-medal">▶</div>
-    `;
-    el.addEventListener("click", () => { sfxClick(); startQuiz(z, "review"); });
-    wrap.appendChild(el);
-  });
-}
-
 /* ---------- せいせき ---------- */
 function renderStats() {
   document.getElementById("sBlocks").textContent = P.blocks;
   document.getElementById("sChests").textContent = P.chests;
-  document.getElementById("sWords").textContent = clearedCount() * 10;
+  document.getElementById("sWords").textContent = boxedCount();
   document.getElementById("sStreak").textContent = P.streak.n;
 
   const inv = document.getElementById("inventory");
   inv.innerHTML = "";
-  for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const s = zoneState(z);
-    const th = zoneTheme(z);
+  WEEKDAYS.forEach((info) => {
+    const n = wordsInBox(info.day).length;
     const el = document.createElement("div");
-    el.className = "inv-slot" + (s.cleared ? "" : " empty");
-    el.textContent = s.cleared ? th.icon : "🔒";
-    el.title = `ワールド ${z}・${th.name}`;
+    el.className = "inv-slot" + (n === 0 ? " empty" : "");
+    el.textContent = n === 0 ? "・" : info.icon;
+    el.title = `${info.label}よう: ${n}ご`;
     inv.appendChild(el);
-  }
+  });
 }
 
 /* ---------- ナビ ---------- */
 document.getElementById("btnHome").addEventListener("click", () => show("home"));
-document.getElementById("btnContinue").addEventListener("click", () => {
-  sfxClick();
-  startLearn(Math.min(P.lastZone, TOTAL_ZONES));
-});
-document.getElementById("btnChapters").addEventListener("click", () => { sfxClick(); show("chapters"); });
-document.getElementById("btnMap").addEventListener("click", () => { sfxClick(); show("map"); });
-document.getElementById("btnReview").addEventListener("click", () => { sfxClick(); show("review"); });
+document.getElementById("btnA").addEventListener("click", () => { sfxClick(); show("ranges"); });
+document.getElementById("btnB").addEventListener("click", () => { sfxClick(); show("boxes"); });
 document.getElementById("btnStats").addEventListener("click", () => { sfxClick(); show("stats"); });
-document.querySelectorAll("[data-back]").forEach((b) =>
-  b.addEventListener("click", () => show(b.dataset.back))
-);
+document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(b.dataset.back)));
 
 /* ---------- スタート ---------- */
 show("home");
