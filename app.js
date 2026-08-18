@@ -87,30 +87,40 @@ const sfxNg = () => beep(160, 0.25, "sawtooth", 0.05);
 const sfxLevel = () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.14), i * 90)); };
 const sfxChest = () => { beep(300, 0.1); setTimeout(() => beep(500, 0.1), 90); setTimeout(() => beep(700, 0.2), 180); };
 
-/* ---------- はつおん ---------- */
+/* ---------- はつおん ----------
+   Androidは たんまつに はいっている おんせいエンジンしだいで
+   ロボットっぽい こえに なりやすい。「Googleの ネットワークおんせい」を
+   さいゆうせんで えらび、それが なければ ローカルの きこえを つかう。
+------------------------------- */
 let voices = [];
+function voiceScore(v) {
+  let s = 0;
+  if (/^en/i.test(v.lang)) s += 10; else return -1; // 英語いがいは のぞく
+  if (v.lang.toLowerCase() === "en-us") s += 20;
+  if (/google/i.test(v.name)) s += 50;              // Googleの ネットワークおんせい(しぜん)
+  if (v.localService === false) s += 15;            // ネットワークけいは しぜんな こえが おおい
+  if (/us english/i.test(v.name)) s += 10;
+  if (/compact|espeak|pico/i.test(v.name)) s -= 30;  // きかいてきな こえは じゅんい さげる
+  return s;
+}
 function pickVoice() {
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  const en = voices.filter((v) => /^en(-|_)?/i.test(v.lang));
-  return (
-    en.find((v) => /google.*us|samantha|alex|natural/i.test(v.name)) ||
-    en.find((v) => /en-US/i.test(v.lang)) ||
-    en[0] || null
-  );
+  const candidates = voices.map((v) => ({ v, s: voiceScore(v) })).filter((x) => x.s >= 0);
+  candidates.sort((a, b) => b.s - a.s);
+  return candidates.length ? candidates[0].v : null;
 }
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = pickVoice;
   pickVoice();
 }
-function speak(text, rate = 0.8) {
+function speak(text, rate = 0.85) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   const v = pickVoice();
-  if (v) u.voice = v;
-  u.lang = "en-US";
+  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "en-US"; }
   u.rate = rate;
-  u.pitch = 1.05;
+  u.pitch = 1.0;
   window.speechSynthesis.speak(u);
 }
 
