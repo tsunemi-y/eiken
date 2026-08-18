@@ -1,419 +1,495 @@
+/* =========================================================
+   えいごクラフト - マイクラふうの ピクセルUI
+   まるみ ゼロ / ベベル(立体ふち) / ドットフォント
+   ========================================================= */
+
 :root {
-  --orange: #ff9a3c;
-  --orange-dark: #f57c00;
-  --blue: #3ca7ff;
-  --blue-dark: #1e88e5;
-  --pink: #ff6fa3;
-  --pink-dark: #e91e78;
-  --green: #4cd08a;
-  --green-dark: #2eab6a;
-  --yellow: #ffd23c;
-  --bg: #fff7ea;
-  --card: #ffffff;
-  --text: #3a2e26;
-  --text-soft: #8a7a6d;
-  --radius: 22px;
-  --shadow: 0 6px 0 rgba(0,0,0,0.08), 0 10px 20px rgba(0,0,0,0.06);
+  /* マイクラ カラーパレット */
+  --grass: #5EA827;
+  --grass-d: #3E7A19;
+  --dirt: #79553A;
+  --dirt-d: #543A27;
+  --stone: #7F7F7F;
+  --gui: #C6C6C6;
+  --gui-lt: #FFFFFF;
+  --gui-dk: #555555;
+  --slot: #8B8B8B;
+  --slot-dk: #373737;
+  --panel: #313131;
+  --panel-lt: #5A5A5A;
+  --panel-dk: #1A1A1A;
+  --gold: #FCEE4B;
+  --diamond: #4AEDD9;
+  --emerald: #17DD62;
+  --redstone: #E03434;
+  --xp: #7FFF00;
+  --xp-d: #3E8E00;
+  --text: #FFFFFF;
+  --text-sh: #3F3F3F;
+  --text-dim: #A8A8A8;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
+  background: #1B1B1B;
+  font-family: "DotGothic16", "Hiragino Maru Gothic ProN", sans-serif;
   color: var(--text);
-  font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Rounded Mplus 1c", "Meiryo", sans-serif;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
   overscroll-behavior-y: contain;
 }
 
-#app {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  padding-bottom: 40px;
-  background: var(--bg);
+/* いしの ちかどう のような はいけい */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #2B2B2B;
+  background-image:
+    repeating-linear-gradient(0deg,   rgba(255,255,255,.03) 0 2px, transparent 2px 32px),
+    repeating-linear-gradient(90deg,  rgba(0,0,0,.25) 0 2px, transparent 2px 32px),
+    radial-gradient(circle at 20% 15%, rgba(94,168,39,.10), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(74,237,217,.08), transparent 45%);
 }
 
-button { font-family: inherit; cursor: pointer; }
+#app {
+  max-width: 460px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 90px;
+}
 
-ruby rt { font-size: 0.5em; color: var(--text-soft); }
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  color: var(--text);
+  text-shadow: 2px 2px 0 var(--text-sh);
+}
 
-/* ===== ヘッダー ===== */
-.topbar {
+/* ---------- ベベル(マイクラの 立体ふち) ---------- */
+.bevel-up {
+  box-shadow:
+    inset 3px 3px 0 var(--panel-lt),
+    inset -3px -3px 0 var(--panel-dk),
+    0 0 0 3px #000;
+}
+.bevel-down {
+  box-shadow:
+    inset 3px 3px 0 var(--panel-dk),
+    inset -3px -3px 0 var(--panel-lt),
+    0 0 0 3px #000;
+}
+
+/* ---------- HUD(うえの バー) ---------- */
+.hud {
+  position: sticky;
+  top: 0;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, var(--orange), #ffb45c);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--grass) 0 30%, var(--dirt) 30% 100%);
+  box-shadow: inset 0 3px 0 #7FD03A, inset 0 -3px 0 #3A2716, 0 3px 0 #000;
 }
-.topbar-left { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.logo { font-size: 1.5rem; }
-.logo-text { font-weight: 900; color: #fff; font-size: 1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
-.topbar-right { display: flex; gap: 6px; }
-.stat-chip {
-  background: rgba(255,255,255,0.9);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: var(--orange-dark);
+.hud-title {
+  font-size: 15px;
+  font-weight: 700;
+  text-shadow: 2px 2px 0 #2A1B0E;
   white-space: nowrap;
 }
+.hud-stats { display: flex; gap: 6px; }
+.hud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,.45);
+  padding: 4px 8px;
+  font-size: 13px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,.15), inset -2px -2px 0 rgba(0,0,0,.5);
+}
+.hud-chip .ic { font-size: 14px; }
 
-/* ===== 画面共通 ===== */
-.screen { padding: 16px; animation: fadeIn 0.25s ease; }
+/* ---------- けいけんちバー ---------- */
+.xp-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 4px;
+}
+.xp-level {
+  font-family: "Press Start 2P", monospace;
+  font-size: 15px;
+  color: var(--xp);
+  text-shadow: 2px 2px 0 #1B4A00;
+  min-width: 26px;
+  text-align: center;
+}
+.xp-bar {
+  flex: 1;
+  height: 12px;
+  background: #1E1E1E;
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #444, 0 0 0 2px #000;
+}
+.xp-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(180deg, #B6FF4A 0 40%, var(--xp) 40% 70%, var(--xp-d) 70% 100%);
+  transition: width .45s steps(12);
+}
+
+/* ---------- がめん ---------- */
+.screen { padding: 12px; }
 .hidden { display: none !important; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
 
-.screen-title { font-size: 1.3rem; font-weight: 900; margin: 6px 0 2px; }
-.screen-desc { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 14px; }
+.scr-title { font-size: 20px; margin: 8px 0 4px; text-shadow: 2px 2px 0 #000; }
+.scr-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
 
 .back-btn {
-  background: none;
-  border: none;
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: var(--orange-dark);
-  padding: 6px 2px;
+  background: #4A4A4A;
+  padding: 8px 14px;
+  font-size: 13px;
+  box-shadow: inset 2px 2px 0 #6E6E6E, inset -2px -2px 0 #222, 0 0 0 2px #000;
 }
+.back-btn:active { box-shadow: inset -2px -2px 0 #6E6E6E, inset 2px 2px 0 #222, 0 0 0 2px #000; }
 
-/* ===== ホーム: カウントダウン ===== */
-.countdown-card {
-  background: linear-gradient(135deg, #4a3f8f, #6a4fd0);
-  color: #fff;
-  border-radius: var(--radius);
-  padding: 18px;
-  text-align: center;
-  margin: 14px 0;
-  box-shadow: var(--shadow);
+/* ---------- パネル ---------- */
+.panel {
+  background: var(--panel);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
 }
-.countdown-title { font-size: 0.85rem; opacity: 0.9; font-weight: 700; }
-.countdown-days { font-size: 2.6rem; font-weight: 900; line-height: 1.3; }
-.countdown-days span { font-size: 3rem; }
-.countdown-sub { font-size: 0.85rem; opacity: 0.95; margin-top: 4px; font-weight: 700; }
+.panel-head { font-size: 14px; margin-bottom: 10px; text-shadow: 2px 2px 0 #000; }
+.panel-foot { font-size: 12px; color: var(--text-dim); text-align: right; margin-top: 8px; }
 
-.home-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 14px 0;
+/* カウントダウン */
+.countdown { text-align: center; background: #2A1E3D; }
+.cd-label { font-size: 12px; color: #C6A8FF; }
+.cd-num {
+  font-family: "Press Start 2P", monospace;
+  font-size: 40px;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #6A5A00;
+  margin: 8px 0 4px;
+  line-height: 1.2;
 }
-.big-tile {
-  border: none;
-  border-radius: var(--radius);
-  padding: 16px 10px;
-  text-align: center;
-  color: #fff;
-  box-shadow: var(--shadow);
-  transition: transform 0.1s;
-}
-.big-tile:active { transform: scale(0.96) translateY(2px); }
-.tile-orange { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); }
-.tile-blue { background: linear-gradient(135deg, var(--blue), var(--blue-dark)); }
-.tile-pink { background: linear-gradient(135deg, var(--pink), var(--pink-dark)); }
-.tile-green { background: linear-gradient(135deg, var(--green), var(--green-dark)); }
-.tile-emoji { font-size: 2rem; }
-.tile-title { font-weight: 900; font-size: 0.95rem; margin-top: 4px; }
-.tile-sub { font-size: 0.72rem; opacity: 0.95; margin-top: 2px; font-weight: 700; }
+.cd-unit { font-size: 15px; margin-left: 6px; color: #FFF; text-shadow: 2px 2px 0 #000; }
+.cd-pace { font-size: 12px; color: #DCC9FF; line-height: 1.6; }
 
-.progress-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  margin: 14px 0;
-}
-.progress-card-title { font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; }
-.progress-bar-outer { background: #f0e6d8; border-radius: 999px; height: 16px; overflow: hidden; }
-.progress-bar-inner { background: linear-gradient(90deg, var(--green), var(--green-dark)); height: 100%; width: 0%; transition: width 0.4s; border-radius: 999px; }
-.progress-card-sub { text-align: right; font-size: 0.8rem; color: var(--text-soft); margin-top: 6px; font-weight: 700; }
-
-/* ===== たんごマップ ===== */
-.map-path {
+/* ---------- マイクラ ボタン ---------- */
+.mc-btn {
   display: flex;
-  flex-direction: column-reverse;
-  gap: 10px;
-  padding: 10px 0 20px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #6E6E6E;
+  padding: 14px 10px;
+  font-size: 14px;
+  text-align: center;
+  position: relative;
+  box-shadow: inset 3px 3px 0 #9C9C9C, inset -3px -3px 0 #3A3A3A, 0 0 0 3px #000;
+  transition: background .1s;
 }
+.mc-btn:active {
+  box-shadow: inset -3px -3px 0 #9C9C9C, inset 3px 3px 0 #3A3A3A, 0 0 0 3px #000;
+  transform: translateY(2px);
+}
+.mc-btn:hover { background: #7E8E7E; }
+.mc-btn.primary { background: var(--grass); box-shadow: inset 3px 3px 0 #86D64C, inset -3px -3px 0 #2E5C12, 0 0 0 3px #000; }
+.mc-btn.primary:active { box-shadow: inset -3px -3px 0 #86D64C, inset 3px 3px 0 #2E5C12, 0 0 0 3px #000; }
+.mc-btn.danger { background: #9C3B2E; box-shadow: inset 3px 3px 0 #D26150, inset -3px -3px 0 #5E1F16, 0 0 0 3px #000; }
+.mc-btn.wide { margin-bottom: 10px; }
+.mc-btn.small { flex: 1; padding: 12px 6px; font-size: 13px; }
+
+.mc-btn-main { padding: 18px 12px; margin-bottom: 12px; background: var(--grass); box-shadow: inset 3px 3px 0 #86D64C, inset -3px -3px 0 #2E5C12, 0 0 0 3px #000; }
+.mc-btn-main:active { box-shadow: inset -3px -3px 0 #86D64C, inset 3px 3px 0 #2E5C12, 0 0 0 3px #000; }
+.mc-btn-icon { font-size: 26px; }
+.mc-btn-body { display: flex; flex-direction: column; align-items: flex-start; }
+.mc-btn-title { font-size: 15px; }
+.mc-btn-sub { font-size: 11px; color: #E6FFD0; }
+
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.menu-grid .mc-btn { flex-direction: column; gap: 4px; padding: 16px 6px; }
+.menu-grid .mc-btn-icon { font-size: 28px; }
+.menu-grid .mc-btn-title { font-size: 13px; }
+
+.notif {
+  position: absolute;
+  top: -6px; right: -6px;
+  background: var(--redstone);
+  font-size: 11px;
+  min-width: 22px;
+  padding: 3px 5px;
+  box-shadow: 0 0 0 2px #000;
+}
+
+/* ---------- しんちょくバー ---------- */
+.mc-bar {
+  height: 18px;
+  background: #1E1E1E;
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #4A4A4A, 0 0 0 2px #000;
+  overflow: hidden;
+}
+.mc-bar.thin { height: 10px; margin-bottom: 10px; }
+.mc-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: repeating-linear-gradient(90deg, var(--emerald) 0 8px, #14C455 8px 10px);
+  transition: width .4s steps(10);
+}
+
+/* ---------- チャプター(30ごずつ) ---------- */
+.chapter-list { display: flex; flex-direction: column; gap: 10px; }
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  padding: 12px;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
+}
+.chapter-ic { font-size: 30px; }
+.chapter-body { flex: 1; }
+.chapter-title { font-size: 15px; }
+.chapter-sub { font-size: 11px; color: var(--text-dim); margin: 4px 0 6px; }
+.chapter .mc-bar { height: 12px; }
+
+/* ---------- マップ ---------- */
+.map-list { display: flex; flex-direction: column; gap: 8px; }
 .map-node {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card);
-  border-radius: 18px;
-  padding: 12px 14px;
-  box-shadow: var(--shadow);
-  position: relative;
+  padding: 12px;
+  background: var(--panel);
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
 }
-.map-node.locked { opacity: 0.5; }
-.map-node.review-due { outline: 3px solid var(--pink); }
-.map-node-icon {
-  width: 48px; height: 48px;
-  border-radius: 50%;
+.map-node.locked { opacity: .45; }
+.map-node.due { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--gold); }
+.map-block {
+  width: 52px; height: 52px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.4rem;
+  font-size: 26px;
   flex-shrink: 0;
-  color: #fff;
-  font-weight: 900;
+  box-shadow: inset 3px 3px 0 rgba(255,255,255,.35), inset -3px -3px 0 rgba(0,0,0,.45), 0 0 0 2px #000;
 }
-.map-node.cleared .map-node-icon { background: linear-gradient(135deg, var(--green), var(--green-dark)); }
-.map-node.current .map-node-icon { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); }
-.map-node.locked .map-node-icon { background: #cfc3b3; }
-.map-node-body { flex: 1; }
-.map-node-title { font-weight: 900; font-size: 0.95rem; }
-.map-node-sub { font-size: 0.75rem; color: var(--text-soft); font-weight: 700; }
-.map-node-badge { font-size: 1.3rem; }
+.map-body { flex: 1; min-width: 0; }
+.map-name { font-size: 14px; }
+.map-sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.map-medal { font-size: 22px; }
 
-/* ===== フラッシュカード ===== */
-.learn-progress {
-  display: flex; justify-content: space-between;
-  font-weight: 800; color: var(--text-soft); font-size: 0.85rem;
-  margin: 8px 4px;
-}
-.flashcard {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 30px 20px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  min-height: 280px;
+/* ---------- カード(おぼえる) ---------- */
+.learn-head { display: flex; justify-content: space-between; align-items: center; margin: 8px 2px; }
+.zone-tag { font-size: 12px; background: rgba(0,0,0,.5); padding: 4px 10px; box-shadow: 0 0 0 2px #000; }
+.learn-pos { font-family: "Press Start 2P", monospace; font-size: 11px; color: var(--text-dim); }
+
+.card {
+  background: var(--panel);
+  padding: 22px 16px;
+  min-height: 330px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   cursor: pointer;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
 }
-.flashcard-emoji { font-size: 4rem; }
-.flashcard-en { font-size: 2rem; font-weight: 900; color: var(--orange-dark); }
-.flashcard-ja { font-size: 1.3rem; font-weight: 800; color: var(--blue-dark); }
-.flashcard-ex { font-size: 0.85rem; color: var(--text-soft); font-weight: 700; max-width: 320px; }
-.flashcard-hint { font-size: 0.8rem; color: var(--text-soft); margin-top: 6px; }
-.speak-btn {
-  background: var(--yellow);
-  border: none;
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-weight: 800;
-  font-size: 0.85rem;
-  box-shadow: 0 3px 0 #e0ac00;
-}
-.speak-btn:active { transform: translateY(2px); box-shadow: none; }
+.card-face { width: 100%; text-align: center; }
+.card-no { font-family: "Press Start 2P", monospace; font-size: 10px; color: var(--gold); margin-bottom: 12px; }
 
-.learn-nav { display: flex; gap: 10px; margin-top: 14px; }
-.nav-btn {
-  flex: 1;
-  border: none;
-  border-radius: 16px;
-  padding: 14px 0;
-  font-weight: 900;
-  font-size: 1rem;
-  background: #eee0cc;
-  color: var(--text);
-  box-shadow: 0 4px 0 #d8c8ad;
-}
-.nav-btn:active { transform: translateY(3px); box-shadow: none; }
-.nav-btn-primary { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: #fff; box-shadow: 0 4px 0 var(--orange-dark); }
-
-.quiz-go-btn {
-  width: 100%;
-  margin-top: 14px;
-  border: none;
-  border-radius: 16px;
-  padding: 16px 0;
-  font-weight: 900;
-  font-size: 1.05rem;
-  background: linear-gradient(135deg, var(--green), var(--green-dark));
-  color: #fff;
-  box-shadow: 0 4px 0 var(--green-dark);
-}
-.quiz-go-btn:active { transform: translateY(3px); box-shadow: none; }
-
-/* ===== クイズ ===== */
-.quiz-progress-wrap { margin: 10px 4px 18px; }
-.quiz-progress-bar { background: #f0e6d8; border-radius: 999px; height: 12px; overflow: hidden; }
-.quiz-progress-inner { background: linear-gradient(90deg, var(--blue), var(--blue-dark)); height: 100%; width: 10%; transition: width 0.3s; border-radius: 999px; }
-.quiz-progress-label { text-align: right; font-size: 0.78rem; color: var(--text-soft); font-weight: 700; margin-top: 4px; }
-
-.quiz-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 26px 16px;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-.quiz-question-label { font-weight: 800; color: var(--text-soft); font-size: 0.85rem; margin-bottom: 6px; }
-.quiz-emoji { font-size: 3.4rem; }
-.quiz-en { font-size: 1.8rem; font-weight: 900; color: var(--orange-dark); margin: 4px 0 10px; }
-
-.quiz-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
-}
-.choice-btn {
-  border: none;
-  border-radius: 16px;
-  padding: 18px 8px;
-  font-weight: 800;
-  font-size: 1rem;
-  background: var(--card);
-  box-shadow: var(--shadow);
-  color: var(--text);
-}
-.choice-btn:active { transform: translateY(2px); }
-.choice-btn.correct { background: linear-gradient(135deg, var(--green), var(--green-dark)); color: #fff; }
-.choice-btn.wrong { background: linear-gradient(135deg, #ff6b6b, #d63c3c); color: #fff; }
-.choice-btn.dim { opacity: 0.45; }
-
-.quiz-feedback {
-  text-align: center;
-  font-weight: 900;
-  font-size: 1.2rem;
-  margin-top: 16px;
-}
-.quiz-feedback.ok { color: var(--green-dark); }
-.quiz-feedback.ng { color: #d63c3c; }
-
-/* ===== けっか画面 ===== */
-#screen-result { display: flex; align-items: center; min-height: 80vh; }
-.result-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 30px 20px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  width: 100%;
-}
-.result-emoji { font-size: 3.5rem; }
-.result-title { font-weight: 900; font-size: 1.3rem; margin: 6px 0; }
-.result-score { font-weight: 800; color: var(--text-soft); margin-bottom: 10px; }
-.chest-anim { font-size: 3.6rem; margin: 10px 0; animation: pop 0.5s ease; }
-@keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
-.result-detail { font-size: 0.9rem; color: var(--text-soft); font-weight: 700; margin-bottom: 18px; min-height: 20px; }
-
-.primary-btn {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  padding: 15px 0;
-  font-weight: 900;
-  font-size: 1.05rem;
-  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
-  color: #fff;
-  box-shadow: 0 4px 0 var(--orange-dark);
-  margin-bottom: 10px;
-}
-.primary-btn:active { transform: translateY(3px); box-shadow: none; }
-.secondary-btn {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  padding: 13px 0;
-  font-weight: 800;
-  font-size: 0.95rem;
-  background: #eee0cc;
-  color: var(--text);
-  margin-bottom: 10px;
-}
-.secondary-btn:active { transform: translateY(2px); }
-
-/* ===== ふくしゅう ===== */
-.review-list { display: flex; flex-direction: column; gap: 10px; }
-.review-item {
-  background: var(--card);
-  border-radius: 18px;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow);
-}
-.review-item-icon { font-size: 1.8rem; }
-.review-item-body { flex: 1; }
-.review-item-title { font-weight: 900; }
-.review-item-sub { font-size: 0.78rem; color: var(--text-soft); font-weight: 700; }
-.review-item-btn {
-  border: none;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--pink), var(--pink-dark));
-  color: #fff;
-  font-size: 0.85rem;
-}
-.empty-msg { text-align: center; color: var(--text-soft); font-weight: 700; padding: 30px 10px; }
-
-/* ===== きろく ===== */
-.ranking-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 14px 0 20px;
-}
-.rank-stat-card {
-  background: var(--card);
-  border-radius: 18px;
-  padding: 16px 8px;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-.rank-stat-emoji { font-size: 1.6rem; }
-.rank-stat-num { font-size: 1.6rem; font-weight: 900; color: var(--orange-dark); }
-.rank-stat-label { font-size: 0.72rem; color: var(--text-soft); font-weight: 700; }
-
-.badge-title { font-weight: 900; margin: 10px 0; }
-.badge-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-.badge-item {
-  aspect-ratio: 1;
-  background: var(--card);
-  border-radius: 14px;
-  display: flex;
+/* アイテムスロット(マイクラの インベントリわく) */
+.slot {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  box-shadow: var(--shadow);
+  background: var(--slot);
+  box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px #000;
 }
-.badge-item.locked { opacity: 0.25; filter: grayscale(1); }
+.slot.big { width: 92px; height: 92px; font-size: 46px; margin-bottom: 14px; }
 
-/* ===== トースト ===== */
-.toast {
+.card-en {
+  font-family: "Press Start 2P", monospace;
+  font-size: 26px;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #5A4A00;
+  word-break: break-word;
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+.card-en.small { font-size: 16px; color: var(--text-dim); text-shadow: 2px 2px 0 #000; margin-bottom: 12px; }
+.card-ja { font-size: 22px; color: var(--diamond); text-shadow: 2px 2px 0 #0A3B36; margin-bottom: 12px; line-height: 1.5; }
+.card-ex { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-top: 10px; }
+.card-hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; animation: blink 1.4s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+
+/* イメージずかい */
+.vis { background: rgba(0,0,0,.35); padding: 10px; margin: 4px 0 8px; box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #4A4A4A; }
+.vis-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.vis-cell {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  background: var(--slot);
+  box-shadow: inset 2px 2px 0 var(--slot-dk), inset -2px -2px 0 #FFF, 0 0 0 1px #000;
+}
+.vis-cell.hi { background: var(--gold); box-shadow: inset 2px 2px 0 #8A7A00, inset -2px -2px 0 #FFF9C4, 0 0 0 2px #FFF; }
+.vis-label { font-size: 11px; color: var(--gold); margin-top: 8px; line-height: 1.6; }
+
+.sound-btn {
+  background: #2C6FA8;
+  padding: 10px 18px;
+  font-size: 13px;
+  box-shadow: inset 2px 2px 0 #4E9FD8, inset -2px -2px 0 #14405F, 0 0 0 2px #000;
+}
+.sound-btn:active { box-shadow: inset -2px -2px 0 #4E9FD8, inset 2px 2px 0 #14405F, 0 0 0 2px #000; }
+
+.learn-nav { display: flex; gap: 10px; margin: 12px 0; }
+
+/* ---------- クイズ ---------- */
+.quiz-head { display: flex; justify-content: space-between; align-items: center; margin: 6px 2px 10px; }
+.hearts { display: flex; gap: 3px; font-size: 22px; }
+.heart.lost { filter: grayscale(1) brightness(.4); }
+.quiz-pos { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--text-dim); }
+
+.combo {
+  text-align: center;
+  font-size: 15px;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 #000;
+  margin-bottom: 8px;
+  animation: popIn .3s steps(4);
+}
+@keyframes popIn { from { transform: scale(.4); } to { transform: scale(1); } }
+
+.quiz-panel { text-align: center; }
+.quiz-label { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+.quiz-en {
+  font-family: "Press Start 2P", monospace;
+  font-size: 24px;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #5A4A00;
+  margin: 4px 0 14px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choice {
+  background: #6E6E6E;
+  padding: 18px 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 68px;
+  box-shadow: inset 3px 3px 0 #9C9C9C, inset -3px -3px 0 #3A3A3A, 0 0 0 3px #000;
+}
+.choice:active { box-shadow: inset -3px -3px 0 #9C9C9C, inset 3px 3px 0 #3A3A3A, 0 0 0 3px #000; }
+.choice.ok { background: var(--grass); box-shadow: inset 3px 3px 0 #86D64C, inset -3px -3px 0 #2E5C12, 0 0 0 3px #FFF; }
+.choice.ng { background: #9C3B2E; box-shadow: inset 3px 3px 0 #D26150, inset -3px -3px 0 #5E1F16, 0 0 0 3px #000; }
+.choice.dim { opacity: .35; }
+
+.feedback { text-align: center; font-size: 17px; margin-top: 14px; text-shadow: 2px 2px 0 #000; }
+.feedback.ok { color: var(--emerald); }
+.feedback.ng { color: #FF7B6B; }
+.feedback .fb-ja { display: block; font-size: 14px; color: var(--text); margin-top: 8px; }
+
+/* ---------- けっか ---------- */
+.result { text-align: center; }
+.result-chest { font-size: 66px; animation: chestPop .5s steps(5); }
+@keyframes chestPop { 0% { transform: scale(0) rotate(-20deg); } 100% { transform: scale(1) rotate(0); } }
+.result-title { font-size: 19px; margin: 10px 0; line-height: 1.5; text-shadow: 2px 2px 0 #000; }
+.result-score { font-family: "Press Start 2P", monospace; font-size: 14px; color: var(--gold); margin-bottom: 14px; }
+.loot { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.loot-item {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,0,0,.4);
+  padding: 8px 12px;
+  font-size: 13px;
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
+}
+.result-msg { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-bottom: 16px; }
+
+/* ---------- せいせき ---------- */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat { text-align: center; padding: 14px 6px; margin: 0; }
+.stat-ic { font-size: 26px; }
+.stat-num { font-family: "Press Start 2P", monospace; font-size: 20px; color: var(--gold); margin: 8px 0 6px; }
+.stat-lb { font-size: 11px; color: var(--text-dim); }
+
+.inventory { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.inv-slot {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: var(--slot);
+  box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px #000;
+}
+.inv-slot.empty { background: #4A4A4A; opacity: .5; font-size: 16px; }
+
+/* ---------- まちがえた たんご ---------- */
+.wrong-list { display: flex; flex-direction: column; gap: 8px; }
+.wrong-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel);
+  padding: 12px;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
+}
+.wrong-ic { font-size: 28px; }
+.wrong-en { font-family: "Press Start 2P", monospace; font-size: 13px; color: var(--gold); }
+.wrong-ja { font-size: 13px; color: var(--diamond); margin-top: 6px; }
+
+/* ---------- しんちょくの たっせい(トースト) ---------- */
+.advancement {
   position: fixed;
-  bottom: 24px;
-  left: 50%;
+  top: 14px; left: 50%;
   transform: translateX(-50%);
-  background: #3a2e26;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.9rem;
-  z-index: 200;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  animation: toastIn 0.3s ease;
-}
-@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px);} to { opacity: 1; transform: translate(-50%, 0);} }
-
-/* 紙吹雪 */
-.confetti {
-  position: fixed;
-  top: -20px;
-  font-size: 1.4rem;
-  animation: confettiFall linear forwards;
+  display: flex; align-items: center; gap: 10px;
+  background: #100C14;
+  padding: 12px 16px;
   z-index: 300;
-  pointer-events: none;
+  min-width: 260px;
+  box-shadow: 0 0 0 3px #A855F7, 0 0 0 6px #000;
+  animation: advIn .35s steps(4);
 }
-@keyframes confettiFall {
-  to { transform: translateY(110vh) rotate(360deg); opacity: 0.3; }
+@keyframes advIn { from { transform: translate(-50%, -90px); } to { transform: translate(-50%, 0); } }
+.adv-ic { font-size: 30px; }
+.adv-head { font-size: 12px; color: var(--gold); }
+.adv-name { font-size: 14px; margin-top: 4px; }
+
+/* ---------- エフェクト ---------- */
+.orb {
+  position: fixed;
+  font-size: 20px;
+  z-index: 250;
+  pointer-events: none;
+  animation: orbUp .9s ease-out forwards;
+}
+@keyframes orbUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-130px) scale(1.5); }
+}
+
+.particle {
+  position: fixed;
+  width: 10px; height: 10px;
+  z-index: 250;
+  pointer-events: none;
+  animation: partFly .8s ease-out forwards;
+}
+@keyframes partFly {
+  0% { opacity: 1; transform: translate(0,0); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+}
+
+.shake { animation: shake .3s steps(3); }
+@keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+@media (max-width: 360px) {
+  .card-en, .quiz-en { font-size: 20px; }
+  .cd-num { font-size: 34px; }
 }

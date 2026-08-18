@@ -3,168 +3,188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>えいけんチャレンジ 5きゅう</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<title>えいごクラフト 5きゅう</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="app">
 
-  <!-- ===== ヘッダー(どこの画面でも見える) ===== -->
-  <header class="topbar" id="topbar">
-    <div class="topbar-left" id="btnHome" role="button" aria-label="ホームへ">
-      <span class="logo">🏆</span><span class="logo-text">えいけんチャレンジ</span>
-    </div>
-    <div class="topbar-right">
-      <div class="stat-chip" title="スター">⭐ <span id="starCount">0</span></div>
-      <div class="stat-chip" title="たからばこ">🎁 <span id="chestCount">0</span></div>
-      <div class="stat-chip" title="レベル">🚩 Lv.<span id="levelNum">1</span></div>
+  <!-- ===== うえの バー ===== -->
+  <header class="hud" id="hud">
+    <div class="hud-title" id="btnHome" role="button">⛏️ えいごクラフト</div>
+    <div class="hud-stats">
+      <span class="hud-chip" title="ブロック"><span class="ic">🟩</span><span id="blockCount">0</span></span>
+      <span class="hud-chip" title="チェスト"><span class="ic">🧰</span><span id="chestCount">0</span></span>
+      <span class="hud-chip" title="れんぞく"><span class="ic">🔥</span><span id="streakCount">0</span></span>
     </div>
   </header>
 
-  <!-- ===== ホーム画面 ===== -->
+  <!-- ===== けいけんちバー(マイクラの XPバー) ===== -->
+  <div class="xp-wrap">
+    <div class="xp-level" id="xpLevel">0</div>
+    <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+  </div>
+
+  <!-- ===== ホーム ===== -->
   <section class="screen" id="screen-home">
-    <div class="countdown-card">
-      <div class="countdown-title">えいけん5きゅう ほんばんまで</div>
-      <div class="countdown-days"><span id="daysLeft">--</span> にち</div>
-      <div class="countdown-sub" id="paceMessage">きょうの もくひょうを かくにんしよう!</div>
+    <div class="panel countdown">
+      <div class="cd-label">えいけん5きゅう まで</div>
+      <div class="cd-num"><span id="daysLeft">--</span><span class="cd-unit">にち</span></div>
+      <div class="cd-pace" id="paceMessage"></div>
     </div>
 
-    <div class="home-grid">
-      <button class="big-tile tile-orange" id="btnStartLearn">
-        <div class="tile-emoji">📖</div>
-        <div class="tile-title">たんごを おぼえる</div>
-        <div class="tile-sub" id="nextZoneLabel">ゾーン 1</div>
-      </button>
+    <button class="mc-btn mc-btn-main" id="btnContinue">
+      <span class="mc-btn-icon">⛏️</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">つづきから ほる</span>
+        <span class="mc-btn-sub" id="continueLabel">ワールド 1</span>
+      </span>
+    </button>
 
-      <button class="big-tile tile-blue" id="btnMap">
-        <div class="tile-emoji">🗺️</div>
-        <div class="tile-title">たんごマップ</div>
-        <div class="tile-sub">ぜんぶの ゾーンを みる</div>
-      </button>
-
-      <button class="big-tile tile-pink" id="btnReview">
-        <div class="tile-emoji">🔁</div>
-        <div class="tile-title">ふくしゅうテスト</div>
-        <div class="tile-sub" id="reviewBadge">いまは ありません</div>
-      </button>
-
-      <button class="big-tile tile-green" id="btnRanking">
-        <div class="tile-emoji">📈</div>
-        <div class="tile-title">きろく</div>
-        <div class="tile-sub">じぶんの ベストを こえよう</div>
-      </button>
+    <div class="menu-grid">
+      <button class="mc-btn" id="btnChapters"><span class="mc-btn-icon">📜</span><span class="mc-btn-title">たんごを えらぶ</span></button>
+      <button class="mc-btn" id="btnMap"><span class="mc-btn-icon">🗺️</span><span class="mc-btn-title">ワールドマップ</span></button>
+      <button class="mc-btn" id="btnReview"><span class="mc-btn-icon">🔁</span><span class="mc-btn-title">ふくしゅう</span><span class="notif hidden" id="reviewNotif">0</span></button>
+      <button class="mc-btn" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
     </div>
 
-    <div class="progress-card">
-      <div class="progress-card-title">ぜんたいの すすみぐあい</div>
-      <div class="progress-bar-outer"><div class="progress-bar-inner" id="overallBar"></div></div>
-      <div class="progress-card-sub"><span id="clearedZoneCount">0</span> / <span id="totalZoneCount">0</span> ゾーン クリア</div>
+    <div class="panel">
+      <div class="panel-head">🌍 ぜんたいの すすみ</div>
+      <div class="mc-bar"><div class="mc-bar-fill" id="overallBar"></div></div>
+      <div class="panel-foot"><span id="learnedWords">0</span> / <span id="totalWords">0</span> ご クリア</div>
     </div>
   </section>
 
-  <!-- ===== たんごマップ ===== -->
+  <!-- ===== チャプターえらび(30ごずつ) ===== -->
+  <section class="screen hidden" id="screen-chapters">
+    <button class="back-btn" data-back="home">◀ もどる</button>
+    <h2 class="scr-title">📜 たんごを えらぶ</h2>
+    <p class="scr-desc">プリントと おなじ 30ごずつの まとまり。<br>だいじな じゅんばんに ならんでるよ。</p>
+    <div class="chapter-list" id="chapterList"></div>
+  </section>
+
+  <!-- ===== ワールドマップ ===== -->
   <section class="screen hidden" id="screen-map">
-    <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="screen-title">🗺️ たんごマップ</h2>
-    <p class="screen-desc">ゾーンを クリアして さきに すすもう!</p>
-    <div class="map-path" id="mapPath"></div>
+    <button class="back-btn" data-back="home">◀ もどる</button>
+    <h2 class="scr-title">🗺️ ワールドマップ</h2>
+    <p class="scr-desc">したへ ほりすすむと レアな ブロックが 出てくるぞ!</p>
+    <div class="map-list" id="mapList"></div>
   </section>
 
-  <!-- ===== おぼえる画面(フラッシュカード) ===== -->
+  <!-- ===== おぼえる(カード) ===== -->
   <section class="screen hidden" id="screen-learn">
-    <button class="back-btn" data-back="home">← もどる</button>
-    <div class="learn-progress">
-      <span id="learnZoneTitle">ゾーン 1</span>
-      <span id="learnCardPos">1 / 10</span>
+    <button class="back-btn" data-back="home">◀ やめる</button>
+    <div class="learn-head">
+      <span class="zone-tag" id="learnZoneTag">ワールド 1</span>
+      <span class="learn-pos" id="learnPos">1 / 10</span>
     </div>
-    <div class="flashcard" id="flashcard">
-      <div class="flashcard-emoji" id="cardEmoji">🍎</div>
-      <div class="flashcard-en" id="cardEn">apple</div>
-      <button class="speak-btn" id="btnSpeak" aria-label="はつおんを きく">🔊 きく</button>
-      <div class="flashcard-ja hidden" id="cardJa">りんご</div>
-      <div class="flashcard-ex hidden" id="cardEx"></div>
-      <div class="flashcard-hint" id="cardHint">タップして いみを みよう</div>
+
+    <div class="card" id="card">
+      <!-- おもて:えいご -->
+      <div class="card-face" id="cardFront">
+        <div class="card-no" id="cardNo">No.1</div>
+        <div class="slot big" id="cardSlotQ">❓</div>
+        <div class="card-en" id="cardEn">house</div>
+        <button class="sound-btn" id="btnSpeak">🔊 もういちど きく</button>
+        <div class="card-hint">タップして こたえを みる 👆</div>
+      </div>
+      <!-- うら:こたえ -->
+      <div class="card-face hidden" id="cardBack">
+        <div class="card-en small" id="cardEnBack">house</div>
+        <div class="slot big" id="cardEmoji">🏠</div>
+        <div class="card-ja" id="cardJa">いえ</div>
+        <div class="vis hidden" id="cardVis"></div>
+        <div class="card-ex" id="cardEx"></div>
+        <button class="sound-btn" id="btnSpeak2">🔊 きく</button>
+      </div>
     </div>
+
     <div class="learn-nav">
-      <button class="nav-btn" id="btnPrevCard">← まえ</button>
-      <button class="nav-btn nav-btn-primary" id="btnNextCard">つぎ →</button>
+      <button class="mc-btn small" id="btnPrev">◀ まえ</button>
+      <button class="mc-btn small primary" id="btnNext">つぎ ▶</button>
     </div>
-    <button class="quiz-go-btn hidden" id="btnGoQuiz">✅ クイズに ちょうせん!</button>
+    <button class="mc-btn wide danger hidden" id="btnGoQuiz">⚔️ クイズに ちょうせん!</button>
   </section>
 
-  <!-- ===== クイズ画面 ===== -->
+  <!-- ===== クイズ ===== -->
   <section class="screen hidden" id="screen-quiz">
-    <div class="quiz-progress-wrap">
-      <div class="quiz-progress-bar"><div class="quiz-progress-inner" id="quizProgressBar"></div></div>
-      <div class="quiz-progress-label"><span id="quizPos">1</span> / <span id="quizTotal">10</span> もん</div>
+    <div class="quiz-head">
+      <div class="hearts" id="hearts"></div>
+      <div class="quiz-pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></div>
     </div>
-    <div class="quiz-card">
-      <div class="quiz-question-label">この たんごの いみは?</div>
-      <div class="quiz-emoji" id="quizEmoji">🍎</div>
-      <div class="quiz-en" id="quizEn">apple</div>
-      <button class="speak-btn" id="btnQuizSpeak" aria-label="はつおんを きく">🔊 きく</button>
+    <div class="mc-bar thin"><div class="mc-bar-fill" id="quizBar"></div></div>
+
+    <div class="combo hidden" id="combo">🔥 <span id="comboNum">2</span> れんぞく!</div>
+
+    <div class="panel quiz-panel">
+      <div class="quiz-label">この たんごの いみは?</div>
+      <div class="slot big" id="quizSlot">❓</div>
+      <div class="quiz-en" id="quizEn">house</div>
+      <button class="sound-btn" id="btnQuizSpeak">🔊 きく</button>
     </div>
-    <div class="quiz-choices" id="quizChoices"></div>
-    <div class="quiz-feedback hidden" id="quizFeedback"></div>
+
+    <div class="choices" id="choices"></div>
+    <div class="feedback hidden" id="feedback"></div>
   </section>
 
-  <!-- ===== けっか画面 ===== -->
+  <!-- ===== けっか ===== -->
   <section class="screen hidden" id="screen-result">
-    <div class="result-card">
-      <div class="result-emoji" id="resultEmoji">🎉</div>
-      <div class="result-title" id="resultTitle">よくできました!</div>
-      <div class="result-score"><span id="resultScore">10</span> / <span id="resultTotalQ">10</span> もんせいかい</div>
-      <div class="chest-anim" id="chestAnim">🎁</div>
-      <div class="result-detail" id="resultDetail"></div>
-      <button class="primary-btn" id="btnResultContinue">つぎへ すすむ</button>
-      <button class="secondary-btn" id="btnResultRetry">もういちど ちょうせんする</button>
-      <button class="secondary-btn" id="btnResultHome">ホームへ もどる</button>
+    <div class="panel result">
+      <div class="result-chest" id="resultChest">🧰</div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-score"><span id="resultScore">0</span> / <span id="resultTotal">10</span> せいかい</div>
+      <div class="loot" id="loot"></div>
+      <div class="result-msg" id="resultMsg"></div>
+      <button class="mc-btn wide primary" id="btnNextZone">つぎの ワールドへ ▶</button>
+      <button class="mc-btn wide" id="btnRetry">⚔️ もういちど</button>
+      <button class="mc-btn wide" id="btnReviewWrong">📕 まちがえた たんごを みる</button>
+      <button class="mc-btn wide" id="btnResultHome">🏠 ホームへ</button>
     </div>
   </section>
 
-  <!-- ===== ふくしゅう画面 ===== -->
+  <!-- ===== ふくしゅう ===== -->
   <section class="screen hidden" id="screen-review">
-    <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="screen-title">🔁 ふくしゅうテスト</h2>
-    <p class="screen-desc">1しゅうかん まえに おぼえた たんご、まだ おぼえてるかな?</p>
-    <div class="review-list" id="reviewList"></div>
+    <button class="back-btn" data-back="home">◀ もどる</button>
+    <h2 class="scr-title">🔁 ふくしゅう</h2>
+    <p class="scr-desc">1しゅうかん たった ワールド。<br>もういちど ほって たしかめよう!</p>
+    <div class="map-list" id="reviewList"></div>
   </section>
 
-  <!-- ===== きろく画面 ===== -->
-  <section class="screen hidden" id="screen-ranking">
-    <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="screen-title">📈 じぶんの きろく</h2>
-    <div class="ranking-stats">
-      <div class="rank-stat-card">
-        <div class="rank-stat-emoji">⭐</div>
-        <div class="rank-stat-num" id="rankStars">0</div>
-        <div class="rank-stat-label">スター ごうけい</div>
-      </div>
-      <div class="rank-stat-card">
-        <div class="rank-stat-emoji">🎁</div>
-        <div class="rank-stat-num" id="rankChests">0</div>
-        <div class="rank-stat-label">たからばこ</div>
-      </div>
-      <div class="rank-stat-card">
-        <div class="rank-stat-emoji">📚</div>
-        <div class="rank-stat-num" id="rankWords">0</div>
-        <div class="rank-stat-label">おぼえた たんご</div>
-      </div>
-      <div class="rank-stat-card">
-        <div class="rank-stat-emoji">🔥</div>
-        <div class="rank-stat-num" id="rankStreak">0</div>
-        <div class="rank-stat-label">れんぞく べんきょう にっすう</div>
-      </div>
+  <!-- ===== せいせき ===== -->
+  <section class="screen hidden" id="screen-stats">
+    <button class="back-btn" data-back="home">◀ もどる</button>
+    <h2 class="scr-title">🏆 せいせき</h2>
+    <div class="stat-grid">
+      <div class="panel stat"><div class="stat-ic">🟩</div><div class="stat-num" id="sBlocks">0</div><div class="stat-lb">ブロック</div></div>
+      <div class="panel stat"><div class="stat-ic">🧰</div><div class="stat-num" id="sChests">0</div><div class="stat-lb">チェスト</div></div>
+      <div class="panel stat"><div class="stat-ic">📚</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">おぼえた ご</div></div>
+      <div class="panel stat"><div class="stat-ic">🔥</div><div class="stat-num" id="sStreak">0</div><div class="stat-lb">れんぞく日</div></div>
     </div>
-    <div class="badge-title">🏅 メダル コレクション</div>
-    <div class="badge-grid" id="badgeGrid"></div>
+    <div class="panel">
+      <div class="panel-head">💎 あつめた ブロック</div>
+      <div class="inventory" id="inventory"></div>
+    </div>
+  </section>
+
+  <!-- ===== まちがえた たんご ===== -->
+  <section class="screen hidden" id="screen-wrong">
+    <button class="back-btn" id="btnWrongBack">◀ もどる</button>
+    <h2 class="scr-title">📕 まちがえた たんご</h2>
+    <div class="wrong-list" id="wrongList"></div>
   </section>
 
 </div>
 
-<div class="toast hidden" id="toast"></div>
+<!-- しんちょくの トースト(マイクラの しんちょく) -->
+<div class="advancement hidden" id="adv">
+  <div class="adv-ic" id="advIc">🏆</div>
+  <div class="adv-body"><div class="adv-head" id="advHead">しんちょくの たっせい!</div><div class="adv-name" id="advName"></div></div>
+</div>
 
 <script src="words-data.js"></script>
 <script src="app.js"></script>

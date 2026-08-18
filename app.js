@@ -1,553 +1,670 @@
-/* ==========================================================
-   えいけんチャレンジ 5きゅう - app.js
-   ========================================================== */
+/* =========================================================
+   えいごクラフト 5きゅう - app.js
+   ========================================================= */
 
-const EXAM_DATE = new Date(2026, 9, 4); // 2026-10-04 (げつは0はじまり)
-const STORAGE_KEY = "eiken5_progress_v1";
-const PASS_RATE = 0.8; // 80%せいかいで ゾーンクリア
-const REVIEW_INTERVAL_DAYS = 7;
+const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
+const KEY = "eigo_craft_v2";
+const HEARTS_MAX = 3;                      // 3かい まちがえたら しっぱい(=8/10で ごうかく)
+const REVIEW_DAYS = 7;
 
-/* ---------- じょうたい かんり ---------- */
-function todayStr() {
+/* ---------- ほぞん ---------- */
+function today() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-function loadProgress() {
-  let data;
-  try {
-    data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  } catch (e) {
-    data = null;
+function load() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) { d = null; }
+  if (!d) d = {};
+  return {
+    blocks: d.blocks || 0,
+    chests: d.chests || 0,
+    xp: d.xp || 0,
+    level: d.level || 0,
+    zones: d.zones || {},
+    streak: d.streak || { n: 0, last: null },
+    lastZone: d.lastZone || 1,
+    advSeen: d.advSeen || {},
+  };
+}
+
+let P = load();
+function save() { localStorage.setItem(KEY, JSON.stringify(P)); }
+
+function zoneState(z) {
+  if (!P.zones[z]) P.zones[z] = { cleared: false, best: 0, nextReview: null, medal: null, reviews: 0 };
+  return P.zones[z];
+}
+const wordsInZone = (z) => WORD_LIST.filter((w) => w.zone === z);
+const isUnlocked = (z) => z === 1 || zoneState(z - 1).cleared;
+const clearedCount = () => Object.values(P.zones).filter((z) => z.cleared).length;
+
+function dueZones() {
+  const now = Date.now();
+  const out = [];
+  for (let z = 1; z <= TOTAL_ZONES; z++) {
+    const s = zoneState(z);
+    if (s.cleared && s.nextReview && s.nextReview <= now) out.push(z);
   }
-  if (!data) {
-    data = {
-      stars: 0,
-      chests: 0,
-      currentZone: 1,
-      zones: {},
-      streak: { count: 0, lastDate: null },
-    };
-  }
-  if (!data.zones) data.zones = {};
-  if (!data.streak) data.streak = { count: 0, lastDate: null };
-  return data;
-}
-
-let PROGRESS = loadProgress();
-
-function saveProgress() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(PROGRESS));
-}
-
-function getZoneState(zoneId) {
-  if (!PROGRESS.zones[zoneId]) {
-    PROGRESS.zones[zoneId] = {
-      cleared: false,
-      bestScore: 0,
-      clearedAt: null,
-      nextReviewAt: null,
-      reviewCount: 0,
-      medal: null, // "bronze" | "silver" | "gold"
-    };
-  }
-  return PROGRESS.zones[zoneId];
-}
-
-function wordsInZone(zoneId) {
-  return WORD_LIST.filter((w) => w.zone === zoneId);
-}
-
-function isZoneUnlocked(zoneId) {
-  if (zoneId === 1) return true;
-  return !!getZoneState(zoneId - 1).cleared;
+  return out;
 }
 
 function bumpStreak() {
-  const t = todayStr();
-  if (PROGRESS.streak.lastDate === t) return; // すでに きょう きろく ずみ
-  const yest = new Date();
-  yest.setDate(yest.getDate() - 1);
-  const yestStr = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, "0")}-${String(yest.getDate()).padStart(2, "0")}`;
-  if (PROGRESS.streak.lastDate === yestStr) {
-    PROGRESS.streak.count += 1;
-  } else {
-    PROGRESS.streak.count = 1;
-  }
-  PROGRESS.streak.lastDate = t;
-  saveProgress();
+  const t = today();
+  if (P.streak.last === t) return;
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const ys = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
+  P.streak.n = P.streak.last === ys ? P.streak.n + 1 : 1;
+  P.streak.last = t;
+  save();
 }
 
-function medalEmoji(medal) {
-  if (medal === "gold") return "🥇";
-  if (medal === "silver") return "🥈";
-  if (medal === "bronze") return "🥉";
-  return "❔";
+const MEDALS = { gold: "💎", silver: "🥈", bronze: "🥉" };
+const medalRank = (m) => ({ bronze: 1, silver: 2, gold: 3 }[m] || 0);
+
+/* ---------- おと(WebAudio:マイクラふうの ぷちっと おと) ---------- */
+let actx = null;
+function beep(freq, dur = 0.08, type = "square", vol = 0.06) {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = vol;
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    o.connect(g).connect(actx.destination);
+    o.start();
+    o.stop(actx.currentTime + dur);
+  } catch (e) { /* おとが 出せなくても すすめる */ }
 }
+const sfxClick = () => beep(600, 0.06);
+const sfxOk = () => { beep(880, 0.08); setTimeout(() => beep(1320, 0.12), 70); };
+const sfxNg = () => beep(160, 0.25, "sawtooth", 0.05);
+const sfxLevel = () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.14), i * 90)); };
+const sfxChest = () => { beep(300, 0.1); setTimeout(() => beep(500, 0.1), 90); setTimeout(() => beep(700, 0.2), 180); };
 
-/* ---------- がめん せんい ---------- */
-const screens = {
-  home: document.getElementById("screen-home"),
-  map: document.getElementById("screen-map"),
-  learn: document.getElementById("screen-learn"),
-  quiz: document.getElementById("screen-quiz"),
-  result: document.getElementById("screen-result"),
-  review: document.getElementById("screen-review"),
-  ranking: document.getElementById("screen-ranking"),
-};
-
-function showScreen(name) {
-  Object.values(screens).forEach((s) => s.classList.add("hidden"));
-  screens[name].classList.remove("hidden");
-  window.scrollTo(0, 0);
-  if (name === "home") renderHome();
-  if (name === "map") renderMap();
-  if (name === "review") renderReview();
-  if (name === "ranking") renderRanking();
+/* ---------- はつおん ---------- */
+let voices = [];
+function pickVoice() {
+  voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  const en = voices.filter((v) => /^en(-|_)?/i.test(v.lang));
+  return (
+    en.find((v) => /google.*us|samantha|alex|natural/i.test(v.name)) ||
+    en.find((v) => /en-US/i.test(v.lang)) ||
+    en[0] || null
+  );
 }
-
-/* ---------- おと ---------- */
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = pickVoice;
+  pickVoice();
+}
+function speak(text, rate = 0.8) {
+  if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice();
+  if (v) u.voice = v;
   u.lang = "en-US";
-  u.rate = 0.85;
+  u.rate = rate;
+  u.pitch = 1.05;
   window.speechSynthesis.speak(u);
 }
 
-/* ---------- トースト・かみふぶき ---------- */
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.remove("hidden");
-  clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => t.classList.add("hidden"), 2200);
-}
-
-function confettiBurst() {
-  const emojis = ["🎉", "⭐", "🎊", "✨", "🏆"];
-  for (let i = 0; i < 18; i++) {
+/* ---------- エフェクト ---------- */
+function orbs(n = 6, emoji = "🟢") {
+  for (let i = 0; i < n; i++) {
     const el = document.createElement("div");
-    el.className = "confetti";
-    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    el.style.left = Math.random() * 100 + "vw";
-    el.style.animationDuration = 1.4 + Math.random() * 1.2 + "s";
+    el.className = "orb";
+    el.textContent = emoji;
+    el.style.left = 20 + Math.random() * 60 + "vw";
+    el.style.top = 40 + Math.random() * 30 + "vh";
+    el.style.animationDelay = i * 0.06 + "s";
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+    setTimeout(() => el.remove(), 1400);
   }
 }
 
-/* ---------- ヘッダー こうしん ---------- */
-function updateHeader() {
-  document.getElementById("starCount").textContent = PROGRESS.stars;
-  document.getElementById("chestCount").textContent = PROGRESS.chests;
-  const clearedCount = Object.values(PROGRESS.zones).filter((z) => z.cleared).length;
-  document.getElementById("levelNum").textContent = clearedCount + 1;
+function blockBreak(x, y, color = "#5EA827") {
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.background = color;
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+    p.style.setProperty("--dx", (Math.random() - 0.5) * 160 + "px");
+    p.style.setProperty("--dy", (Math.random() - 0.5) * 160 + "px");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
 }
 
-/* ---------- ホーム がめん ---------- */
+function advancement(name, icon = "🏆", head = "しんちょくの たっせい!") {
+  const el = document.getElementById("adv");
+  document.getElementById("advIc").textContent = icon;
+  document.getElementById("advHead").textContent = head;
+  document.getElementById("advName").textContent = name;
+  el.classList.remove("hidden");
+  clearTimeout(advancement._t);
+  advancement._t = setTimeout(() => el.classList.add("hidden"), 3200);
+}
+
+/* ---------- がめん きりかえ ---------- */
+const S = {};
+["home", "chapters", "map", "learn", "quiz", "result", "review", "stats", "wrong"].forEach((n) => {
+  S[n] = document.getElementById("screen-" + n);
+});
+
+function show(name) {
+  Object.values(S).forEach((s) => s.classList.add("hidden"));
+  S[name].classList.remove("hidden");
+  window.scrollTo(0, 0);
+  ({ home: renderHome, chapters: renderChapters, map: renderMap, review: renderReview, stats: renderStats }[name] || (() => {}))();
+}
+
+/* ---------- HUD ---------- */
+function updateHUD() {
+  document.getElementById("blockCount").textContent = P.blocks;
+  document.getElementById("chestCount").textContent = P.chests;
+  document.getElementById("streakCount").textContent = P.streak.n;
+  document.getElementById("xpLevel").textContent = P.level;
+  const need = 10 + P.level * 2;
+  document.getElementById("xpFill").style.width = Math.min(100, (P.xp / need) * 100) + "%";
+}
+
+function addXP(n) {
+  P.xp += n;
+  let leveled = false;
+  while (P.xp >= 10 + P.level * 2) {
+    P.xp -= 10 + P.level * 2;
+    P.level++;
+    leveled = true;
+  }
+  save();
+  updateHUD();
+  if (leveled) {
+    sfxLevel();
+    advancement(`レベル ${P.level} に なった!`, "⬆️", "レベルアップ!");
+  }
+  return leveled;
+}
+
+/* ---------- ホーム ---------- */
 function renderHome() {
-  updateHeader();
+  updateHUD();
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((EXAM_DATE - today) / (1000 * 60 * 60 * 24));
-  document.getElementById("daysLeft").textContent = diffDays >= 0 ? diffDays : 0;
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  const days = Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
+  document.getElementById("daysLeft").textContent = days;
 
-  const clearedCount = Object.values(PROGRESS.zones).filter((z) => z.cleared).length;
-  const remainZones = TOTAL_ZONES - clearedCount;
-  const paceEl = document.getElementById("paceMessage");
-  if (remainZones <= 0) {
-    paceEl.textContent = "🎉 ぜんぶの ゾーンを おぼえたよ!すごい!";
-  } else if (diffDays <= 0) {
-    paceEl.textContent = "きょうが ほんばん!じしんを もっていこう!";
+  const done = clearedCount();
+  const remain = TOTAL_ZONES - done;
+  const pace = document.getElementById("paceMessage");
+  if (remain <= 0) {
+    pace.textContent = "🎉 ぜんぶ クリア!すごい!";
+  } else if (days <= 0) {
+    pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
   } else {
-    const weeks = Math.max(1, Math.ceil(diffDays / 7));
-    const perWeek = Math.max(1, Math.ceil(remainZones / weeks));
-    paceEl.textContent = `のこり ${remainZones}ゾーン。1しゅうかんに ${perWeek}ゾーンずつ すすめよう!`;
+    const perWeek = Math.max(1, Math.ceil(remain / Math.max(1, Math.ceil(days / 7))));
+    pace.textContent = `のこり ${remain}ワールド。1しゅうに ${perWeek}ワールドで まにあうよ!`;
   }
 
-  const nextZone = PROGRESS.currentZone <= TOTAL_ZONES ? PROGRESS.currentZone : TOTAL_ZONES;
-  document.getElementById("nextZoneLabel").textContent =
-    clearedCount >= TOTAL_ZONES ? "ぜんぶ かんりょう!" : `ゾーン ${nextZone}`;
+  const nz = Math.min(P.lastZone, TOTAL_ZONES);
+  const th = zoneTheme(nz);
+  document.getElementById("continueLabel").textContent =
+    done >= TOTAL_ZONES ? "ぜんぶ クリアずみ!" : `ワールド ${nz}・${th.name}`;
 
-  const dueZones = getDueReviewZones();
-  const reviewBadge = document.getElementById("reviewBadge");
-  reviewBadge.textContent = dueZones.length > 0 ? `${dueZones.length}ゾーン ふくしゅうしよう!` : "いまは ありません";
+  const due = dueZones();
+  const notif = document.getElementById("reviewNotif");
+  notif.textContent = due.length;
+  notif.classList.toggle("hidden", due.length === 0);
 
-  document.getElementById("clearedZoneCount").textContent = clearedCount;
-  document.getElementById("totalZoneCount").textContent = TOTAL_ZONES;
-  document.getElementById("overallBar").style.width = `${(clearedCount / TOTAL_ZONES) * 100}%`;
+  document.getElementById("learnedWords").textContent = done * 10;
+  document.getElementById("totalWords").textContent = WORD_LIST.length;
+  document.getElementById("overallBar").style.width = (done / TOTAL_ZONES) * 100 + "%";
 }
 
-function getDueReviewZones() {
-  const now = Date.now();
-  const list = [];
-  for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const st = getZoneState(z);
-    if (st.cleared && st.nextReviewAt && st.nextReviewAt <= now) {
-      list.push(z);
-    }
-  }
-  return list;
-}
-
-/* ---------- たんごマップ ---------- */
-function renderMap() {
-  const wrap = document.getElementById("mapPath");
+/* ---------- チャプターえらび ---------- */
+function renderChapters() {
+  const wrap = document.getElementById("chapterList");
   wrap.innerHTML = "";
-  const dueZones = new Set(getDueReviewZones());
+  CHAPTERS.forEach((ch) => {
+    const done = ch.zones.filter((z) => zoneState(z).cleared).length;
+    const pct = (done / ch.zones.length) * 100;
+    const first = wordsInChapter(ch.id)[0];
+    const el = document.createElement("div");
+    el.className = "chapter";
+    el.innerHTML = `
+      <div class="chapter-ic">${done === ch.zones.length ? "✅" : first.emoji}</div>
+      <div class="chapter-body">
+        <div class="chapter-title">${ch.title}</div>
+        <div class="chapter-sub">${first.en} から ${ch.to - ch.from + 1}ご ・ ${done}/${ch.zones.length} ワールド</div>
+        <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+    el.addEventListener("click", () => {
+      sfxClick();
+      const next = ch.zones.find((z) => !zoneState(z).cleared) || ch.zones[0];
+      P.lastZone = next;
+      save();
+      startLearn(next);
+    });
+    wrap.appendChild(el);
+  });
+}
+
+/* ---------- マップ ---------- */
+function renderMap() {
+  const wrap = document.getElementById("mapList");
+  wrap.innerHTML = "";
+  const due = new Set(dueZones());
 
   for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const st = getZoneState(z);
-    const unlocked = isZoneUnlocked(z);
-    const isCurrent = unlocked && !st.cleared;
-    const node = document.createElement("div");
-    node.className =
-      "map-node " +
-      (st.cleared ? "cleared " : unlocked ? "current " : "locked ") +
-      (dueZones.has(z) ? "review-due" : "");
-
-    const words = wordsInZone(z);
-    const rangeLabel = `${words[0].en} など ${words.length}ご`;
-
-    node.innerHTML = `
-      <div class="map-node-icon">${st.cleared ? "✅" : unlocked ? z : "🔒"}</div>
-      <div class="map-node-body">
-        <div class="map-node-title">ゾーン ${z}</div>
-        <div class="map-node-sub">${rangeLabel}${dueZones.has(z) ? " ・ ふくしゅう まちです!" : ""}</div>
+    const s = zoneState(z);
+    const open = isUnlocked(z);
+    const th = zoneTheme(z);
+    const ws = wordsInZone(z);
+    const el = document.createElement("div");
+    el.className = "map-node" + (open ? "" : " locked") + (due.has(z) ? " due" : "");
+    el.innerHTML = `
+      <div class="map-block" style="background:${th.color}">${open ? (s.cleared ? "✅" : th.icon) : "🔒"}</div>
+      <div class="map-body">
+        <div class="map-name">ワールド ${z}・${th.name}</div>
+        <div class="map-sub">No.${ws[0].no}〜${ws[ws.length - 1].no} ・ ${ws[0].en} など${due.has(z) ? " ・🔁 ふくしゅう!" : ""}</div>
       </div>
-      <div class="map-node-badge">${st.medal ? medalEmoji(st.medal) : ""}</div>
+      <div class="map-medal">${s.medal ? MEDALS[s.medal] : ""}</div>
     `;
-
-    if (unlocked) {
-      node.addEventListener("click", () => {
-        PROGRESS.currentZone = z;
-        saveProgress();
+    if (open) {
+      el.addEventListener("click", () => {
+        sfxClick();
+        P.lastZone = z;
+        save();
         startLearn(z);
       });
     }
-    wrap.appendChild(node);
+    wrap.appendChild(el);
   }
 }
 
-/* ---------- おぼえる がめん(フラッシュカード) ---------- */
-let learnState = { zone: 1, words: [], index: 0, revealed: false };
+/* ---------- おぼえる(カード) ---------- */
+let L = { zone: 1, words: [], i: 0, flipped: false };
 
-function startLearn(zoneId) {
-  learnState = { zone: zoneId, words: wordsInZone(zoneId), index: 0, revealed: false };
-  document.getElementById("learnZoneTitle").textContent = `ゾーン ${zoneId}`;
-  renderFlashcard();
-  showScreen("learn");
+function startLearn(z) {
+  L = { zone: z, words: wordsInZone(z), i: 0, flipped: false };
+  const th = zoneTheme(z);
+  document.getElementById("learnZoneTag").textContent = `ワールド ${z}・${th.name}`;
+  show("learn");
+  renderCard();
 }
 
-function renderFlashcard() {
-  const w = learnState.words[learnState.index];
-  document.getElementById("cardEmoji").textContent = w.emoji;
+function visHTML(vis) {
+  if (!vis) return "";
+  const cells = vis.icons
+    .map((ic, i) => `<div class="vis-cell${vis.hi && vis.hi.includes(i) ? " hi" : ""}">${ic}</div>`)
+    .join("");
+  return `<div class="vis-row">${cells}</div><div class="vis-label">${vis.label}</div>`;
+}
+
+function renderCard() {
+  const w = L.words[L.i];
+  L.flipped = false;
+
+  document.getElementById("cardNo").textContent = `No.${w.no}`;
   document.getElementById("cardEn").textContent = w.en;
+  document.getElementById("cardSlotQ").textContent = "❓";
+  document.getElementById("cardEnBack").textContent = w.en;
+  document.getElementById("cardEmoji").textContent = w.emoji;
   document.getElementById("cardJa").textContent = w.ja;
   document.getElementById("cardEx").innerHTML = `${w.ex}<br>${w.exJa}`;
-  document.getElementById("learnCardPos").textContent = `${learnState.index + 1} / ${learnState.words.length}`;
 
-  learnState.revealed = false;
-  document.getElementById("cardJa").classList.add("hidden");
-  document.getElementById("cardEx").classList.add("hidden");
-  document.getElementById("cardHint").classList.remove("hidden");
-
-  document.getElementById("btnPrevCard").disabled = learnState.index === 0;
-  const isLast = learnState.index === learnState.words.length - 1;
-  document.getElementById("btnGoQuiz").classList.toggle("hidden", !isLast);
-  document.getElementById("btnNextCard").textContent = isLast ? "さいしょから" : "つぎ →";
-
-  speak(w.en);
-}
-
-document.getElementById("flashcard").addEventListener("click", (e) => {
-  if (e.target.closest("#btnSpeak")) return;
-  learnState.revealed = !learnState.revealed;
-  document.getElementById("cardJa").classList.toggle("hidden", !learnState.revealed);
-  document.getElementById("cardEx").classList.toggle("hidden", !learnState.revealed);
-  document.getElementById("cardHint").classList.toggle("hidden", learnState.revealed);
-});
-
-document.getElementById("btnSpeak").addEventListener("click", () => {
-  speak(learnState.words[learnState.index].en);
-});
-
-document.getElementById("btnPrevCard").addEventListener("click", () => {
-  if (learnState.index > 0) {
-    learnState.index -= 1;
-    renderFlashcard();
-  }
-});
-
-document.getElementById("btnNextCard").addEventListener("click", () => {
-  if (learnState.index < learnState.words.length - 1) {
-    learnState.index += 1;
-    renderFlashcard();
+  const vis = document.getElementById("cardVis");
+  if (w.vis) {
+    vis.innerHTML = visHTML(w.vis);
+    vis.classList.remove("hidden");
   } else {
-    learnState.index = 0;
-    renderFlashcard();
+    vis.classList.add("hidden");
   }
-});
 
-document.getElementById("btnGoQuiz").addEventListener("click", () => {
-  startQuiz(learnState.zone, "learn");
-});
+  document.getElementById("cardFront").classList.remove("hidden");
+  document.getElementById("cardBack").classList.add("hidden");
+  document.getElementById("learnPos").textContent = `${L.i + 1} / ${L.words.length}`;
 
-/* ---------- クイズ がめん ---------- */
-let quizState = null;
+  const last = L.i === L.words.length - 1;
+  document.getElementById("btnGoQuiz").classList.toggle("hidden", !last);
+  document.getElementById("btnNext").textContent = last ? "さいしょへ" : "つぎ ▶";
 
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  speak(w.en);   // えいごを 出したら すぐ ネイティブはつおん
 }
 
-function buildChoices(correctWord) {
-  const pool = WORD_LIST.filter((w) => w.id !== correctWord.id && w.ja !== correctWord.ja);
-  const wrongs = shuffle(pool).slice(0, 3);
-  return shuffle([correctWord, ...wrongs]);
+function flipCard() {
+  const w = L.words[L.i];
+  L.flipped = !L.flipped;
+  document.getElementById("cardFront").classList.toggle("hidden", L.flipped);
+  document.getElementById("cardBack").classList.toggle("hidden", !L.flipped);
+  if (L.flipped) { sfxClick(); speak(w.en); }
 }
 
-function startQuiz(zoneId, mode) {
-  const words = shuffle(wordsInZone(zoneId));
-  quizState = {
-    zone: zoneId,
-    mode, // "learn" | "review"
-    words,
-    index: 0,
+document.getElementById("card").addEventListener("click", (e) => {
+  if (e.target.closest(".sound-btn")) return;
+  flipCard();
+});
+document.getElementById("btnSpeak").addEventListener("click", () => speak(L.words[L.i].en));
+document.getElementById("btnSpeak2").addEventListener("click", () => speak(L.words[L.i].en));
+document.getElementById("btnPrev").addEventListener("click", () => {
+  if (L.i > 0) { L.i--; sfxClick(); renderCard(); }
+});
+document.getElementById("btnNext").addEventListener("click", () => {
+  L.i = L.i < L.words.length - 1 ? L.i + 1 : 0;
+  sfxClick();
+  renderCard();
+});
+document.getElementById("btnGoQuiz").addEventListener("click", () => startQuiz(L.zone, "learn"));
+
+/* ---------- クイズ ---------- */
+let Q = null;
+
+function shuffle(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
+}
+
+function startQuiz(z, mode) {
+  Q = {
+    zone: z,
+    mode,
+    words: shuffle(wordsInZone(z)),
+    i: 0,
     correct: 0,
+    hearts: HEARTS_MAX,
+    combo: 0,
+    maxCombo: 0,
+    wrong: [],
     locked: false,
   };
-  document.getElementById("quizTotal").textContent = words.length;
-  renderQuizQuestion();
-  showScreen("quiz");
+  document.getElementById("quizTotal").textContent = Q.words.length;
+  show("quiz");
+  renderQuiz();
 }
 
-function renderQuizQuestion() {
-  const q = quizState;
-  const w = q.words[q.index];
-  document.getElementById("quizPos").textContent = q.index + 1;
-  document.getElementById("quizProgressBar").style.width = `${((q.index) / q.words.length) * 100}%`;
-  document.getElementById("quizEmoji").textContent = w.emoji;
-  document.getElementById("quizEn").textContent = w.en;
-  document.getElementById("quizFeedback").classList.add("hidden");
-  q.locked = false;
+function renderHearts() {
+  const wrap = document.getElementById("hearts");
+  wrap.innerHTML = "";
+  for (let i = 0; i < HEARTS_MAX; i++) {
+    const s = document.createElement("span");
+    s.className = "heart" + (i < Q.hearts ? "" : " lost");
+    s.textContent = "❤️";
+    wrap.appendChild(s);
+  }
+}
 
-  const choices = buildChoices(w);
-  const wrap = document.getElementById("quizChoices");
+function renderQuiz() {
+  const w = Q.words[Q.i];
+  Q.locked = false;
+
+  renderHearts();
+  document.getElementById("quizPos").textContent = Q.i + 1;
+  document.getElementById("quizBar").style.width = (Q.i / Q.words.length) * 100 + "%";
+  document.getElementById("quizSlot").textContent = "❓";
+  document.getElementById("quizEn").textContent = w.en;
+  document.getElementById("feedback").classList.add("hidden");
+
+  const cb = document.getElementById("combo");
+  cb.classList.toggle("hidden", Q.combo < 2);
+  document.getElementById("comboNum").textContent = Q.combo;
+
+  // まちがい せんたくしは おなじ ワールド + ちかい たんごから
+  const pool = WORD_LIST.filter((x) => x.id !== w.id && x.ja !== w.ja);
+  const near = pool.filter((x) => Math.abs(x.zone - w.zone) <= 2);
+  const wrongs = shuffle(near.length >= 3 ? near : pool).slice(0, 3);
+  const choices = shuffle([w, ...wrongs]);
+
+  const wrap = document.getElementById("choices");
   wrap.innerHTML = "";
   choices.forEach((c) => {
-    const btn = document.createElement("button");
-    btn.className = "choice-btn";
-    btn.textContent = c.ja;
-    btn.addEventListener("click", () => onChoiceClick(btn, c, w));
-    wrap.appendChild(btn);
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.textContent = c.ja;
+    b.addEventListener("click", (ev) => answer(b, c, w, ev));
+    wrap.appendChild(b);
   });
 
   speak(w.en);
 }
 
-document.getElementById("btnQuizSpeak").addEventListener("click", () => {
-  if (quizState) speak(quizState.words[quizState.index].en);
-});
+document.getElementById("btnQuizSpeak").addEventListener("click", () => Q && speak(Q.words[Q.i].en));
 
-function onChoiceClick(btn, chosen, correctWord) {
-  if (quizState.locked) return;
-  quizState.locked = true;
-  const isCorrect = chosen.id === correctWord.id;
-  const allBtns = document.querySelectorAll(".choice-btn");
-  allBtns.forEach((b) => {
-    if (b.textContent === correctWord.ja) b.classList.add("correct");
+function answer(btn, chosen, correct, ev) {
+  if (Q.locked) return;
+  Q.locked = true;
+  const ok = chosen.id === correct.id;
+
+  document.querySelectorAll(".choice").forEach((b) => {
+    if (b.textContent === correct.ja) b.classList.add("ok");
     else b.classList.add("dim");
   });
-  if (!isCorrect) btn.classList.add("wrong");
+  if (!ok) btn.classList.add("ng");
 
-  const fb = document.getElementById("quizFeedback");
+  document.getElementById("quizSlot").textContent = correct.emoji;
+
+  const fb = document.getElementById("feedback");
   fb.classList.remove("hidden", "ok", "ng");
-  if (isCorrect) {
-    quizState.correct += 1;
-    fb.textContent = "🎉 せいかい!";
+
+  if (ok) {
+    Q.correct++;
+    Q.combo++;
+    Q.maxCombo = Math.max(Q.maxCombo, Q.combo);
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    const r = btn.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
+    orbs(Q.combo >= 3 ? 6 : 3, "🟢");
     fb.classList.add("ok");
+    fb.innerHTML = `⛏️ ブロック ゲット!${Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : ""}`;
+    if (Q.combo === 5) advancement("5れんぞく せいかい!", "🔥", "コンボ たっせい!");
   } else {
-    fb.textContent = `❌ ざんねん! こたえは「${correctWord.ja}」`;
+    Q.combo = 0;
+    Q.hearts--;
+    Q.wrong.push(correct);
+    renderHearts();
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
     fb.classList.add("ng");
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${correct.emoji} ${correct.en} = ${correct.ja}</span>`;
+    speak(correct.en);
   }
 
   setTimeout(() => {
-    quizState.index += 1;
-    if (quizState.index >= quizState.words.length) {
-      document.getElementById("quizProgressBar").style.width = `100%`;
-      finishQuiz();
+    if (Q.hearts <= 0) { finish(false); return; }
+    Q.i++;
+    if (Q.i >= Q.words.length) {
+      document.getElementById("quizBar").style.width = "100%";
+      finish(true);
     } else {
-      renderQuizQuestion();
+      renderQuiz();
     }
-  }, 1100);
+  }, ok ? 900 : 1900);
 }
 
-/* ---------- けっか がめん ---------- */
-function finishQuiz() {
+/* ---------- けっか ---------- */
+function finish(finished) {
   bumpStreak();
-  const q = quizState;
-  const total = q.words.length;
-  const score = q.correct;
+  const total = Q.words.length;
+  const score = Q.correct;
+  const passed = finished && score / total >= 0.8;
+
+  const s = zoneState(Q.zone);
   const rate = score / total;
-  const passed = rate >= PASS_RATE;
+  const medal = rate === 1 ? "gold" : rate >= 0.9 ? "silver" : passed ? "bronze" : null;
 
-  const earnedStars = score;
-  PROGRESS.stars += earnedStars;
+  const loot = [];
+  let title, msg;
 
-  const zoneState = getZoneState(q.zone);
-  let newMedal = null;
-  if (rate === 1) newMedal = "gold";
-  else if (rate >= 0.9) newMedal = "silver";
-  else if (passed) newMedal = "bronze";
+  if (passed) {
+    if (medal && medalRank(medal) > medalRank(s.medal)) s.medal = medal;
+    s.best = Math.max(s.best, score);
+    s.nextReview = Date.now() + REVIEW_DAYS * 86400000;
 
-  let title, detail, chestGained = false;
+    const first = !s.cleared;
+    s.cleared = true;
+    P.chests++;
+    loot.push({ ic: "🧰", t: "チェスト ×1" });
+    loot.push({ ic: "🟩", t: `ブロック ×${score}` });
+    if (medal) loot.push({ ic: MEDALS[medal], t: "メダル" });
 
-  if (q.mode === "learn") {
-    zoneState.bestScore = Math.max(zoneState.bestScore, score);
-    if (passed) {
-      const firstClear = !zoneState.cleared;
-      zoneState.cleared = true;
-      zoneState.clearedAt = Date.now();
-      zoneState.nextReviewAt = Date.now() + REVIEW_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
-      if (!zoneState.medal || medalRank(newMedal) > medalRank(zoneState.medal)) zoneState.medal = newMedal;
-
-      if (firstClear) {
-        PROGRESS.chests += 1;
-        chestGained = true;
-        PROGRESS.currentZone = Math.max(PROGRESS.currentZone, q.zone + 1);
-        title = `🎉 ゾーン${q.zone} クリア! レベルアップ!`;
-        detail = `たからばこを ゲット! 1しゅうかんごに ふくしゅうテストが あります。`;
-      } else {
-        title = `もういちど クリア!`;
-        detail = `きろく こうしん できたかな?`;
-      }
+    if (first) {
+      P.lastZone = Math.min(TOTAL_ZONES, Q.zone + 1);
+      const th = zoneTheme(Q.zone);
+      title = `⛏️ ワールド${Q.zone} クリア!`;
+      msg = `${th.name}を せいはした!\n1しゅうかんごに ふくしゅうが 出るよ。`;
+      advancement(`${th.name} を クリア!`, th.icon);
     } else {
-      title = "おしい! もういちど ちょうせんしよう";
-      detail = `80%(10もんちゅう8もん)いじょう せいかいで クリアだよ。`;
+      title = Q.mode === "review" ? "🔁 ふくしゅう せいこう!" : "⛏️ また クリア!";
+      msg = "また 1しゅうかんごに ふくしゅうが 出るよ。";
     }
+    save();
+    addXP(score * 2);
+    sfxChest();
+    orbs(10, "💎");
   } else {
-    // review mode
-    if (passed) {
-      zoneState.nextReviewAt = Date.now() + REVIEW_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
-      zoneState.reviewCount = (zoneState.reviewCount || 0) + 1;
-      PROGRESS.chests += 1;
-      chestGained = true;
-      if (!zoneState.medal || medalRank(newMedal) > medalRank(zoneState.medal)) zoneState.medal = newMedal;
-      title = `✅ ふくしゅう せいこう!`;
-      detail = `また 1しゅうかんご に ふくしゅうテストが あります。たからばこ ゲット!`;
-    } else {
-      title = "もういちど ふくしゅうしよう";
-      detail = `わすれちゃった たんごを おぼえなおそう。`;
-    }
+    title = Q.hearts <= 0 ? "💔 ハートが なくなった!" : "もうすこし!";
+    msg = `${HEARTS_MAX}かいまで まちがえて OK。\nまちがえた たんごを みてから もういちど!`;
+    loot.push({ ic: "🟩", t: `ブロック ×${score}` });
+    save();
+    addXP(score);
   }
 
-  saveProgress();
-  updateHeader();
-
-  document.getElementById("resultEmoji").textContent = passed ? (rate === 1 ? "🏆" : "🎉") : "💪";
+  document.getElementById("resultChest").textContent = passed ? "🧰" : "💔";
   document.getElementById("resultTitle").textContent = title;
   document.getElementById("resultScore").textContent = score;
-  document.getElementById("resultTotalQ").textContent = total;
-  document.getElementById("resultDetail").textContent = detail;
-  document.getElementById("chestAnim").textContent = chestGained ? "🎁" : passed ? (newMedal ? medalEmoji(newMedal) : "⭐") : "📚";
+  document.getElementById("resultTotal").textContent = total;
+  document.getElementById("resultMsg").innerText = msg;
 
-  const continueBtn = document.getElementById("btnResultContinue");
-  continueBtn.classList.toggle("hidden", !passed);
-  continueBtn.textContent = q.mode === "review" ? "ふくしゅう いちらんへ" : "つぎの ゾーンへ";
-  document.getElementById("btnResultRetry").classList.toggle("hidden", passed);
+  const lootEl = document.getElementById("loot");
+  lootEl.innerHTML = loot
+    .map((l) => `<div class="loot-item"><span>${l.ic}</span><span>${l.t}</span></div>`)
+    .join("");
 
-  if (passed) confettiBurst();
-  showScreen("result");
+  document.getElementById("btnNextZone").classList.toggle("hidden", !passed);
+  document.getElementById("btnRetry").classList.toggle("hidden", passed);
+  document.getElementById("btnReviewWrong").classList.toggle("hidden", Q.wrong.length === 0);
+
+  show("result");
+  updateHUD();
 }
 
-function medalRank(m) {
-  return { bronze: 1, silver: 2, gold: 3 }[m] || 0;
+document.getElementById("btnNextZone").addEventListener("click", () => {
+  sfxClick();
+  if (Q.mode === "review") { show("review"); return; }
+  const nz = Q.zone + 1;
+  if (nz > TOTAL_ZONES) { show("home"); return; }
+  P.lastZone = nz;
+  save();
+  startLearn(nz);
+});
+document.getElementById("btnRetry").addEventListener("click", () => {
+  sfxClick();
+  startLearn(Q.zone);
+});
+document.getElementById("btnResultHome").addEventListener("click", () => { sfxClick(); show("home"); });
+document.getElementById("btnReviewWrong").addEventListener("click", () => { sfxClick(); renderWrong(); });
+document.getElementById("btnWrongBack").addEventListener("click", () => show("result"));
+
+/* ---------- まちがえた たんご ---------- */
+function renderWrong() {
+  const wrap = document.getElementById("wrongList");
+  wrap.innerHTML = "";
+  const seen = new Set();
+  Q.wrong.forEach((w) => {
+    if (seen.has(w.id)) return;
+    seen.add(w.id);
+    const el = document.createElement("div");
+    el.className = "wrong-item";
+    el.innerHTML = `
+      <div class="wrong-ic">${w.emoji}</div>
+      <div style="flex:1">
+        <div class="wrong-en">${w.en}</div>
+        <div class="wrong-ja">${w.ja}</div>
+      </div>
+      <button class="sound-btn">🔊</button>
+    `;
+    el.querySelector("button").addEventListener("click", () => speak(w.en));
+    wrap.appendChild(el);
+  });
+  show("wrong");
 }
 
-document.getElementById("btnResultContinue").addEventListener("click", () => {
-  if (quizState.mode === "review") {
-    showScreen("review");
-  } else {
-    showScreen("map");
-  }
-});
-document.getElementById("btnResultRetry").addEventListener("click", () => {
-  if (quizState.mode === "review") {
-    startQuiz(quizState.zone, "review");
-  } else {
-    startLearn(quizState.zone);
-  }
-});
-document.getElementById("btnResultHome").addEventListener("click", () => showScreen("home"));
-
-/* ---------- ふくしゅう がめん ---------- */
+/* ---------- ふくしゅう ---------- */
 function renderReview() {
-  const dueZones = getDueReviewZones();
+  const due = dueZones();
   const wrap = document.getElementById("reviewList");
   wrap.innerHTML = "";
-  if (dueZones.length === 0) {
-    wrap.innerHTML = `<div class="empty-msg">いま ふくしゅうする ゾーンは ないよ。<br>たんごを どんどん おぼえよう!📖</div>`;
+  if (!due.length) {
+    wrap.innerHTML = `<div class="panel" style="text-align:center;color:var(--text-dim);font-size:13px;line-height:1.9">
+      いま ふくしゅうする ワールドは ないよ。<br>あたらしい たんごを ほりに いこう!⛏️</div>`;
     return;
   }
-  dueZones.forEach((z) => {
-    const words = wordsInZone(z);
-    const item = document.createElement("div");
-    item.className = "review-item";
-    item.innerHTML = `
-      <div class="review-item-icon">🔁</div>
-      <div class="review-item-body">
-        <div class="review-item-title">ゾーン ${z}</div>
-        <div class="review-item-sub">${words[0].en} など ${words.length}ご</div>
+  due.forEach((z) => {
+    const th = zoneTheme(z);
+    const ws = wordsInZone(z);
+    const el = document.createElement("div");
+    el.className = "map-node due";
+    el.innerHTML = `
+      <div class="map-block" style="background:${th.color}">🔁</div>
+      <div class="map-body">
+        <div class="map-name">ワールド ${z}・${th.name}</div>
+        <div class="map-sub">No.${ws[0].no}〜${ws[ws.length - 1].no}</div>
       </div>
-      <button class="review-item-btn">テストする</button>
+      <div class="map-medal">▶</div>
     `;
-    item.querySelector(".review-item-btn").addEventListener("click", () => startQuiz(z, "review"));
-    wrap.appendChild(item);
+    el.addEventListener("click", () => { sfxClick(); startQuiz(z, "review"); });
+    wrap.appendChild(el);
   });
 }
 
-/* ---------- きろく がめん ---------- */
-function renderRanking() {
-  document.getElementById("rankStars").textContent = PROGRESS.stars;
-  document.getElementById("rankChests").textContent = PROGRESS.chests;
-  const clearedCount = Object.values(PROGRESS.zones).filter((z) => z.cleared).length;
-  document.getElementById("rankWords").textContent = clearedCount * 10;
-  document.getElementById("rankStreak").textContent = PROGRESS.streak.count;
+/* ---------- せいせき ---------- */
+function renderStats() {
+  document.getElementById("sBlocks").textContent = P.blocks;
+  document.getElementById("sChests").textContent = P.chests;
+  document.getElementById("sWords").textContent = clearedCount() * 10;
+  document.getElementById("sStreak").textContent = P.streak.n;
 
-  const grid = document.getElementById("badgeGrid");
-  grid.innerHTML = "";
+  const inv = document.getElementById("inventory");
+  inv.innerHTML = "";
   for (let z = 1; z <= TOTAL_ZONES; z++) {
-    const st = getZoneState(z);
+    const s = zoneState(z);
+    const th = zoneTheme(z);
     const el = document.createElement("div");
-    el.className = "badge-item" + (st.medal ? "" : " locked");
-    el.textContent = st.medal ? medalEmoji(st.medal) : "🔒";
-    el.title = `ゾーン ${z}`;
-    grid.appendChild(el);
+    el.className = "inv-slot" + (s.cleared ? "" : " empty");
+    el.textContent = s.cleared ? th.icon : "🔒";
+    el.title = `ワールド ${z}・${th.name}`;
+    inv.appendChild(el);
   }
 }
 
-/* ---------- ナビゲーション ---------- */
-document.getElementById("btnHome").addEventListener("click", () => showScreen("home"));
-document.getElementById("btnStartLearn").addEventListener("click", () => {
-  const clearedCount = Object.values(PROGRESS.zones).filter((z) => z.cleared).length;
-  const zoneId = clearedCount >= TOTAL_ZONES ? TOTAL_ZONES : Math.min(PROGRESS.currentZone, TOTAL_ZONES);
-  startLearn(zoneId);
+/* ---------- ナビ ---------- */
+document.getElementById("btnHome").addEventListener("click", () => show("home"));
+document.getElementById("btnContinue").addEventListener("click", () => {
+  sfxClick();
+  startLearn(Math.min(P.lastZone, TOTAL_ZONES));
 });
-document.getElementById("btnMap").addEventListener("click", () => showScreen("map"));
-document.getElementById("btnReview").addEventListener("click", () => showScreen("review"));
-document.getElementById("btnRanking").addEventListener("click", () => showScreen("ranking"));
+document.getElementById("btnChapters").addEventListener("click", () => { sfxClick(); show("chapters"); });
+document.getElementById("btnMap").addEventListener("click", () => { sfxClick(); show("map"); });
+document.getElementById("btnReview").addEventListener("click", () => { sfxClick(); show("review"); });
+document.getElementById("btnStats").addEventListener("click", () => { sfxClick(); show("stats"); });
+document.querySelectorAll("[data-back]").forEach((b) =>
+  b.addEventListener("click", () => show(b.dataset.back))
+);
 
-document.querySelectorAll("[data-back]").forEach((btn) => {
-  btn.addEventListener("click", () => showScreen(btn.dataset.back));
-});
-
-/* ---------- しょきひょうじ ---------- */
-showScreen("home");
+/* ---------- スタート ---------- */
+show("home");
