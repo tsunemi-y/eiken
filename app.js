@@ -246,6 +246,13 @@ function renderRanges() {
 
 /* ---------- Ⓐ たんごいちらん(カウントの かくにん) ---------- */
 let currentWordlistRange = 1;
+function promoteToBox(id) {
+  delete P.mastery[id];
+  P.box[id] = new Date().getDay();
+  save();
+  updateHUD();
+}
+
 function renderWordlist(rangeId) {
   currentWordlistRange = rangeId;
   const r = RANGES[rangeId - 1];
@@ -253,6 +260,7 @@ function renderWordlist(rangeId) {
 
   const wrap = document.getElementById("wordList");
   wrap.innerHTML = "";
+  let anyUnboxed = false;
   wordsInRange(rangeId).forEach((w) => {
     const boxed = P.box[w.id] !== undefined;
     const n = P.mastery[w.id] || 0;
@@ -263,9 +271,10 @@ function renderWordlist(rangeId) {
       const info = WEEKDAYS.find((d) => d.day === P.box[w.id]);
       statusHTML = `<span class="word-boxed-tag">${info.icon} ${info.label}よう Ⓑ</span>`;
     } else {
+      anyUnboxed = true;
       let dots = "";
       for (let i = 0; i < MASTER_COUNT; i++) dots += `<span class="dot small${i < n ? " on" : ""}"></span>`;
-      statusHTML = `<span class="word-dots">${dots}</span>`;
+      statusHTML = `<span class="word-dots">${dots}</span><button class="skip-btn" data-id="${w.id}">✅ しってる</button>`;
     }
     el.innerHTML = `
       <div class="word-ic">${w.emoji}</div>
@@ -278,9 +287,27 @@ function renderWordlist(rangeId) {
     wrap.appendChild(el);
   });
 
+  wrap.querySelectorAll(".skip-btn").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sfxGraduate();
+      promoteToBox(Number(b.dataset.id));
+      renderWordlist(rangeId);
+    });
+  });
+
+  document.getElementById("btnWordlistSkipAll").classList.toggle("hidden", !anyUnboxed);
   show("wordlist");
 }
 document.getElementById("btnWordlistBack").addEventListener("click", () => show("ranges"));
+document.getElementById("btnWordlistSkipAll").addEventListener("click", () => {
+  const ids = wordsStillLearning(wordsInRange(currentWordlistRange).map((w) => w.id));
+  if (ids.length === 0) return;
+  if (!confirm(`この${ids.length}ごを ぜんぶ「しってる」として Ⓑへ うつしますか?`)) return;
+  ids.forEach((id) => promoteToBox(id));
+  sfxGraduate();
+  renderWordlist(currentWordlistRange);
+});
 document.getElementById("btnWordlistStart").addEventListener("click", () => {
   sfxClick();
   P.lastRange = currentWordlistRange;
