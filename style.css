@@ -263,6 +263,13 @@ button {
 
 /* ---------- Ⓐ はんいカード ---------- */
 .range-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.range-divider {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 8px 0 2px;
+}
 .range-card {
   background: var(--panel);
   padding: 12px;

@@ -242,7 +242,16 @@ function renderRankBadge(prefix, count) {
 function renderRanges() {
   const wrap = document.getElementById("rangeGrid");
   wrap.innerHTML = "";
-  RANGES.forEach((r) => {
+  const sorted = RANGES.slice().sort((a, b) => (a.bonus === b.bonus ? a.id - b.id : a.bonus ? 1 : -1));
+  let dividerShown = false;
+  sorted.forEach((r) => {
+    if (r.bonus && !dividerShown) {
+      dividerShown = true;
+      const div = document.createElement("div");
+      div.className = "range-divider";
+      div.textContent = "── ここから ➕ボーナス(よゆうが あれば) ──";
+      wrap.appendChild(div);
+    }
     const ws = wordsInRange(r.id);
     const done = ws.filter((w) => P.box[w.id] !== undefined).length;
     const pct = (done / ws.length) * 100;
