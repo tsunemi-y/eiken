@@ -681,3 +681,34 @@ const WEEKDAYS = [
   { day: 6, label: "ど",   icon: "🪨" },
   { day: 0, label: "にち", icon: "☀️" },
 ];
+
+/* =========================================================
+   ランク(マイクラの ブロックが すすんでいく)
+   300ごを 15だんかいに わけて、ほった かずで ランクが あがる。
+   ========================================================= */
+const TIERS = [
+  { name: "くさはら",       icon: "🟩", color: "#5EA827" },
+  { name: "もりのなか",     icon: "🌳", color: "#3E7A19" },
+  { name: "すなはま",       icon: "🟨", color: "#D9C38A" },
+  { name: "いしのどうくつ", icon: "⬜", color: "#9A9A9A" },
+  { name: "せきたんこう",   icon: "⬛", color: "#4A4A4A" },
+  { name: "どうこうせき",   icon: "🟧", color: "#C87137" },
+  { name: "てつこうせき",   icon: "🤍", color: "#D8AF93" },
+  { name: "きんこうせき",   icon: "🟨", color: "#FCEE4B" },
+  { name: "レッドストーン", icon: "🟥", color: "#E03434" },
+  { name: "ラピスラズリ",   icon: "🟦", color: "#2D5FCE" },
+  { name: "エメラルド",     icon: "💚", color: "#17DD62" },
+  { name: "ダイヤモンド",   icon: "💎", color: "#4AEDD9" },
+  { name: "ネザー",         icon: "🔥", color: "#B02E26" },
+  { name: "エンド",         icon: "🟪", color: "#8C5FCF" },
+  { name: "エンダードラゴン", icon: "🐉", color: "#22162B" },
+];
+
+function tierInfo(count, total) {
+  const perTier = total / TIERS.length;
+  const idx = Math.min(TIERS.length - 1, Math.floor(count / perTier));
+  const tier = TIERS[idx];
+  const nextNeed = Math.ceil((idx + 1) * perTier);
+  const inTierPct = idx === TIERS.length - 1 ? 100 : Math.min(100, ((count - idx * perTier) / perTier) * 100);
+  return { idx, tier, nextTier: TIERS[idx + 1] || null, nextNeed, pct: inTierPct };
+}

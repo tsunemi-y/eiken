@@ -168,6 +168,21 @@ button {
 .panel-head { font-size: 14px; margin-bottom: 10px; text-shadow: 2px 2px 0 #000; }
 .panel-foot { font-size: 12px; color: var(--text-dim); text-align: right; margin-top: 8px; }
 
+/* ---------- ランク(ホーム) ---------- */
+.rank-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rank-row:last-child { margin-bottom: 0; }
+.rank-badge {
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: inset 3px 3px 0 rgba(255,255,255,.35), inset -3px -3px 0 rgba(0,0,0,.45), 0 0 0 2px #000;
+}
+.rank-body { flex: 1; min-width: 0; }
+.rank-label { font-size: 12px; margin-bottom: 5px; }
+.rank-label span { color: var(--gold); font-weight: bold; }
+.rank-foot { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
 /* カウントダウン */
 .countdown { text-align: center; background: #2A1E3D; }
 .cd-label { font-size: 12px; color: #C6A8FF; }

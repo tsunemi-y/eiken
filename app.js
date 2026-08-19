@@ -215,9 +215,23 @@ function renderHome() {
   notif.textContent = todayCount;
   notif.classList.toggle("hidden", todayCount === 0);
 
-  document.getElementById("learnedWords").textContent = boxed;
-  document.getElementById("totalWords").textContent = TOTAL;
-  document.getElementById("overallBar").style.width = (boxed / TOTAL) * 100 + "%";
+  const started = WORD_LIST.filter((w) => P.box[w.id] !== undefined || (P.mastery[w.id] || 0) > 0).length;
+  renderRankBadge("a", started);
+  renderRankBadge("b", boxed);
+}
+
+function renderRankBadge(prefix, count) {
+  const info = tierInfo(count, TOTAL);
+  document.getElementById(`${prefix}RankBadge`).textContent = info.tier.icon;
+  document.getElementById(`${prefix}RankBadge`).style.background = info.tier.color;
+  document.getElementById(`${prefix}RankName`).textContent = info.tier.name;
+  document.getElementById(`${prefix}RankBar`).style.width = info.pct + "%";
+  const foot = document.getElementById(`${prefix}RankFoot`);
+  if (info.nextTier) {
+    foot.textContent = `${count} / ${TOTAL}ご ・ あと${info.nextNeed - count}ごで ${info.nextTier.icon}${info.nextTier.name}!`;
+  } else {
+    foot.textContent = `${count} / ${TOTAL}ご ・ さいこう ランク!`;
+  }
 }
 
 /* ---------- Ⓐ はんいえらび ---------- */

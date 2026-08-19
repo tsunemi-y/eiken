@@ -54,10 +54,26 @@
 
     <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
 
-    <div class="panel">
-      <div class="panel-head">🌍 ぜんたいの すすみ</div>
-      <div class="mc-bar"><div class="mc-bar-fill" id="overallBar"></div></div>
-      <div class="panel-foot"><span id="learnedWords">0</span> / <span id="totalWords">0</span> ご ボックスへ</div>
+    <div class="panel rank-panel">
+      <div class="panel-head">⛏️ ほった ランク</div>
+
+      <div class="rank-row">
+        <div class="rank-badge" id="aRankBadge">🟩</div>
+        <div class="rank-body">
+          <div class="rank-label">Ⓐ れんしゅう ランク <span id="aRankName">くさはら</span></div>
+          <div class="mc-bar thin"><div class="mc-bar-fill" id="aRankBar"></div></div>
+          <div class="rank-foot" id="aRankFoot">0 / 300 ご てをつけた</div>
+        </div>
+      </div>
+
+      <div class="rank-row">
+        <div class="rank-badge" id="bRankBadge">🟩</div>
+        <div class="rank-body">
+          <div class="rank-label">Ⓑ マスター ランク <span id="bRankName">くさはら</span></div>
+          <div class="mc-bar thin"><div class="mc-bar-fill" id="bRankBar"></div></div>
+          <div class="rank-foot" id="bRankFoot">0 / 300 ご ボックスへ</div>
+        </div>
+      </div>
     </div>
   </section>
 
