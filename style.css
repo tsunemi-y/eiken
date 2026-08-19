@@ -269,6 +269,18 @@ button {
   box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
 }
 .range-card.done { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--emerald); }
+.range-card.bonus { opacity: .82; }
+.range-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 6px;
+  margin-bottom: 5px;
+  background: var(--gold);
+  color: #4A3B00;
+  box-shadow: 0 0 0 1px #000;
+}
+.range-card.bonus .range-tag { background: #6E6E6E; color: #FFF; }
 .range-title { font-size: 14px; }
 .range-sub { font-size: 10px; color: var(--text-dim); margin: 4px 0 8px; word-break: break-all; }
 .range-card .mc-bar { height: 10px; }

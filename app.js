@@ -196,15 +196,19 @@ function renderHome() {
   document.getElementById("daysLeft").textContent = days;
 
   const boxed = boxedCount();
-  const remain = TOTAL - boxed;
+  const coreBoxed = WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && P.box[w.id] !== undefined).length;
+  const coreRemain = CORE_WORD_IDS.size - coreBoxed;
+  const bonusRemain = TOTAL - CORE_WORD_IDS.size - (boxed - coreBoxed);
   const pace = document.getElementById("paceMessage");
-  if (remain <= 0) {
-    pace.textContent = "🎉 ぜんぶ ボックスに はいったよ!すごい!";
+  if (coreRemain <= 0) {
+    pace.textContent = bonusRemain <= 0
+      ? "🎉 ぜんぶ ボックスに はいったよ!かんぺき!"
+      : `🎯 ごうかくラインは クリア!のこり ➕ボーナス ${bonusRemain}ご、よゆうが あれば どうぞ。`;
   } else if (days <= 0) {
     pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
   } else {
-    const perWeek = Math.max(1, Math.ceil(remain / Math.max(1, Math.ceil(days / 7))));
-    pace.textContent = `のこり ${remain}ご。1しゅうに ${perWeek}ごで まにあうよ!`;
+    const perWeek = Math.max(1, Math.ceil(coreRemain / Math.max(1, Math.ceil(days / 7))));
+    pace.textContent = `🎯ごうかくラインまで のこり ${coreRemain}ご。1しゅうに ${perWeek}ごで まにあうよ!`;
   }
 
   const wd = new Date().getDay();
@@ -243,8 +247,9 @@ function renderRanges() {
     const done = ws.filter((w) => P.box[w.id] !== undefined).length;
     const pct = (done / ws.length) * 100;
     const el = document.createElement("div");
-    el.className = "range-card" + (done === ws.length ? " done" : "");
+    el.className = "range-card" + (done === ws.length ? " done" : "") + (r.bonus ? " bonus" : "");
     el.innerHTML = `
+      <div class="range-tag">${r.bonus ? "➕ ボーナス" : "🎯 ごうかく"}</div>
       <div class="range-title">${r.title}</div>
       <div class="range-sub">${ws[0].en} 〜 ${ws[ws.length - 1].en}</div>
       <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>

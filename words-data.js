@@ -1056,16 +1056,27 @@ WORD_LIST.forEach((w, i) => {
    A: れんしゅう はんい(パス単プリントの じゅんばんに あわせて
    15ごずつに くぎる。ぜんぶで 10はんい)
    ========================================================= */
+/* ごうかくライン(必須)/ ボーナス(よゆうが あれば)の わけかた。
+   パス単は「でるじゅん」だけど、代名詞・疑問詞・数字のような
+   ぶんぽうの きほんが うしろの ほうに かたまっているので、
+   316〜495ばん(かぐ・たてもの・しょくぎょう・とくていの
+   食べ物・天気の けいようし など)を ボーナスあつかいにする。 */
+const BONUS_RANGE_IDS = new Set([22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]);
+
 const RANGES = [];
 for (let r = 0; r * 15 < WORD_LIST.length; r++) {
   const from = r * 15 + 1;
   const to = Math.min((r + 1) * 15, WORD_LIST.length);
-  RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
+  const id = r + 1;
+  RANGES.push({ id, from, to, title: `${from}〜${to}ばん`, bonus: BONUS_RANGE_IDS.has(id) });
 }
 function wordsInRange(rangeId) {
   const r = RANGES[rangeId - 1];
   return WORD_LIST.filter((w) => w.no >= r.from && w.no <= r.to);
 }
+const CORE_WORD_IDS = new Set(
+  RANGES.filter((r) => !r.bonus).flatMap((r) => wordsInRange(r.id).map((w) => w.id))
+);
 
 /* =========================================================
    B: ようびボックス(げつ〜にち の 7こ)
