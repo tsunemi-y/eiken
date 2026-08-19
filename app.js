@@ -151,7 +151,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "boxes", "learn", "quiz", "result", "stats", "wrong"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -238,13 +238,55 @@ function renderRanges() {
     `;
     el.addEventListener("click", () => {
       sfxClick();
-      P.lastRange = r.id;
-      save();
-      startLearn(r.id);
+      renderWordlist(r.id);
     });
     wrap.appendChild(el);
   });
 }
+
+/* ---------- Ⓐ たんごいちらん(カウントの かくにん) ---------- */
+let currentWordlistRange = 1;
+function renderWordlist(rangeId) {
+  currentWordlistRange = rangeId;
+  const r = RANGES[rangeId - 1];
+  document.getElementById("wordlistTitle").textContent = `📋 ${r.title}`;
+
+  const wrap = document.getElementById("wordList");
+  wrap.innerHTML = "";
+  wordsInRange(rangeId).forEach((w) => {
+    const boxed = P.box[w.id] !== undefined;
+    const n = P.mastery[w.id] || 0;
+    const el = document.createElement("div");
+    el.className = "word-row" + (boxed ? " boxed" : "");
+    let statusHTML;
+    if (boxed) {
+      const info = WEEKDAYS.find((d) => d.day === P.box[w.id]);
+      statusHTML = `<span class="word-boxed-tag">${info.icon} ${info.label}よう Ⓑ</span>`;
+    } else {
+      let dots = "";
+      for (let i = 0; i < MASTER_COUNT; i++) dots += `<span class="dot small${i < n ? " on" : ""}"></span>`;
+      statusHTML = `<span class="word-dots">${dots}</span>`;
+    }
+    el.innerHTML = `
+      <div class="word-ic">${w.emoji}</div>
+      <div class="word-body">
+        <div class="word-en">No.${w.no} ${w.en}</div>
+        <div class="word-ja">${w.ja}</div>
+      </div>
+      ${statusHTML}
+    `;
+    wrap.appendChild(el);
+  });
+
+  show("wordlist");
+}
+document.getElementById("btnWordlistBack").addEventListener("click", () => show("ranges"));
+document.getElementById("btnWordlistStart").addEventListener("click", () => {
+  sfxClick();
+  P.lastRange = currentWordlistRange;
+  save();
+  startLearn(currentWordlistRange);
+});
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
