@@ -207,8 +207,8 @@ function renderHome() {
   } else if (days <= 0) {
     pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
   } else {
-    const perWeek = Math.max(1, Math.ceil(coreRemain / Math.max(1, Math.ceil(days / 7))));
-    pace.textContent = `🎯ごうかくラインまで のこり ${coreRemain}ご。1しゅうに ${perWeek}ごで まにあうよ!`;
+    const perDay = Math.max(1, Math.ceil(coreRemain / days));
+    pace.textContent = `🎯ごうかくラインまで のこり ${coreRemain}ご。1日に ${perDay}ごで まにあうよ!`;
   }
 
   const wd = new Date().getDay();
