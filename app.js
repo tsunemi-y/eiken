@@ -649,14 +649,18 @@ function renderStats() {
   document.getElementById("sWords").textContent = boxedCount();
   document.getElementById("sStreak").textContent = P.streak.n;
 
+  const wd = new Date().getDay();
   const inv = document.getElementById("inventory");
   inv.innerHTML = "";
   WEEKDAYS.forEach((info) => {
     const n = wordsInBox(info.day).length;
     const el = document.createElement("div");
-    el.className = "inv-slot" + (n === 0 ? " empty" : "");
-    el.textContent = n === 0 ? "・" : info.icon;
-    el.title = `${info.label}よう: ${n}ご`;
+    el.className = "inv-slot" + (n === 0 ? " empty" : "") + (info.day === wd ? " today" : "");
+    el.innerHTML = `
+      <div class="inv-ic">${n === 0 ? "・" : info.icon}</div>
+      <div class="inv-label">${info.label}よう</div>
+      <div class="inv-count">${n}ご</div>
+    `;
     inv.appendChild(el);
   });
 }

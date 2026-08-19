@@ -490,15 +490,20 @@ button {
 .stat-num { font-family: "Press Start 2P", monospace; font-size: 20px; color: var(--gold); margin: 8px 0 6px; }
 .stat-lb { font-size: 11px; color: var(--text-dim); }
 
-.inventory { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.inventory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .inv-slot {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px;
+  padding: 10px 4px;
   background: var(--slot);
   box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px #000;
 }
-.inv-slot.empty { background: #4A4A4A; opacity: .5; font-size: 16px; }
+.inv-slot.today { box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px var(--gold); }
+.inv-slot.empty { background: #4A4A4A; opacity: .5; }
+.inv-ic { font-size: 20px; }
+.inv-label { font-size: 10px; color: var(--text-sh); }
+.inv-count { font-size: 11px; font-weight: bold; color: #1A1A1A; }
+.inv-slot.empty .inv-label, .inv-slot.empty .inv-count { color: var(--text-dim); }
 
 /* ---------- まちがえた たんご ---------- */
 .wrong-list { display: flex; flex-direction: column; gap: 8px; }
