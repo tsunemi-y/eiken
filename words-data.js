@@ -186,27 +186,150 @@ const WORD_LIST = [
 ];
 
 /* =========================================================
+   じかん・こよみ の てがき SVG ずかい
+   マイクラふうの ブロックいろで、かどが かくかくした
+   シンプルな せんがを コードで つくる(がぞう ファイルは つかわない)。
+   ========================================================= */
+const WD_COLORS = ["#FFD23C", "#5C6FE0", "#E0472E", "#2D9FE0", "#3E9E1E", "#D9B23C", "#9A9A9A"]; // 日月火水木金土(getDay じゅん)
+const WD_LETTERS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function svgWeekStrip(highlightAll, highlightSet) {
+  let cells = "";
+  for (let i = 0; i < 7; i++) {
+    const x = 6 + i * 27;
+    const on = highlightAll || (highlightSet && highlightSet.has(i));
+    const fill = on ? WD_COLORS[i] : "#3A3A3A";
+    const stroke = on ? "#FFFFFF" : "#000000";
+    cells += `<rect x="${x}" y="20" width="21" height="21" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    cells += `<text x="${x + 10.5}" y="35" font-size="11" fill="${on ? "#1A1A1A" : "#888"}" text-anchor="middle" font-family="sans-serif" font-weight="bold">${WD_LETTERS[i]}</text>`;
+  }
+  return `<svg viewBox="0 0 195 62" width="100%" height="62">${cells}</svg>`;
+}
+
+function svgSky(skyColors, groundColor, bodyX, bodyY, bodyColor, isMoon, showStars) {
+  const bands = skyColors.map((c, i) => `<rect x="0" y="${i * (78 / skyColors.length)}" width="200" height="${78 / skyColors.length + 1}" fill="${c}"/>`).join("");
+  const stars = showStars ? `<circle cx="35" cy="18" r="2" fill="#FFF"/><circle cx="165" cy="14" r="2" fill="#FFF"/><circle cx="60" cy="42" r="2" fill="#FFF"/><circle cx="145" cy="38" r="2" fill="#FFF"/><circle cx="20" cy="55" r="2" fill="#FFF"/>` : "";
+  const body = isMoon
+    ? `<circle cx="${bodyX}" cy="${bodyY}" r="16" fill="#F2F2F2"/><circle cx="${bodyX + 7}" cy="${bodyY - 4}" r="14" fill="${skyColors[skyColors.length - 1]}"/>`
+    : `<circle cx="${bodyX}" cy="${bodyY}" r="17" fill="${bodyColor}" stroke="#00000033" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 200 108" width="100%" height="108">
+    ${bands}
+    <rect x="0" y="78" width="200" height="30" fill="${groundColor}"/>
+    ${stars}
+    ${body}
+  </svg>`;
+}
+
+function svgClock(handDeg, wedgeDeg, sunAbove) {
+  const cx = 70, cy = sunAbove ? 78 : 60, r = 50;
+  const rad = (d) => ((d - 90) * Math.PI) / 180;
+  const hx = cx + Math.cos(rad(handDeg)) * (r - 14);
+  const hy = cy + Math.sin(rad(handDeg)) * (r - 14);
+  let ticks = "";
+  for (let i = 0; i < 12; i++) {
+    const a = rad(i * 30);
+    ticks += `<line x1="${cx + Math.cos(a) * (r - 7)}" y1="${cy + Math.sin(a) * (r - 7)}" x2="${cx + Math.cos(a) * r}" y2="${cy + Math.sin(a) * r}" stroke="#FFF" stroke-width="3"/>`;
+  }
+  let wedge = "";
+  if (wedgeDeg > 0) {
+    const a2 = rad(wedgeDeg);
+    const x2 = cx + Math.cos(a2) * r, y2 = cy + Math.sin(a2) * r;
+    wedge = `<path d="M${cx},${cy} L${cx},${cy - r} A${r},${r} 0 0 1 ${x2},${y2} Z" fill="#FCEE4B" opacity="0.55"/>`;
+  }
+  const sun = sunAbove ? `<circle cx="${cx}" cy="14" r="12" fill="#FFEB3B"/><line x1="${cx}" y1="-2" x2="${cx}" y2="4" stroke="#FFEB3B" stroke-width="3"/><line x1="${cx - 20}" y1="14" x2="${cx - 14}" y2="14" stroke="#FFEB3B" stroke-width="3"/><line x1="${cx + 14}" y1="14" x2="${cx + 20}" y2="14" stroke="#FFEB3B" stroke-width="3"/>` : "";
+  return `<svg viewBox="0 0 140 ${sunAbove ? 136 : 118}" width="140" height="${sunAbove ? 136 : 118}">
+    ${sun}
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#2E2E2E" stroke="#FFF" stroke-width="4"/>
+    ${wedge}
+    ${ticks}
+    <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#FCEE4B" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="4" fill="#FCEE4B"/>
+  </svg>`;
+}
+
+function svgMonthGrid() {
+  let cells = "";
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 7; c++) {
+      cells += `<rect x="${8 + c * 27}" y="${28 + r * 17}" width="23" height="13" fill="#4A4A4A" stroke="#000" stroke-width="1"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 200 100" width="100%" height="100">
+    <rect x="0" y="0" width="200" height="24" fill="#E04B2E"/>
+    <text x="100" y="16" font-size="12" fill="#FFF" text-anchor="middle" font-family="sans-serif" font-weight="bold">1かげつ</text>
+    ${cells}
+  </svg>`;
+}
+
+function svgYearWheel() {
+  const cx = 70, cy = 68, r = 46;
+  const seasonColors = ["#BFE6FF", "#BFE6FF", "#FFD3EC", "#FFD3EC", "#FFD3EC", "#FFF3A0", "#FFF3A0", "#FFF3A0", "#FFD199", "#FFD199", "#FFD199", "#BFE6FF"];
+  let blocks = "";
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    blocks += `<rect x="${x - 9}" y="${y - 9}" width="18" height="18" fill="${seasonColors[i]}" stroke="#000" stroke-width="1.5"/>`;
+  }
+  return `<svg viewBox="0 0 140 136" width="140" height="136">
+    <circle cx="${cx}" cy="${cy}" r="${r + 16}" fill="#2E2E2E" stroke="#000" stroke-width="1"/>
+    ${blocks}
+    <text x="${cx}" y="${cy + 4}" font-size="12" fill="#FFF" text-anchor="middle" font-family="sans-serif" font-weight="bold">1ねん</text>
+  </svg>`;
+}
+
+function svgCalStrip(mode) {
+  let cells = "";
+  const hiIdx = mode === "today" ? 1 : mode === "tomorrow" ? 2 : -1;
+  for (let i = 0; i < 3; i++) {
+    const x = 12 + i * 62;
+    const on = i === hiIdx;
+    const fill = on ? "#FCEE4B" : "#4A4A4A";
+    cells += `<rect x="${x}" y="8" width="50" height="50" fill="${fill}" stroke="#000" stroke-width="2"/>`;
+    if (mode === "date" && i === 1) {
+      cells += `<text x="${x + 25}" y="42" font-size="26" fill="#1A1A1A" text-anchor="middle" font-family="sans-serif" font-weight="bold">?</text>`;
+    }
+  }
+  const arrow =
+    mode === "tomorrow"
+      ? `<polygon points="83,28 100,28 100,20 118,33 100,46 100,38 83,38" fill="#17DD62"/>`
+      : "";
+  return `<svg viewBox="0 0 198 66" width="100%" height="66">${cells}${arrow}</svg>`;
+}
+
+function svgDayArc() {
+  return `<svg viewBox="0 0 200 108" width="100%" height="108">
+    <rect x="0" y="0" width="200" height="78" fill="#4A78C4"/>
+    <rect x="0" y="78" width="200" height="30" fill="#3E7A19"/>
+    <path d="M18,78 Q100,6 182,78" fill="none" stroke="#FCEE4B" stroke-width="2" stroke-dasharray="5,5"/>
+    <circle cx="18" cy="78" r="10" fill="#FFB870"/>
+    <circle cx="100" cy="16" r="14" fill="#FFEB3B"/>
+    <circle cx="182" cy="78" r="10" fill="#FF7B54"/>
+    <circle cx="192" cy="94" r="8" fill="#F2F2F2"/>
+  </svg>`;
+}
+
+/* =========================================================
    イメージずかい
    week / year みたいな「絵に しにくい ことば」を
-   ブロックを ならべて 目で わかるように します。
+   目で わかるように します。
    ========================================================= */
 const VISUALS = {
-  // --- じかん ---
-  day:       { icons: ["🌅","☀️","🌆","🌙"], label: "あさ→ひる→ゆうがた→よる = 1にち" },
-  morning:   { icons: ["🌅","☀️","🌆","🌙"], hi: [0],       label: "1にちの さいしょ" },
-  afternoon: { icons: ["🌅","☀️","🌆","🌙"], hi: [1],       label: "おひるの あと" },
-  evening:   { icons: ["🌅","☀️","🌆","🌙"], hi: [2],       label: "ひが しずむ ころ" },
-  night:     { icons: ["🌅","☀️","🌆","🌙"], hi: [3],       label: "ねる じかん" },
-  noon:      { icons: ["🌅","☀️","🌆","🌙"], hi: [1],       label: "ちょうど 12じ" },
-  hour:      { icons: ["🕐","🕑","🕒","🕓"], hi: [0],       label: "1つぶん = 1じかん" },
-  time:      { icons: ["🕐","🕒","🕕","🕘"], label: "とけいが さす「じかん」" },
-  date:      { icons: ["1️⃣","2️⃣","3️⃣","4️⃣"], hi: [2],    label: "なんにち かの「ひづけ」" },
-  week:      { icons: ["☀️","🌙","🔥","💧","🌳","🪙","🪨"], label: "にち・げつ・か・すい・もく・きん・ど = 7日で 1しゅう" },
-  weekend:   { icons: ["☀️","🌙","🔥","💧","🌳","🪙","🪨"], hi: [0, 6], label: "1しゅうの おわり(ど・にち)" },
-  month:     { icons: ["🗓️","🗓️","🗓️","🗓️"], hi: [0],     label: "1まいぶん = 1かげつ(30日ぐらい)" },
-  year:      { icons: ["🎍","👹","🎎","🌸","🎏","☔","🎋","🎆","🌕","🎃","🍁","🎄"], label: "1がつ〜12がつ ぜんぶで 1ねん" },
-  today:     { icons: ["⬅️","📅","➡️"], hi: [1],            label: "いまの ひ" },
-  tomorrow:  { icons: ["⬅️","📅","➡️"], hi: [2],            label: "きょうの つぎの ひ" },
+  // --- じかん・こよみ(てがき SVG) ---
+  day:       { svg: svgDayArc(), label: "あさ→ひる→ゆうがた→よる で 1にち" },
+  morning:   { svg: svgSky(["#FFD9A0", "#FFB870"], "#3E7A19", 100, 64, "#FFD23C", false, false), label: "1にちの さいしょ、たいようが のぼる" },
+  afternoon: { svg: svgSky(["#6FC6FF", "#8FD6FF"], "#3E7A19", 100, 22, "#FFEB3B", false, false), label: "おひるすぎ、たいようが いちばん たかい" },
+  evening:   { svg: svgSky(["#E0668C", "#FF9D5C"], "#3E7A19", 100, 64, "#FFEB3B", false, false), label: "ひが しずむ ころ" },
+  night:     { svg: svgSky(["#0E1B3D", "#1B2A4A"], "#122015", 100, 34, null, true, true), label: "つきが でる、ねる じかん" },
+  noon:      { svg: svgClock(0, 0, true), label: "ちょうど 12じ、たいようが まうえ" },
+  hour:      { svg: svgClock(30, 30, false), label: "この 1きれぶんが 1じかん" },
+  time:      { svg: svgClock(90, 0, false), label: "とけいが さす「じかん」" },
+  date:      { svg: svgCalStrip("date"), label: "なんにち かの「ひづけ」" },
+  today:     { svg: svgCalStrip("today"), label: "いまの ひ" },
+  tomorrow:  { svg: svgCalStrip("tomorrow"), label: "きょうの つぎの ひ" },
+  week:      { svg: svgWeekStrip(true), label: "にち・げつ・か・すい・もく・きん・ど = 7日で 1しゅう" },
+  weekend:   { svg: svgWeekStrip(false, new Set([0, 6])), label: "1しゅうの おわり(ど・にち)" },
+  month:     { svg: svgMonthGrid(), label: "たくさんの 日 あつまって 1かげつ(だいたい30日)" },
+  year:      { svg: svgYearWheel(), label: "1がつ〜12がつ ぐるっと まわって 1ねん" },
 
   // --- 人・あつまり ---
   people:    { icons: ["👦","👧","👨","👩","👴","👵"], label: "たくさんの 人" },

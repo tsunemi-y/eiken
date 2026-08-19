@@ -328,6 +328,9 @@ function startLearn(rangeId) {
 
 function visHTML(vis) {
   if (!vis) return "";
+  if (vis.svg) {
+    return `<div class="vis-svg-wrap">${vis.svg}</div><div class="vis-label">${vis.label}</div>`;
+  }
   const cells = vis.icons
     .map((ic, i) => `<div class="vis-cell${vis.hi && vis.hi.includes(i) ? " hi" : ""}">${ic}</div>`)
     .join("");
