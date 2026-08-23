@@ -254,15 +254,22 @@ function renderRanges() {
     }
     const ws = wordsInRange(r.id);
     const done = ws.filter((w) => P.box[w.id] !== undefined).length;
-    const pct = (done / ws.length) * 100;
+    const points = ws.reduce((sum, w) => sum + (P.box[w.id] !== undefined ? MASTER_COUNT : P.mastery[w.id] || 0), 0);
+    const maxPoints = ws.length * MASTER_COUNT;
+    const pct = (points / maxPoints) * 100;
+    const untouched = points === 0;
+    const finished = done === ws.length;
+    const status = finished ? "✅ かんりょう" : untouched ? "🆕 みはじめ" : "✏️ とちゅう";
     const el = document.createElement("div");
-    el.className = "range-card" + (done === ws.length ? " done" : "") + (r.bonus ? " bonus" : "");
+    el.className =
+      "range-card" + (finished ? " done" : "") + (r.bonus ? " bonus" : "") + (untouched ? " untouched" : "");
     el.innerHTML = `
       <div class="range-tag">${r.bonus ? "➕ ボーナス" : "🎯 ごうかく"}</div>
+      <div class="range-status">${status}</div>
       <div class="range-title">${r.title}</div>
       <div class="range-sub">${ws[0].en} 〜 ${ws[ws.length - 1].en}</div>
       <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
-      <div class="range-foot">${done}/${ws.length} ${done === ws.length ? "✅" : "📦"}</div>
+      <div class="range-foot">${done}/${ws.length}ご ボックスへ</div>
     `;
     el.addEventListener("click", () => {
       sfxClick();

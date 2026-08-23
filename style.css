@@ -271,6 +271,7 @@ button {
   margin: 8px 0 2px;
 }
 .range-card {
+  position: relative;
   background: var(--panel);
   padding: 12px;
   box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px #000;
@@ -288,6 +289,8 @@ button {
   box-shadow: 0 0 0 1px #000;
 }
 .range-card.bonus .range-tag { background: #6E6E6E; color: #FFF; }
+.range-card.untouched { opacity: .6; }
+.range-status { position: absolute; top: 10px; right: 10px; font-size: 10px; font-weight: bold; color: var(--text-dim); }
 .range-title { font-size: 14px; }
 .range-sub { font-size: 10px; color: var(--text-dim); margin: 4px 0 8px; word-break: break-all; }
 .range-card .mc-bar { height: 10px; }
