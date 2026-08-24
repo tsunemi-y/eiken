@@ -151,7 +151,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -352,6 +352,11 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
+  const total = boxedCount();
+  document.getElementById("typingModeSub").textContent = `Ⓑの ぜんぶの たんごで スペルを うつ(${total}ご)`;
+  document.getElementById("btnTypingMode").disabled = total === 0;
+  document.getElementById("btnTypingMode").classList.toggle("dim", total === 0);
+
   const wrap = document.getElementById("boxGrid");
   wrap.innerHTML = "";
   const wd = new Date().getDay();
@@ -477,6 +482,101 @@ function startBoxQuiz(day) {
   show("quiz");
   renderQuiz();
 }
+
+/* ---------- ⌨️ タイピングれんしゅう(Ⓑの単語だけ、Ⓑの状態は かえない) ---------- */
+let TY = null;
+
+function startTyping() {
+  const pool = shuffle(WORD_LIST.filter((w) => P.box[w.id] !== undefined));
+  if (pool.length === 0) return;
+  TY = { words: pool, i: 0, correct: 0, locked: false };
+  document.getElementById("typingTotal").textContent = TY.words.length;
+  document.getElementById("typingResult").classList.add("hidden");
+  show("typing");
+  renderTyping();
+}
+
+function normalizeTyped(s) {
+  return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function renderTyping() {
+  const w = TY.words[TY.i];
+  TY.locked = false;
+  document.getElementById("typingPos").textContent = TY.i + 1;
+  document.getElementById("typingBar").style.width = (TY.i / TY.words.length) * 100 + "%";
+  document.getElementById("typingSlot").textContent = w.emoji;
+  document.getElementById("typingJa").textContent = w.ja;
+  const input = document.getElementById("typingInput");
+  input.value = "";
+  input.className = "typing-input";
+  document.getElementById("typingFeedback").classList.add("hidden");
+  setTimeout(() => input.focus(), 50);
+}
+
+function submitTyping() {
+  if (!TY || TY.locked) return;
+  const w = TY.words[TY.i];
+  const input = document.getElementById("typingInput");
+  const typed = normalizeTyped(input.value);
+  if (!typed) return;
+  TY.locked = true;
+  const ok = typed === normalizeTyped(w.en);
+
+  const fb = document.getElementById("typingFeedback");
+  fb.classList.remove("hidden", "ok", "ng");
+
+  if (ok) {
+    TY.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    input.className = "typing-input ok";
+    const r = input.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
+    fb.classList.add("ok");
+    fb.innerHTML = "⛏️ せいかい!";
+  } else {
+    sfxNg();
+    input.className = "typing-input ng";
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは 「${w.en}」だよ</span>`;
+  }
+  speak(w.en);
+
+  setTimeout(() => {
+    TY.i++;
+    if (TY.i >= TY.words.length) {
+      document.getElementById("typingBar").style.width = "100%";
+      finishTyping();
+    } else {
+      renderTyping();
+    }
+  }, ok ? 1000 : 2000);
+}
+
+function finishTyping() {
+  bumpStreak();
+  document.getElementById("typingScore").textContent = TY.correct;
+  document.getElementById("typingResultTotal").textContent = TY.words.length;
+  document.getElementById("typingResult").classList.remove("hidden");
+  if (TY.correct === TY.words.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("タイピング ぜんもん せいかい!", "⌨️", "すごい!");
+  }
+}
+
+document.getElementById("btnTypingMode").addEventListener("click", () => { sfxClick(); startTyping(); });
+document.getElementById("btnTypingSubmit").addEventListener("click", submitTyping);
+document.getElementById("typingInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitTyping();
+});
+document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
+document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
 
 function renderMasteryTag(w) {
   const tag = document.getElementById("masteryTag");
