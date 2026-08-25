@@ -190,6 +190,9 @@ function addXP(n) {
 function renderHome() {
   updateHUD();
 
+  document.getElementById("typingModeSub").textContent =
+    `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
+
   const t = new Date();
   t.setHours(0, 0, 0, 0);
   const days = Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
@@ -352,11 +355,6 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
-  const total = boxedCount();
-  document.getElementById("typingModeSub").textContent = `Ⓑの ぜんぶの たんごで スペルを うつ(${total}ご)`;
-  document.getElementById("btnTypingMode").disabled = total === 0;
-  document.getElementById("btnTypingMode").classList.toggle("dim", total === 0);
-
   const wrap = document.getElementById("boxGrid");
   wrap.innerHTML = "";
   const wd = new Date().getDay();
@@ -486,8 +484,10 @@ function startBoxQuiz(day) {
 /* ---------- ⌨️ タイピングれんしゅう(Ⓑの単語だけ、Ⓑの状態は かえない) ---------- */
 let TY = null;
 
+const TYPING_BATCH_SIZE = 15;
+
 function startTyping() {
-  const pool = shuffle(WORD_LIST.filter((w) => P.box[w.id] !== undefined));
+  const pool = shuffle(WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id))).slice(0, TYPING_BATCH_SIZE);
   if (pool.length === 0) return;
   TY = { words: pool, i: 0, correct: 0, locked: false };
   document.getElementById("typingTotal").textContent = TY.words.length;

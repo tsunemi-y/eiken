@@ -54,6 +54,12 @@
 
     <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
 
+    <button class="mc-btn wide" id="btnTypingMode">
+      <span class="mc-btn-icon">⌨️</span>
+      <span class="mc-btn-title">タイピングれんしゅう</span>
+      <span class="mc-btn-sub" id="typingModeSub">ごうかくに ひつような たんごを ランダムで</span>
+    </button>
+
     <div class="panel rank-panel">
       <div class="panel-head">⛏️ ほった ランク</div>
 
@@ -100,17 +106,12 @@
     <button class="back-btn" data-back="home">◀ もどる</button>
     <h2 class="scr-title">Ⓑ ようびボックス</h2>
     <p class="scr-desc">そつぎょうした たんごが、おぼえた ようびの はこに はいるよ。<br>まちがえると Ⓐに もどるから きをつけて!</p>
-    <button class="mc-btn wide" id="btnTypingMode">
-      <span class="mc-btn-icon">⌨️</span>
-      <span class="mc-btn-title">タイピングれんしゅう</span>
-      <span class="mc-btn-sub" id="typingModeSub">Ⓑの ぜんぶの たんごで スペルを うつ</span>
-    </button>
     <div class="box-grid" id="boxGrid"></div>
   </section>
 
-  <!-- ===== タイピングれんしゅう(Ⓑの単語だけ) ===== -->
+  <!-- ===== タイピングれんしゅう(ごうかくラインから ランダム) ===== -->
   <section class="screen hidden" id="screen-typing">
-    <button class="back-btn" data-back="boxes">◀ やめる</button>
+    <button class="back-btn" data-back="home">◀ やめる</button>
     <div class="quiz-head">
       <div class="mastery-tag">⌨️ タイピング れんしゅう</div>
       <div class="quiz-pos"><span id="typingPos">1</span>/<span id="typingTotal">10</span></div>
@@ -133,7 +134,7 @@
     <div class="panel hidden" id="typingResult">
       <div class="panel-head">⌨️ タイピング けっか</div>
       <div class="result-score"><span id="typingScore">0</span> / <span id="typingResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓑからは でていかないよ。なんかいでも れんしゅう しよう!</div>
+      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
       <button class="mc-btn wide primary" id="btnTypingRetry">⌨️ もういちど</button>
       <button class="mc-btn wide" id="btnTypingHome">🏠 ホームへ</button>
     </div>
