@@ -412,7 +412,12 @@ function renderCard() {
   document.getElementById("cardEnBack").textContent = w.en;
   document.getElementById("cardEmoji").textContent = w.emoji;
   document.getElementById("cardJa").textContent = w.ja;
-  document.getElementById("cardEx").innerHTML = `${w.ex}<br>${w.exJa}`;
+  document.getElementById("cardEx").innerHTML =
+    `<span class="card-ex-en" id="cardExEn">🔊 ${w.ex}</span><br>${w.exJa}`;
+  document.getElementById("cardExEn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    speak(w.ex);
+  });
 
   const vis = document.getElementById("cardVis");
   if (w.vis) { vis.innerHTML = visHTML(w.vis); vis.classList.remove("hidden"); }
