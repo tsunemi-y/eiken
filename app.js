@@ -82,19 +82,19 @@ const sfxGraduate = () => { [660, 880, 1100, 1320].forEach((f, i) => setTimeout(
    さいゆうせんで えらび、それが なければ ローカルの きこえを つかう。
 ------------------------------- */
 let voices = [];
-function voiceScore(v) {
+function voiceScore(v, langPrefix) {
   let s = 0;
-  if (/^en/i.test(v.lang)) s += 10; else return -1;
-  if (v.lang.toLowerCase() === "en-us") s += 20;
+  if (new RegExp("^" + langPrefix, "i").test(v.lang)) s += 10; else return -1;
+  if (langPrefix === "en" && v.lang.toLowerCase() === "en-us") s += 20;
   if (/google/i.test(v.name)) s += 50;
   if (v.localService === false) s += 15;
-  if (/us english/i.test(v.name)) s += 10;
+  if (langPrefix === "en" && /us english/i.test(v.name)) s += 10;
   if (/compact|espeak|pico/i.test(v.name)) s -= 30;
   return s;
 }
-function pickVoice() {
+function pickVoice(langPrefix = "en") {
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  const candidates = voices.map((v) => ({ v, s: voiceScore(v) })).filter((x) => x.s >= 0);
+  const candidates = voices.map((v) => ({ v, s: voiceScore(v, langPrefix) })).filter((x) => x.s >= 0);
   candidates.sort((a, b) => b.s - a.s);
   return candidates.length ? candidates[0].v : null;
 }
@@ -102,15 +102,28 @@ if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = pickVoice;
   pickVoice();
 }
+function makeUtterance(text, langPrefix, rate) {
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice(langPrefix);
+  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = langPrefix === "ja" ? "ja-JP" : "en-US"; }
+  u.rate = rate;
+  u.pitch = 1.0;
+  return u;
+}
 function speak(text, rate = 0.85) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  const v = pickVoice();
-  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "en-US"; }
-  u.rate = rate;
-  u.pitch = 1.0;
-  window.speechSynthesis.speak(u);
+  window.speechSynthesis.speak(makeUtterance(text, "en", rate));
+}
+/* えいご→にほんご の じゅんに つづけて よむ(れいぶんを セットで おぼえる) */
+function speakPair(en, ja) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const uEn = makeUtterance(en, "en", 0.85);
+  uEn.onend = () => {
+    window.speechSynthesis.speak(makeUtterance(ja, "ja", 0.95));
+  };
+  window.speechSynthesis.speak(uEn);
 }
 
 /* ---------- エフェクト ---------- */
@@ -416,7 +429,7 @@ function renderCard() {
     `<span class="card-ex-en" id="cardExEn">🔊 ${w.ex}</span><br>${w.exJa}`;
   document.getElementById("cardExEn").addEventListener("click", (e) => {
     e.stopPropagation();
-    speak(w.ex);
+    speakPair(w.ex, w.exJa);
   });
 
   const vis = document.getElementById("cardVis");
