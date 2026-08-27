@@ -527,6 +527,41 @@ function normalizeTyped(s) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/* ---------- にほんごの こたえあわせ ----------
+   カタカナ→ひらがな、ぜんかく→はんかく、スペース・くとうてん・
+   「～」を むしして くらべる。「,」「/」で わかれた どの こたえでも OK。
+   かっこ ( ) [ ] の 中は あっても なくても OK。
+   かんじの こたえには words-data.js の kana(よみ)も つかう。
+------------------------------------------------ */
+function toHiragana(s) {
+  return s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+function normalizeJa(s) {
+  return toHiragana(String(s))
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .toLowerCase()
+    .replace(/[\s　]/g, "")
+    .replace(/[～~ー－ｰ。、，・…]/g, "")
+    .trim();
+}
+function jaAnswerSet(w) {
+  const out = new Set();
+  const add = (v) => { const n = normalizeJa(v); if (n) out.add(n); };
+  String(w.ja).split(/[,、/／]/).forEach((part) => {
+    const p = part.trim();
+    if (!p) return;
+    add(p);
+    add(p.replace(/[（(\[][^）)\]]*[）)\]]/g, ""));  // かっこの 中を とる
+    add(p.replace(/[（()）\[\]]/g, ""));             // かっこだけ とる
+  });
+  (w.kana || []).forEach(add);
+  return out;
+}
+function isJaCorrect(typed, w) {
+  const t = normalizeJa(typed);
+  return t.length > 0 && jaAnswerSet(w).has(t);
+}
+
 function renderTyping() {
   const w = TY.words[TY.i];
   TY.locked = false;
@@ -654,16 +689,17 @@ function renderBossQuestion() {
   const typeWrap = document.getElementById("bossTypeWrap");
   choicesWrap.classList.toggle("hidden", typeMode);
   typeWrap.classList.toggle("hidden", !typeMode);
-  document.getElementById("btnBossSpeak").classList.toggle("hidden", typeMode);
+  document.getElementById("btnBossSpeak").classList.remove("hidden");
 
   if (typeMode) {
-    document.getElementById("bossLabel").textContent = "この えの えいごを かこう";
+    document.getElementById("bossLabel").textContent = "えと はつおんを きいて、にほんごで かこう";
     document.getElementById("bossSlot").textContent = w.emoji;
-    document.getElementById("bossEn").textContent = w.ja;
+    document.getElementById("bossEn").textContent = w.en;
     const input = document.getElementById("bossInput");
     input.value = "";
     input.className = "typing-input";
     setTimeout(() => input.focus(), 50);
+    speak(w.en);
   } else {
     document.getElementById("bossLabel").textContent = "この たんごの いみは?";
     document.getElementById("bossSlot").textContent = "❓";
@@ -734,9 +770,8 @@ function submitBossTyped() {
   if (!BS || BS.locked) return;
   const w = BS.words[BS.i];
   const input = document.getElementById("bossInput");
-  const typed = normalizeTyped(input.value);
-  if (!typed) return;
-  const ok = typed === normalizeTyped(w.en);
+  if (!input.value.trim()) return;
+  const ok = isJaCorrect(input.value, w);
   input.className = "typing-input " + (ok ? "ok" : "ng");
   bossAnswer(input, ok, w);
 }
@@ -814,7 +849,7 @@ document.getElementById("btnAnswerMode").addEventListener("click", () => {
   save();
   renderAnswerMode();
   advancement(
-    isTypeMode() ? "スペルを かいて こたえる モード" : "4つから えらぶ モード",
+    isTypeMode() ? "にほんごを じぶんで かく モード" : "4つから えらぶ モード",
     isTypeMode() ? "⌨️" : "🔘",
     "こたえかたを かえた!"
   );
@@ -869,17 +904,18 @@ function renderQuiz() {
   const typeWrap = document.getElementById("quizTypeWrap");
   choicesWrap.classList.toggle("hidden", typeMode);
   typeWrap.classList.toggle("hidden", !typeMode);
-  document.getElementById("btnQuizSpeak").classList.toggle("hidden", typeMode);
+  document.getElementById("btnQuizSpeak").classList.remove("hidden");
 
   if (typeMode) {
-    // にゅうりょくモード: え + にほんご を みて えいごを かく
-    document.getElementById("quizLabel").textContent = "この えの えいごを かこう";
+    // にゅうりょくモード: え と はつおんを きいて にほんごを かく
+    document.getElementById("quizLabel").textContent = "えと はつおんを きいて、にほんごで かこう";
     document.getElementById("quizSlot").textContent = w.emoji;
-    document.getElementById("quizEn").textContent = w.ja;
+    document.getElementById("quizEn").textContent = w.en;
     const input = document.getElementById("quizInput");
     input.value = "";
     input.className = "typing-input";
     setTimeout(() => input.focus(), 50);
+    speak(w.en);
   } else {
     // 4たくモード: えいごを きいて いみを えらぶ
     document.getElementById("quizLabel").textContent = "この たんごの いみは?";
@@ -901,9 +937,8 @@ function submitQuizTyped() {
   if (!Q || Q.locked) return;
   const w = Q.words[Q.i];
   const input = document.getElementById("quizInput");
-  const typed = normalizeTyped(input.value);
-  if (!typed) return;
-  const ok = typed === normalizeTyped(w.en);
+  if (!input.value.trim()) return;
+  const ok = isJaCorrect(input.value, w);
   input.className = "typing-input " + (ok ? "ok" : "ng");
   answer(input, ok, w);
 }
