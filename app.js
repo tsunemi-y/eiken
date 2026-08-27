@@ -692,8 +692,8 @@ function renderBossQuestion() {
   document.getElementById("btnBossSpeak").classList.remove("hidden");
 
   if (typeMode) {
-    document.getElementById("bossLabel").textContent = "えと はつおんを きいて、にほんごで かこう";
-    document.getElementById("bossSlot").textContent = w.emoji;
+    document.getElementById("bossLabel").textContent = "たんごを きいて、にほんごで かこう";
+    document.getElementById("bossSlot").textContent = "❓";
     document.getElementById("bossEn").textContent = w.en;
     const input = document.getElementById("bossInput");
     input.value = "";
@@ -907,9 +907,9 @@ function renderQuiz() {
   document.getElementById("btnQuizSpeak").classList.remove("hidden");
 
   if (typeMode) {
-    // にゅうりょくモード: え と はつおんを きいて にほんごを かく
-    document.getElementById("quizLabel").textContent = "えと はつおんを きいて、にほんごで かこう";
-    document.getElementById("quizSlot").textContent = w.emoji;
+    // にゅうりょくモード: はつおんを きいて にほんごを かく(えは ヒントに なるので かくす)
+    document.getElementById("quizLabel").textContent = "たんごを きいて、にほんごで かこう";
+    document.getElementById("quizSlot").textContent = "❓";
     document.getElementById("quizEn").textContent = w.en;
     const input = document.getElementById("quizInput");
     input.value = "";
