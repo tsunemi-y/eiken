@@ -167,7 +167,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "boss"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -207,10 +207,6 @@ function renderHome() {
   updateHUD();
 
   renderAnswerMode();
-  const nextBoss = bossAt(P.bossDefeated);
-  document.getElementById("bossHomeIcon").textContent = nextBoss.icon;
-  document.getElementById("bossHomeSub").textContent =
-    `${nextBoss.name}(HP ${nextBoss.hp})・たおした ボス ${P.bossDefeated}たい`;
 
   document.getElementById("typingModeSub").textContent =
     `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
@@ -374,6 +370,12 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
   save();
   startLearn(currentWordlistRange);
 });
+document.getElementById("btnWordlistQuiz").addEventListener("click", () => {
+  sfxClick();
+  P.lastRange = currentWordlistRange;
+  save();
+  startQuiz(currentWordlistRange, "A");   // カードを とばして いきなり ボスバトル
+});
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
@@ -450,7 +452,6 @@ function renderCard() {
   document.getElementById("learnPos").textContent = `${L.i + 1} / ${L.words.length}`;
 
   const last = L.i === L.words.length - 1;
-  document.getElementById("btnGoQuiz").classList.toggle("hidden", !last);
   document.getElementById("btnNext").textContent = last ? "さいしょへ" : "つぎ ▶";
 
   speak(w.en);
@@ -492,19 +493,66 @@ function shuffle(a) {
   return b;
 }
 
+const BOSS_WIN_RATE = 0.7;   // このわりあい せいかいすると ボスを たおせる
+
 function startQuiz(rangeId, mode) {
   const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
-  Q = { mode, rangeId, words: shuffle(pool), i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false };
-  document.getElementById("quizTotal").textContent = Q.words.length;
+  const words = shuffle(pool);
+  const boss = bossAt(P.bossDefeated);
+  const bossHp = Math.max(1, Math.ceil(words.length * BOSS_WIN_RATE));
+  Q = {
+    mode, rangeId, words, i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false,
+    boss, bossHp, bossHpMax: bossHp, bossDown: false,
+  };
+  document.getElementById("quizTotal").textContent = words.length;
   show("quiz");
+  renderBossStage();
   renderQuiz();
+}
+
+/* ---------- ⚔️ ボス(Ⓐの クイズに くみこみ) ----------
+   15もんちゅう 7わり(11もん)せいかいで ボスを たおせる。
+   せいとうりつが たかいほど レアな ドロップが 出る。
+--------------------------------------------------------- */
+function renderBossStage() {
+  const stage = document.getElementById("bossStage");
+  if (!Q.boss) { stage.classList.add("hidden"); return; }
+  stage.classList.remove("hidden");
+  const icon = document.getElementById("bossIcon");
+  icon.textContent = Q.boss.icon;
+  icon.className = "boss-icon" + (Q.bossDown ? " dead" : "");
+  document.getElementById("bossName").textContent =
+    `${Q.boss.name}${Q.boss.loop > 0 ? ` (つよさ +${Q.boss.loop})` : ""}`;
+  document.getElementById("bossHpNow").textContent = Math.max(0, Q.bossHp);
+  document.getElementById("bossHpMax").textContent = Q.bossHpMax;
+  document.getElementById("bossHpFill").style.width =
+    Math.max(0, (Q.bossHp / Q.bossHpMax) * 100) + "%";
+}
+
+function damageBoss() {
+  if (!Q.boss || Q.bossDown) return;
+  Q.bossHp--;
+  const icon = document.getElementById("bossIcon");
+  icon.classList.remove("hit");
+  void icon.offsetWidth;
+  icon.classList.add("hit");
+  const r = icon.getBoundingClientRect();
+  blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#E03434");
+  if (Q.bossHp <= 0) {
+    Q.bossDown = true;
+    sfxGraduate();
+    orbs(10, "💥");
+    advancement(`${Q.boss.name} を たおした!`, Q.boss.icon, "ボス げきは!");
+  }
+  renderBossStage();
 }
 
 function startBoxQuiz(day) {
   const pool = wordsInBox(day);
-  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false };
+  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false, boss: null };
   document.getElementById("quizTotal").textContent = Q.words.length;
   show("quiz");
+  renderBossStage();
   renderQuiz();
 }
 
@@ -639,203 +687,6 @@ document.getElementById("typingInput").addEventListener("keydown", (e) => {
 });
 document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
 document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
-
-/* ---------- ⚔️ ボスバトル ----------
-   せいかい = ボスに 1ダメージ / まちがい = じぶんが 1ダメージ。
-   ボスの HPを 0に すると げきは!レアな ドロップが もらえる。
-   Ⓐ・Ⓑの きろくは かわらない(いつでも あそべる ちょうせんモード)。
----------------------------------- */
-const BOSS_HEARTS = 3;
-let BS = null;
-
-function startBoss() {
-  const boss = bossAt(P.bossDefeated);
-  const pool = shuffle(WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id)));
-  BS = { boss, hp: boss.hp, hearts: BOSS_HEARTS, words: pool, i: 0, locked: false, hits: 0 };
-
-  document.getElementById("bossIcon").textContent = boss.icon;
-  document.getElementById("bossIcon").className = "boss-icon";
-  document.getElementById("bossName").textContent =
-    `${boss.name}${boss.loop > 0 ? ` (つよさ +${boss.loop})` : ""}`;
-  document.getElementById("bossHpMax").textContent = boss.hp;
-  document.getElementById("bossStage").style.background = "#1A1420";
-  document.getElementById("bossResult").classList.add("hidden");
-  document.getElementById("bossQuestion").classList.remove("hidden");
-  show("boss");
-  renderBossHp();
-  renderBossQuestion();
-}
-
-function renderBossHp() {
-  document.getElementById("bossHpNow").textContent = BS.hp;
-  document.getElementById("bossHpFill").style.width = (BS.hp / BS.boss.hp) * 100 + "%";
-  const wrap = document.getElementById("bossHearts");
-  wrap.innerHTML = "";
-  for (let i = 0; i < BOSS_HEARTS; i++) {
-    const s = document.createElement("span");
-    s.className = "heart" + (i < BS.hearts ? "" : " lost");
-    s.textContent = "❤️";
-    wrap.appendChild(s);
-  }
-}
-
-function renderBossQuestion() {
-  const w = BS.words[BS.i];
-  BS.locked = false;
-  document.getElementById("bossFeedback").classList.add("hidden");
-
-  const typeMode = isTypeMode();
-  const choicesWrap = document.getElementById("bossChoices");
-  const typeWrap = document.getElementById("bossTypeWrap");
-  choicesWrap.classList.toggle("hidden", typeMode);
-  typeWrap.classList.toggle("hidden", !typeMode);
-  document.getElementById("btnBossSpeak").classList.remove("hidden");
-
-  if (typeMode) {
-    document.getElementById("bossLabel").textContent = "たんごを きいて、にほんごで かこう";
-    document.getElementById("bossSlot").textContent = "❓";
-    document.getElementById("bossEn").textContent = w.en;
-    const input = document.getElementById("bossInput");
-    input.value = "";
-    input.className = "typing-input";
-    setTimeout(() => input.focus(), 50);
-    speak(w.en);
-  } else {
-    document.getElementById("bossLabel").textContent = "この たんごの いみは?";
-    document.getElementById("bossSlot").textContent = "❓";
-    document.getElementById("bossEn").textContent = w.en;
-    choicesWrap.innerHTML = "";
-    buildChoices(w).forEach((c) => {
-      const b = document.createElement("button");
-      b.className = "choice";
-      b.textContent = c.ja;
-      b.addEventListener("click", () => bossAnswer(b, c.id === w.id, w));
-      choicesWrap.appendChild(b);
-    });
-    speak(w.en);
-  }
-}
-
-function bossAnswer(btn, ok, w) {
-  if (BS.locked) return;
-  BS.locked = true;
-
-  if (!isTypeMode()) {
-    document.querySelectorAll("#bossChoices .choice").forEach((b) => {
-      if (b.textContent === w.ja) b.classList.add("ok");
-      else b.classList.add("dim");
-    });
-    if (!ok) btn.classList.add("ng");
-  }
-  document.getElementById("bossSlot").textContent = w.emoji;
-
-  const fb = document.getElementById("bossFeedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  const icon = document.getElementById("bossIcon");
-
-  if (ok) {
-    BS.hp--;
-    BS.hits++;
-    P.blocks++;
-    save();
-    updateHUD();
-    sfxOk();
-    icon.classList.remove("hit");
-    void icon.offsetWidth;
-    icon.classList.add("hit");
-    const r = icon.getBoundingClientRect();
-    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#E03434");
-    fb.classList.add("ok");
-    fb.innerHTML = `⚔️ こうげき せいこう!<span class="fb-ja">${BS.boss.name}に 1ダメージ!</span>`;
-  } else {
-    BS.hearts--;
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💥 はんげきを うけた!<span class="fb-ja">${w.emoji} ${w.en} = ${w.ja}</span>`;
-    speak(w.en);
-  }
-  renderBossHp();
-
-  setTimeout(() => {
-    if (BS.hp <= 0) { bossWin(); return; }
-    if (BS.hearts <= 0) { bossLose(); return; }
-    BS.i = (BS.i + 1) % BS.words.length;
-    renderBossQuestion();
-  }, ok ? 950 : 1900);
-}
-
-function submitBossTyped() {
-  if (!BS || BS.locked) return;
-  const w = BS.words[BS.i];
-  const input = document.getElementById("bossInput");
-  if (!input.value.trim()) return;
-  const ok = isJaCorrect(input.value, w);
-  input.className = "typing-input " + (ok ? "ok" : "ng");
-  bossAnswer(input, ok, w);
-}
-
-function bossEnd(title, icon, msg, loot, won) {
-  document.getElementById("bossQuestion").classList.add("hidden");
-  document.getElementById("bossChoices").classList.add("hidden");
-  document.getElementById("bossTypeWrap").classList.add("hidden");
-  document.getElementById("bossFeedback").classList.add("hidden");
-  document.getElementById("bossResultIcon").textContent = icon;
-  document.getElementById("bossResultTitle").textContent = title;
-  document.getElementById("bossResultMsg").innerText = msg;
-  document.getElementById("bossLoot").innerHTML = loot
-    .map((l) => `<div class="loot-item"><span>${l.ic}</span><span>${l.t}</span></div>`)
-    .join("");
-  document.getElementById("btnBossNext").classList.toggle("hidden", !won);
-  document.getElementById("bossResult").classList.remove("hidden");
-}
-
-function bossWin() {
-  bumpStreak();
-  const b = BS.boss;
-  document.getElementById("bossIcon").classList.add("dead");
-  P.bossDefeated++;
-  P.chests++;
-  P.bossDrops.push(b.drop);
-  save();
-  addXP(b.hp * 3);
-  updateHUD();
-  sfxChest();
-  orbs(12, "💎");
-  advancement(`${b.name} を たおした!`, b.icon, "ボス げきは!");
-
-  const next = bossAt(P.bossDefeated);
-  bossEnd(
-    `🏆 ${b.name} を たおした!`,
-    b.icon,
-    `つぎは ${next.icon} ${next.name}(HP ${next.hp})が まってるぞ!`,
-    [{ ic: b.drop, t: b.dropName }, { ic: "🧰", t: "チェスト ×1" }, { ic: "🟩", t: `ブロック ×${BS.hits}` }],
-    true
-  );
-}
-
-function bossLose() {
-  bumpStreak();
-  addXP(BS.hits);
-  bossEnd(
-    "💀 やられて しまった…",
-    "💀",
-    `${BS.boss.name}に あと ${BS.hp} ダメージ だったのに!\nもういちど ちょうせん しよう。`,
-    [{ ic: "🟩", t: `ブロック ×${BS.hits}` }],
-    false
-  );
-}
-
-document.getElementById("btnBossSubmit").addEventListener("click", submitBossTyped);
-document.getElementById("bossInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submitBossTyped();
-});
-document.getElementById("btnBossSpeak").addEventListener("click", () => BS && speak(BS.words[BS.i].en));
-document.getElementById("btnBossNext").addEventListener("click", () => { sfxClick(); startBoss(); });
-document.getElementById("btnBossRetry").addEventListener("click", () => { sfxClick(); startBoss(); });
-document.getElementById("btnBossHome").addEventListener("click", () => { sfxClick(); show("home"); });
-document.getElementById("btnBoss").addEventListener("click", () => { sfxClick(); startBoss(); });
 
 /* ---------- こたえかたの きりかえ(4たく ⇄ にゅうりょく) ---------- */
 function renderAnswerMode() {
@@ -975,6 +826,7 @@ function answer(btn, ok, correct) {
     const r = btn.getBoundingClientRect();
     blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
     orbs(Q.combo >= 3 ? 6 : 3, "🟢");
+    damageBoss();
 
     if (Q.mode === "A") {
       const n = (P.mastery[correct.id] || 0) + 1;
@@ -1053,18 +905,43 @@ function finish() {
       orbs(10, "💎");
     }
   } else {
-    title = Q.graduated.length > 0 ? `🎉 ${Q.graduated.length}ご そつぎょう!` : "⛏️ れんしゅう かんりょう!";
-    msg = `${score}/${total} せいかい。\nのこりも がんばろう!`;
+    const rate = total > 0 ? score / total : 0;
+    const pct = Math.round(rate * 100);
+    const won = Q.boss && Q.bossHp <= 0;
+
+    if (won) {
+      const drop = dropForRate(rate);
+      P.bossDefeated++;
+      P.chests++;
+      if (drop) P.bossDrops.push(drop.item);
+      loot.push({ ic: "🧰", t: "チェスト ×1" });
+      if (drop) loot.push({ ic: drop.item, t: drop.name });
+      title = `🏆 ${Q.boss.name} を たおした!`;
+      msg = `せいとうりつ ${pct}%${drop ? ` → ${drop.name} ドロップ!` : ""}\n` +
+            (rate >= 1 ? "パーフェクト!さいこうの アイテムだ!" : "もっと せいかいすると もっと レアな アイテムが 出るぞ!");
+      sfxChest();
+      orbs(12, "💎");
+    } else if (Q.boss) {
+      title = `💀 ${Q.boss.name} を たおせなかった…`;
+      msg = `せいとうりつ ${pct}%(あと ${Q.bossHp}ダメージ)\n` +
+            `${Math.round(BOSS_WIN_RATE * 100)}%いじょう せいかいすると たおせるよ!`;
+    } else {
+      title = "⛏️ れんしゅう かんりょう!";
+      msg = `${score}/${total} せいかい。`;
+    }
+
     if (Q.graduated.length > 0) {
       P.chests += Q.graduated.length;
-      loot.push({ ic: "🧰", t: `チェスト ×${Q.graduated.length}` });
-      sfxChest();
-      orbs(10, "💎");
+      loot.push({ ic: "🧰", t: `そつぎょう チェスト ×${Q.graduated.length}` });
+      msg += `\n🎉 ${Q.graduated.length}ご Ⓑボックスへ そつぎょう!`;
+      if (!won) { sfxChest(); orbs(10, "💎"); }
     }
   }
   save();
 
-  document.getElementById("resultChest").textContent = Q.mode === "A" && Q.graduated.length > 0 ? "🧰" : "⛏️";
+  const wonBoss = Q.mode !== "B" && Q.boss && Q.bossHp <= 0;
+  document.getElementById("resultChest").textContent =
+    Q.mode === "B" ? "📦" : wonBoss ? Q.boss.icon : Q.boss ? "💀" : "⛏️";
   document.getElementById("resultTitle").textContent = title;
   document.getElementById("resultScore").textContent = score;
   document.getElementById("resultTotal").textContent = total;
@@ -1146,18 +1023,23 @@ function renderStats() {
   });
 
   document.getElementById("sBosses").textContent = P.bossDefeated;
+  // てにいれた ドロップを レアリティごとに かぞえる
+  const counts = {};
+  P.bossDrops.forEach((d) => { counts[d] = (counts[d] || 0) + 1; });
   const trophy = document.getElementById("bossTrophies");
   trophy.innerHTML = "";
-  BOSSES.forEach((b, i) => {
-    const beaten = P.bossDefeated > i;
-    const el = document.createElement("div");
-    el.className = "inv-slot" + (beaten ? "" : " empty");
-    el.innerHTML = `
-      <div class="inv-ic">${beaten ? b.icon : "🔒"}</div>
-      <div class="inv-label">${beaten ? b.name : "???"}</div>
-      <div class="inv-count">${beaten ? b.drop : "-"}</div>
-    `;
-    trophy.appendChild(el);
+  DROP_TIERS.slice().reverse().forEach((tier) => {
+    tier.items.forEach((item) => {
+      const n = counts[item] || 0;
+      const el = document.createElement("div");
+      el.className = "inv-slot" + (n === 0 ? " empty" : "");
+      el.innerHTML = `
+        <div class="inv-ic">${n > 0 ? item : "🔒"}</div>
+        <div class="inv-label" style="color:${n > 0 ? tier.color : ""}">${tier.name}</div>
+        <div class="inv-count">${n > 0 ? "×" + n : "-"}</div>
+      `;
+      trophy.appendChild(el);
+    });
   });
 }
 

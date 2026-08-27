@@ -52,13 +52,6 @@
       </button>
     </div>
 
-    <button class="mc-btn wide danger" id="btnBoss">
-      <span class="mc-btn-icon" id="bossHomeIcon">🧟</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">⚔️ ボスバトル</span>
-        <span class="mc-btn-sub" id="bossHomeSub">つぎの ボスに ちょうせん!</span>
-      </span>
-    </button>
 
     <button class="mc-btn wide" id="btnAnswerMode">
       <span class="mc-btn-icon" id="answerModeIcon">🔘</span>
@@ -103,7 +96,7 @@
   <section class="screen hidden" id="screen-ranges">
     <button class="back-btn" data-back="home">◀ もどる</button>
     <h2 class="scr-title">Ⓐ たんごを えらぶ</h2>
-    <p class="scr-desc">15ごずつ。3かい せいかいすると Ⓑボックスへ そつぎょう!<br>🎯ごうかく = まずここ、➕ボーナス = よゆうが あれば</p>
+    <p class="scr-desc">15ごずつ。7わり せいかいで ボスを たおせる!<br>せいとうりつが たかいほど レアな アイテムが 出るぞ 💎</p>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
 
@@ -114,7 +107,8 @@
     <p class="scr-desc">いまの せいかいカウント(●●●で3こに なると そつぎょう)<br>もう しってる たんごは「✅しってる」で Ⓑへ おくれます</p>
     <div class="word-list" id="wordList"></div>
     <button class="mc-btn wide" id="btnWordlistSkipAll">✅ このはんいは ぜんぶ しってる → まとめてⒷへ</button>
-    <button class="mc-btn wide danger" id="btnWordlistStart">⚔️ この はんいを れんしゅう</button>
+    <button class="mc-btn wide" id="btnWordlistStart">📖 カードで おぼえてから クイズ</button>
+    <button class="mc-btn wide danger" id="btnWordlistQuiz">⚔️ いきなり ボスバトル!</button>
   </section>
 
   <!-- ===== B: ようびボックス ===== -->
@@ -186,11 +180,18 @@
       <button class="mc-btn small" id="btnPrev">◀ まえ</button>
       <button class="mc-btn small primary" id="btnNext">つぎ ▶</button>
     </div>
-    <button class="mc-btn wide danger hidden" id="btnGoQuiz">⚔️ クイズに ちょうせん!</button>
+    <button class="mc-btn wide danger" id="btnGoQuiz">⚔️ ボスバトルへ すすむ!</button>
   </section>
 
   <!-- ===== クイズ ===== -->
   <section class="screen hidden" id="screen-quiz">
+    <div class="boss-stage hidden" id="bossStage">
+      <div class="boss-icon" id="bossIcon">🧟</div>
+      <div class="boss-name" id="bossName">ゾンビ</div>
+      <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill"></div></div>
+      <div class="boss-hp-text">HP <span id="bossHpNow">11</span> / <span id="bossHpMax">11</span></div>
+    </div>
+
     <div class="quiz-head">
       <div class="mastery-tag" id="masteryTag"></div>
       <div class="quiz-pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></div>
@@ -216,48 +217,6 @@
     <div class="feedback hidden" id="feedback"></div>
   </section>
 
-  <!-- ===== ボスバトル ===== -->
-  <section class="screen hidden" id="screen-boss">
-    <button class="back-btn" data-back="home">◀ にげる</button>
-
-    <div class="boss-stage" id="bossStage">
-      <div class="boss-icon" id="bossIcon">🧟</div>
-      <div class="boss-name" id="bossName">ゾンビ</div>
-      <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill"></div></div>
-      <div class="boss-hp-text"><span id="bossHpNow">5</span> / <span id="bossHpMax">5</span></div>
-    </div>
-
-    <div class="boss-you">
-      <span class="boss-you-label">きみの たいりょく</span>
-      <div class="hearts" id="bossHearts"></div>
-    </div>
-
-    <div class="panel quiz-panel" id="bossQuestion">
-      <div class="quiz-label" id="bossLabel">この たんごの いみは?</div>
-      <div class="slot big" id="bossSlot">❓</div>
-      <div class="quiz-en" id="bossEn">house</div>
-      <div class="card-ja hidden" id="bossJa"></div>
-      <button class="sound-btn" id="btnBossSpeak">🔊 きく</button>
-    </div>
-
-    <div class="choices" id="bossChoices"></div>
-    <div class="typing-input-wrap hidden" id="bossTypeWrap">
-      <input type="text" id="bossInput" class="typing-input" autocapitalize="off" autocomplete="off"
-        autocorrect="off" spellcheck="false" placeholder="にほんごで こたえる">
-      <button class="mc-btn primary" id="btnBossSubmit">こうげき!</button>
-    </div>
-    <div class="feedback hidden" id="bossFeedback"></div>
-
-    <div class="panel hidden" id="bossResult">
-      <div class="result-chest" id="bossResultIcon">🏆</div>
-      <div class="result-title" id="bossResultTitle"></div>
-      <div class="loot" id="bossLoot"></div>
-      <div class="result-msg" id="bossResultMsg"></div>
-      <button class="mc-btn wide primary" id="btnBossNext">⚔️ つぎの ボスへ</button>
-      <button class="mc-btn wide" id="btnBossRetry">🔁 もういちど たたかう</button>
-      <button class="mc-btn wide" id="btnBossHome">🏠 ホームへ</button>
-    </div>
-  </section>
 
   <!-- ===== けっか ===== -->
   <section class="screen hidden" id="screen-result">
@@ -291,7 +250,7 @@
       <div class="inventory" id="inventory"></div>
     </div>
     <div class="panel">
-      <div class="panel-head">⚔️ ボス コレクション</div>
+      <div class="panel-head">💎 ドロップ コレクション</div>
       <div class="inventory" id="bossTrophies"></div>
     </div>
   </section>

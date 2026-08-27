@@ -1147,3 +1147,21 @@ function bossAt(defeatedCount) {
   const base = BOSSES[defeatedCount % BOSSES.length];
   return { ...base, hp: base.hp + loop * 4, loop };
 }
+
+/* =========================================================
+   ドロップの レアリティ
+   せいとうりつが たかいほど レアな アイテムが 出る。
+   70%いじょうで ボスを たおせる(=ドロップあり)。
+   ========================================================= */
+const DROP_TIERS = [
+  { min: 1.00, name: "レジェンダリー", color: "#FCEE4B", items: ["🐉", "⭐", "🥚"] },
+  { min: 0.90, name: "エピック",       color: "#B96BFF", items: ["💎", "💚", "🔮"] },
+  { min: 0.80, name: "レア",           color: "#4AEDD9", items: ["🟨", "🤍", "🏹"] },
+  { min: 0.70, name: "コモン",         color: "#9A9A9A", items: ["⬛", "🟧", "🧵"] },
+];
+
+function dropForRate(rate) {
+  const tier = DROP_TIERS.find((t) => rate >= t.min);
+  if (!tier) return null;
+  return { ...tier, item: tier.items[Math.floor(Math.random() * tier.items.length)] };
+}
