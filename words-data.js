@@ -1122,3 +1122,28 @@ function tierInfo(count, total) {
   const inTierPct = idx === TIERS.length - 1 ? 100 : Math.min(100, ((count - idx * perTier) / perTier) * 100);
   return { idx, tier, nextTier: TIERS[idx + 1] || null, nextNeed, pct: inTierPct };
 }
+
+/* =========================================================
+   ボス戦の ボス(たおすたびに つよい ボスが 出てくる)
+   hp = せいかいすう。ボスを たおすと レアな ドロップが もらえる。
+   ========================================================= */
+const BOSSES = [
+  { name: "ゾンビ",         icon: "🧟", hp: 5,  color: "#4A7A3A", drop: "🥩", dropName: "くさったにく" },
+  { name: "スケルトン",     icon: "💀", hp: 6,  color: "#B0B0B0", drop: "🏹", dropName: "ゆみ" },
+  { name: "クモ",           icon: "🕷️", hp: 7,  color: "#5A3A3A", drop: "🧵", dropName: "いと" },
+  { name: "クリーパー",     icon: "🟩", hp: 8,  color: "#5EA827", drop: "💣", dropName: "かやく" },
+  { name: "エンダーマン",   icon: "👤", hp: 9,  color: "#2A1E3D", drop: "🔮", dropName: "エンダーパール" },
+  { name: "ブレイズ",       icon: "🔥", hp: 10, color: "#E0A020", drop: "🕯️", dropName: "ブレイズロッド" },
+  { name: "ウィザースケルトン", icon: "☠️", hp: 11, color: "#2C2C2C", drop: "🖤", dropName: "ウィザーのほね" },
+  { name: "ゴーレム",       icon: "🗿", hp: 12, color: "#8A8A8A", drop: "🌹", dropName: "ポピー" },
+  { name: "ウィザー",       icon: "👹", hp: 14, color: "#1A1A1A", drop: "⭐", dropName: "ネザースター" },
+  { name: "エンダードラゴン", icon: "🐉", hp: 16, color: "#8C5FCF", drop: "🥚", dropName: "ドラゴンのたまご" },
+];
+
+function bossAt(defeatedCount) {
+  // ぜんぶ たおしたら さいごの ボスが くりかえし つよく なって 出てくる
+  if (defeatedCount < BOSSES.length) return { ...BOSSES[defeatedCount], loop: 0 };
+  const loop = Math.floor(defeatedCount / BOSSES.length);
+  const base = BOSSES[defeatedCount % BOSSES.length];
+  return { ...base, hp: base.hp + loop * 4, loop };
+}

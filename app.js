@@ -27,6 +27,9 @@ function load() {
     mastery: d.mastery || {},   // wordId -> 0..2 (Aでの れんぞく せいかいすう)
     box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
     lastRange: d.lastRange || 1,
+    answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
+    bossDefeated: d.bossDefeated || 0,   // たおした ボスの かず
+    bossDrops: d.bossDrops || [],        // てにいれた ドロップ(アイコン)
   };
 }
 
@@ -164,7 +167,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "boss"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -202,6 +205,12 @@ function addXP(n) {
 /* ---------- ホーム ---------- */
 function renderHome() {
   updateHUD();
+
+  renderAnswerMode();
+  const nextBoss = bossAt(P.bossDefeated);
+  document.getElementById("bossHomeIcon").textContent = nextBoss.icon;
+  document.getElementById("bossHomeSub").textContent =
+    `${nextBoss.name}(HP ${nextBoss.hp})・たおした ボス ${P.bossDefeated}たい`;
 
   document.getElementById("typingModeSub").textContent =
     `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
@@ -596,6 +605,221 @@ document.getElementById("typingInput").addEventListener("keydown", (e) => {
 document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
 document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
 
+/* ---------- ⚔️ ボスバトル ----------
+   せいかい = ボスに 1ダメージ / まちがい = じぶんが 1ダメージ。
+   ボスの HPを 0に すると げきは!レアな ドロップが もらえる。
+   Ⓐ・Ⓑの きろくは かわらない(いつでも あそべる ちょうせんモード)。
+---------------------------------- */
+const BOSS_HEARTS = 3;
+let BS = null;
+
+function startBoss() {
+  const boss = bossAt(P.bossDefeated);
+  const pool = shuffle(WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id)));
+  BS = { boss, hp: boss.hp, hearts: BOSS_HEARTS, words: pool, i: 0, locked: false, hits: 0 };
+
+  document.getElementById("bossIcon").textContent = boss.icon;
+  document.getElementById("bossIcon").className = "boss-icon";
+  document.getElementById("bossName").textContent =
+    `${boss.name}${boss.loop > 0 ? ` (つよさ +${boss.loop})` : ""}`;
+  document.getElementById("bossHpMax").textContent = boss.hp;
+  document.getElementById("bossStage").style.background = "#1A1420";
+  document.getElementById("bossResult").classList.add("hidden");
+  document.getElementById("bossQuestion").classList.remove("hidden");
+  show("boss");
+  renderBossHp();
+  renderBossQuestion();
+}
+
+function renderBossHp() {
+  document.getElementById("bossHpNow").textContent = BS.hp;
+  document.getElementById("bossHpFill").style.width = (BS.hp / BS.boss.hp) * 100 + "%";
+  const wrap = document.getElementById("bossHearts");
+  wrap.innerHTML = "";
+  for (let i = 0; i < BOSS_HEARTS; i++) {
+    const s = document.createElement("span");
+    s.className = "heart" + (i < BS.hearts ? "" : " lost");
+    s.textContent = "❤️";
+    wrap.appendChild(s);
+  }
+}
+
+function renderBossQuestion() {
+  const w = BS.words[BS.i];
+  BS.locked = false;
+  document.getElementById("bossFeedback").classList.add("hidden");
+
+  const typeMode = isTypeMode();
+  const choicesWrap = document.getElementById("bossChoices");
+  const typeWrap = document.getElementById("bossTypeWrap");
+  choicesWrap.classList.toggle("hidden", typeMode);
+  typeWrap.classList.toggle("hidden", !typeMode);
+  document.getElementById("btnBossSpeak").classList.toggle("hidden", typeMode);
+
+  if (typeMode) {
+    document.getElementById("bossLabel").textContent = "この えの えいごを かこう";
+    document.getElementById("bossSlot").textContent = w.emoji;
+    document.getElementById("bossEn").textContent = w.ja;
+    const input = document.getElementById("bossInput");
+    input.value = "";
+    input.className = "typing-input";
+    setTimeout(() => input.focus(), 50);
+  } else {
+    document.getElementById("bossLabel").textContent = "この たんごの いみは?";
+    document.getElementById("bossSlot").textContent = "❓";
+    document.getElementById("bossEn").textContent = w.en;
+    choicesWrap.innerHTML = "";
+    buildChoices(w).forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = c.ja;
+      b.addEventListener("click", () => bossAnswer(b, c.id === w.id, w));
+      choicesWrap.appendChild(b);
+    });
+    speak(w.en);
+  }
+}
+
+function bossAnswer(btn, ok, w) {
+  if (BS.locked) return;
+  BS.locked = true;
+
+  if (!isTypeMode()) {
+    document.querySelectorAll("#bossChoices .choice").forEach((b) => {
+      if (b.textContent === w.ja) b.classList.add("ok");
+      else b.classList.add("dim");
+    });
+    if (!ok) btn.classList.add("ng");
+  }
+  document.getElementById("bossSlot").textContent = w.emoji;
+
+  const fb = document.getElementById("bossFeedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  const icon = document.getElementById("bossIcon");
+
+  if (ok) {
+    BS.hp--;
+    BS.hits++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    icon.classList.remove("hit");
+    void icon.offsetWidth;
+    icon.classList.add("hit");
+    const r = icon.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#E03434");
+    fb.classList.add("ok");
+    fb.innerHTML = `⚔️ こうげき せいこう!<span class="fb-ja">${BS.boss.name}に 1ダメージ!</span>`;
+  } else {
+    BS.hearts--;
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💥 はんげきを うけた!<span class="fb-ja">${w.emoji} ${w.en} = ${w.ja}</span>`;
+    speak(w.en);
+  }
+  renderBossHp();
+
+  setTimeout(() => {
+    if (BS.hp <= 0) { bossWin(); return; }
+    if (BS.hearts <= 0) { bossLose(); return; }
+    BS.i = (BS.i + 1) % BS.words.length;
+    renderBossQuestion();
+  }, ok ? 950 : 1900);
+}
+
+function submitBossTyped() {
+  if (!BS || BS.locked) return;
+  const w = BS.words[BS.i];
+  const input = document.getElementById("bossInput");
+  const typed = normalizeTyped(input.value);
+  if (!typed) return;
+  const ok = typed === normalizeTyped(w.en);
+  input.className = "typing-input " + (ok ? "ok" : "ng");
+  bossAnswer(input, ok, w);
+}
+
+function bossEnd(title, icon, msg, loot, won) {
+  document.getElementById("bossQuestion").classList.add("hidden");
+  document.getElementById("bossChoices").classList.add("hidden");
+  document.getElementById("bossTypeWrap").classList.add("hidden");
+  document.getElementById("bossFeedback").classList.add("hidden");
+  document.getElementById("bossResultIcon").textContent = icon;
+  document.getElementById("bossResultTitle").textContent = title;
+  document.getElementById("bossResultMsg").innerText = msg;
+  document.getElementById("bossLoot").innerHTML = loot
+    .map((l) => `<div class="loot-item"><span>${l.ic}</span><span>${l.t}</span></div>`)
+    .join("");
+  document.getElementById("btnBossNext").classList.toggle("hidden", !won);
+  document.getElementById("bossResult").classList.remove("hidden");
+}
+
+function bossWin() {
+  bumpStreak();
+  const b = BS.boss;
+  document.getElementById("bossIcon").classList.add("dead");
+  P.bossDefeated++;
+  P.chests++;
+  P.bossDrops.push(b.drop);
+  save();
+  addXP(b.hp * 3);
+  updateHUD();
+  sfxChest();
+  orbs(12, "💎");
+  advancement(`${b.name} を たおした!`, b.icon, "ボス げきは!");
+
+  const next = bossAt(P.bossDefeated);
+  bossEnd(
+    `🏆 ${b.name} を たおした!`,
+    b.icon,
+    `つぎは ${next.icon} ${next.name}(HP ${next.hp})が まってるぞ!`,
+    [{ ic: b.drop, t: b.dropName }, { ic: "🧰", t: "チェスト ×1" }, { ic: "🟩", t: `ブロック ×${BS.hits}` }],
+    true
+  );
+}
+
+function bossLose() {
+  bumpStreak();
+  addXP(BS.hits);
+  bossEnd(
+    "💀 やられて しまった…",
+    "💀",
+    `${BS.boss.name}に あと ${BS.hp} ダメージ だったのに!\nもういちど ちょうせん しよう。`,
+    [{ ic: "🟩", t: `ブロック ×${BS.hits}` }],
+    false
+  );
+}
+
+document.getElementById("btnBossSubmit").addEventListener("click", submitBossTyped);
+document.getElementById("bossInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitBossTyped();
+});
+document.getElementById("btnBossSpeak").addEventListener("click", () => BS && speak(BS.words[BS.i].en));
+document.getElementById("btnBossNext").addEventListener("click", () => { sfxClick(); startBoss(); });
+document.getElementById("btnBossRetry").addEventListener("click", () => { sfxClick(); startBoss(); });
+document.getElementById("btnBossHome").addEventListener("click", () => { sfxClick(); show("home"); });
+document.getElementById("btnBoss").addEventListener("click", () => { sfxClick(); startBoss(); });
+
+/* ---------- こたえかたの きりかえ(4たく ⇄ にゅうりょく) ---------- */
+function renderAnswerMode() {
+  const typeMode = isTypeMode();
+  document.getElementById("answerModeIcon").textContent = typeMode ? "⌨️" : "🔘";
+  document.getElementById("answerModeName").textContent = typeMode ? " にゅうりょく" : " 4たく";
+}
+document.getElementById("btnAnswerMode").addEventListener("click", () => {
+  sfxClick();
+  P.answerMode = isTypeMode() ? "choice" : "type";
+  save();
+  renderAnswerMode();
+  advancement(
+    isTypeMode() ? "スペルを かいて こたえる モード" : "4つから えらぶ モード",
+    isTypeMode() ? "⌨️" : "🔘",
+    "こたえかたを かえた!"
+  );
+});
+
 function renderMasteryTag(w) {
   const tag = document.getElementById("masteryTag");
   if (Q.mode === "B") { tag.textContent = "📦 ボックスの ふくしゅう"; return; }
@@ -616,6 +840,16 @@ function renderDots(w) {
   }
 }
 
+/* 4たくの せんたくしを つくる(まちがいは ちかい ばんごうから) */
+function buildChoices(w) {
+  const pool = WORD_LIST.filter((x) => x.id !== w.id && x.ja !== w.ja);
+  const near = pool.filter((x) => Math.abs(x.no - w.no) <= 20);
+  const wrongs = shuffle(near.length >= 3 ? near : pool).slice(0, 3);
+  return shuffle([w, ...wrongs]);
+}
+
+const isTypeMode = () => P.answerMode === "type";
+
 function renderQuiz() {
   const w = Q.words[Q.i];
   Q.locked = false;
@@ -624,44 +858,73 @@ function renderQuiz() {
   renderDots(w);
   document.getElementById("quizPos").textContent = Q.i + 1;
   document.getElementById("quizBar").style.width = (Q.i / Q.words.length) * 100 + "%";
-  document.getElementById("quizSlot").textContent = "❓";
-  document.getElementById("quizEn").textContent = w.en;
   document.getElementById("feedback").classList.add("hidden");
 
   const cb = document.getElementById("combo");
   cb.classList.toggle("hidden", Q.combo < 2);
   document.getElementById("comboNum").textContent = Q.combo;
 
-  const pool = WORD_LIST.filter((x) => x.id !== w.id && x.ja !== w.ja);
-  const near = pool.filter((x) => Math.abs(x.no - w.no) <= 20);
-  const wrongs = shuffle(near.length >= 3 ? near : pool).slice(0, 3);
-  const choices = shuffle([w, ...wrongs]);
+  const typeMode = isTypeMode();
+  const choicesWrap = document.getElementById("choices");
+  const typeWrap = document.getElementById("quizTypeWrap");
+  choicesWrap.classList.toggle("hidden", typeMode);
+  typeWrap.classList.toggle("hidden", !typeMode);
+  document.getElementById("btnQuizSpeak").classList.toggle("hidden", typeMode);
 
-  const wrap = document.getElementById("choices");
-  wrap.innerHTML = "";
-  choices.forEach((c) => {
-    const b = document.createElement("button");
-    b.className = "choice";
-    b.textContent = c.ja;
-    b.addEventListener("click", () => answer(b, c, w));
-    wrap.appendChild(b);
-  });
-
-  speak(w.en);
+  if (typeMode) {
+    // にゅうりょくモード: え + にほんご を みて えいごを かく
+    document.getElementById("quizLabel").textContent = "この えの えいごを かこう";
+    document.getElementById("quizSlot").textContent = w.emoji;
+    document.getElementById("quizEn").textContent = w.ja;
+    const input = document.getElementById("quizInput");
+    input.value = "";
+    input.className = "typing-input";
+    setTimeout(() => input.focus(), 50);
+  } else {
+    // 4たくモード: えいごを きいて いみを えらぶ
+    document.getElementById("quizLabel").textContent = "この たんごの いみは?";
+    document.getElementById("quizSlot").textContent = "❓";
+    document.getElementById("quizEn").textContent = w.en;
+    choicesWrap.innerHTML = "";
+    buildChoices(w).forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = c.ja;
+      b.addEventListener("click", () => answer(b, c.id === w.id, w));
+      choicesWrap.appendChild(b);
+    });
+    speak(w.en);
+  }
 }
 
+function submitQuizTyped() {
+  if (!Q || Q.locked) return;
+  const w = Q.words[Q.i];
+  const input = document.getElementById("quizInput");
+  const typed = normalizeTyped(input.value);
+  if (!typed) return;
+  const ok = typed === normalizeTyped(w.en);
+  input.className = "typing-input " + (ok ? "ok" : "ng");
+  answer(input, ok, w);
+}
+
+document.getElementById("btnQuizSubmit").addEventListener("click", submitQuizTyped);
+document.getElementById("quizInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitQuizTyped();
+});
 document.getElementById("btnQuizSpeak").addEventListener("click", () => Q && speak(Q.words[Q.i].en));
 
-function answer(btn, chosen, correct) {
+function answer(btn, ok, correct) {
   if (Q.locked) return;
   Q.locked = true;
-  const ok = chosen.id === correct.id;
 
-  document.querySelectorAll(".choice").forEach((b) => {
-    if (b.textContent === correct.ja) b.classList.add("ok");
-    else b.classList.add("dim");
-  });
-  if (!ok) btn.classList.add("ng");
+  if (!isTypeMode()) {
+    document.querySelectorAll("#choices .choice").forEach((b) => {
+      if (b.textContent === correct.ja) b.classList.add("ok");
+      else b.classList.add("dim");
+    });
+    if (!ok) btn.classList.add("ng");
+  }
 
   document.getElementById("quizSlot").textContent = correct.emoji;
 
@@ -845,6 +1108,21 @@ function renderStats() {
       <div class="inv-count">${n}ご</div>
     `;
     inv.appendChild(el);
+  });
+
+  document.getElementById("sBosses").textContent = P.bossDefeated;
+  const trophy = document.getElementById("bossTrophies");
+  trophy.innerHTML = "";
+  BOSSES.forEach((b, i) => {
+    const beaten = P.bossDefeated > i;
+    const el = document.createElement("div");
+    el.className = "inv-slot" + (beaten ? "" : " empty");
+    el.innerHTML = `
+      <div class="inv-ic">${beaten ? b.icon : "🔒"}</div>
+      <div class="inv-label">${beaten ? b.name : "???"}</div>
+      <div class="inv-count">${beaten ? b.drop : "-"}</div>
+    `;
+    trophy.appendChild(el);
   });
 }
 

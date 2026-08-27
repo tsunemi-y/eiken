@@ -52,6 +52,22 @@
       </button>
     </div>
 
+    <button class="mc-btn wide danger" id="btnBoss">
+      <span class="mc-btn-icon" id="bossHomeIcon">🧟</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">⚔️ ボスバトル</span>
+        <span class="mc-btn-sub" id="bossHomeSub">つぎの ボスに ちょうせん!</span>
+      </span>
+    </button>
+
+    <button class="mc-btn wide" id="btnAnswerMode">
+      <span class="mc-btn-icon" id="answerModeIcon">🔘</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">こたえかた:<span id="answerModeName"> 4たく</span></span>
+        <span class="mc-btn-sub">タップで きりかえ(4たく ⇄ にゅうりょく)</span>
+      </span>
+    </button>
+
     <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
 
     <button class="mc-btn wide" id="btnTypingMode">
@@ -184,7 +200,7 @@
     <div class="combo hidden" id="combo">🔥 <span id="comboNum">2</span> れんぞく!</div>
 
     <div class="panel quiz-panel">
-      <div class="quiz-label">この たんごの いみは?</div>
+      <div class="quiz-label" id="quizLabel">この たんごの いみは?</div>
       <div class="slot big" id="quizSlot">❓</div>
       <div class="quiz-en" id="quizEn">house</div>
       <button class="sound-btn" id="btnQuizSpeak">🔊 きく</button>
@@ -192,7 +208,55 @@
     </div>
 
     <div class="choices" id="choices"></div>
+    <div class="typing-input-wrap hidden" id="quizTypeWrap">
+      <input type="text" id="quizInput" class="typing-input" autocapitalize="off" autocomplete="off"
+        autocorrect="off" spellcheck="false" placeholder="えいごで にゅうりょく">
+      <button class="mc-btn primary" id="btnQuizSubmit">こたえる</button>
+    </div>
     <div class="feedback hidden" id="feedback"></div>
+  </section>
+
+  <!-- ===== ボスバトル ===== -->
+  <section class="screen hidden" id="screen-boss">
+    <button class="back-btn" data-back="home">◀ にげる</button>
+
+    <div class="boss-stage" id="bossStage">
+      <div class="boss-icon" id="bossIcon">🧟</div>
+      <div class="boss-name" id="bossName">ゾンビ</div>
+      <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill"></div></div>
+      <div class="boss-hp-text"><span id="bossHpNow">5</span> / <span id="bossHpMax">5</span></div>
+    </div>
+
+    <div class="boss-you">
+      <span class="boss-you-label">きみの たいりょく</span>
+      <div class="hearts" id="bossHearts"></div>
+    </div>
+
+    <div class="panel quiz-panel" id="bossQuestion">
+      <div class="quiz-label" id="bossLabel">この たんごの いみは?</div>
+      <div class="slot big" id="bossSlot">❓</div>
+      <div class="quiz-en" id="bossEn">house</div>
+      <div class="card-ja hidden" id="bossJa"></div>
+      <button class="sound-btn" id="btnBossSpeak">🔊 きく</button>
+    </div>
+
+    <div class="choices" id="bossChoices"></div>
+    <div class="typing-input-wrap hidden" id="bossTypeWrap">
+      <input type="text" id="bossInput" class="typing-input" autocapitalize="off" autocomplete="off"
+        autocorrect="off" spellcheck="false" placeholder="えいごで にゅうりょく">
+      <button class="mc-btn primary" id="btnBossSubmit">こうげき!</button>
+    </div>
+    <div class="feedback hidden" id="bossFeedback"></div>
+
+    <div class="panel hidden" id="bossResult">
+      <div class="result-chest" id="bossResultIcon">🏆</div>
+      <div class="result-title" id="bossResultTitle"></div>
+      <div class="loot" id="bossLoot"></div>
+      <div class="result-msg" id="bossResultMsg"></div>
+      <button class="mc-btn wide primary" id="btnBossNext">⚔️ つぎの ボスへ</button>
+      <button class="mc-btn wide" id="btnBossRetry">🔁 もういちど たたかう</button>
+      <button class="mc-btn wide" id="btnBossHome">🏠 ホームへ</button>
+    </div>
   </section>
 
   <!-- ===== けっか ===== -->
@@ -220,10 +284,15 @@
       <div class="panel stat"><div class="stat-ic">🧰</div><div class="stat-num" id="sChests">0</div><div class="stat-lb">チェスト</div></div>
       <div class="panel stat"><div class="stat-ic">📦</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">ボックスの ご</div></div>
       <div class="panel stat"><div class="stat-ic">🔥</div><div class="stat-num" id="sStreak">0</div><div class="stat-lb">れんぞく日</div></div>
+      <div class="panel stat"><div class="stat-ic">⚔️</div><div class="stat-num" id="sBosses">0</div><div class="stat-lb">たおした ボス</div></div>
     </div>
     <div class="panel">
       <div class="panel-head">📦 ようびボックスの なかみ</div>
       <div class="inventory" id="inventory"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">⚔️ ボス コレクション</div>
+      <div class="inventory" id="bossTrophies"></div>
     </div>
   </section>
 
