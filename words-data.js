@@ -1149,19 +1149,154 @@ function bossAt(defeatedCount) {
 }
 
 /* =========================================================
-   ドロップの レアリティ
-   せいとうりつが たかいほど レアな アイテムが 出る。
-   70%いじょうで ボスを たおせる(=ドロップあり)。
+   ボスを たおしたときの ドロップ(アイテム 100しゅるい)
+   せいとうりつが たかいほど レアリティが たかく、
+   1パックで もらえる こすうも ふえる
    ========================================================= */
 const DROP_TIERS = [
-  { min: 1.00, name: "レジェンダリー", color: "#FCEE4B", items: ["🐉", "⭐", "🥚"] },
-  { min: 0.90, name: "エピック",       color: "#B96BFF", items: ["💎", "💚", "🔮"] },
-  { min: 0.80, name: "レア",           color: "#4AEDD9", items: ["🟨", "🤍", "🏹"] },
-  { min: 0.70, name: "コモン",         color: "#9A9A9A", items: ["⬛", "🟧", "🧵"] },
+  {
+    key: "legendary", min: 1.00, pull: 5,
+    name: "レジェンダリー", color: "#FCEE4B", glow: "#FFF9C4", label: "でんせつ",
+    items: [
+      { id: "L01", ic: "🐉", n: "エンダードラゴン" },
+      { id: "L02", ic: "🥚", n: "ドラゴンのたまご" },
+      { id: "L03", ic: "⭐", n: "ネザースター" },
+      { id: "L04", ic: "🌟", n: "ビーコン" },
+      { id: "L05", ic: "⚒️", n: "ネザライトのツルハシ" },
+      { id: "L06", ic: "👑", n: "おうじゃの かんむり" },
+      { id: "L07", ic: "🏆", n: "ワールドの トロフィー" },
+      { id: "L08", ic: "🌈", n: "レインボービーコン" },
+      { id: "L09", ic: "🗿", n: "こだいの ぞう" },
+      { id: "L10", ic: "💫", n: "ながれぼし" },
+      { id: "L11", ic: "🪽", n: "エリトラ" },
+      { id: "L12", ic: "🌌", n: "エンドの そら" },
+    ],
+  },
+  {
+    key: "epic", min: 0.90, pull: 3,
+    name: "エピック", color: "#B96BFF", glow: "#E7CCFF", label: "きわめてレア",
+    items: [
+      { id: "E01", ic: "💎", n: "ダイヤモンド" },
+      { id: "E02", ic: "💠", n: "ダイヤブロック" },
+      { id: "E03", ic: "⚔️", n: "ダイヤのけん" },
+      { id: "E04", ic: "🛠️", n: "ダイヤのツルハシ" },
+      { id: "E05", ic: "💚", n: "エメラルド" },
+      { id: "E06", ic: "🧿", n: "エンダーアイ" },
+      { id: "E07", ic: "🔮", n: "エンダーパール" },
+      { id: "E08", ic: "🟪", n: "シュルカーボックス" },
+      { id: "E09", ic: "🌀", n: "エンダーマン" },
+      { id: "E10", ic: "🧟", n: "ゾンビ" },
+      { id: "E11", ic: "💀", n: "スケルトン" },
+      { id: "E12", ic: "🕷️", n: "クモ" },
+      { id: "E13", ic: "👻", n: "ガスト" },
+      { id: "E14", ic: "🔱", n: "トライデント" },
+      { id: "E15", ic: "📖", n: "エンチャントのほん" },
+      { id: "E16", ic: "🟥", n: "レッドストーンブロック" },
+      { id: "E17", ic: "✨", n: "けいけんちオーブ" },
+      { id: "E18", ic: "🏺", n: "こだいの つぼ" },
+      { id: "E19", ic: "🦑", n: "イカ" },
+      { id: "E20", ic: "⛓️", n: "くさりブロック" },
+    ],
+  },
+  {
+    key: "rare", min: 0.80, pull: 2,
+    name: "レア", color: "#4AEDD9", glow: "#C4FFF8", label: "めずらしい",
+    items: [
+      { id: "R01", ic: "🟨", n: "きんインゴット" },
+      { id: "R02", ic: "🔩", n: "てつインゴット" },
+      { id: "R03", ic: "🔗", n: "くさり" },
+      { id: "R04", ic: "🛡️", n: "たて" },
+      { id: "R05", ic: "🏹", n: "ゆみ" },
+      { id: "R06", ic: "🎯", n: "まと" },
+      { id: "R07", ic: "🧭", n: "コンパス" },
+      { id: "R08", ic: "⏰", n: "とけい" },
+      { id: "R09", ic: "🗺️", n: "ちず" },
+      { id: "R10", ic: "🔭", n: "スパイグラス" },
+      { id: "R11", ic: "🧪", n: "ポーション" },
+      { id: "R12", ic: "🍯", n: "ハチミツ" },
+      { id: "R13", ic: "🐝", n: "ミツバチ" },
+      { id: "R14", ic: "🐷", n: "ブタ" },
+      { id: "R15", ic: "🐮", n: "ウシ" },
+      { id: "R16", ic: "🐔", n: "ニワトリ" },
+      { id: "R17", ic: "🐺", n: "オオカミ" },
+      { id: "R18", ic: "🐱", n: "ネコ" },
+      { id: "R19", ic: "🐴", n: "ウマ" },
+      { id: "R20", ic: "🦊", n: "キツネ" },
+      { id: "R21", ic: "🐑", n: "ヒツジ" },
+      { id: "R22", ic: "🎃", n: "ジャック・オ・ランタン" },
+      { id: "R23", ic: "🎆", n: "うちあげはなび" },
+      { id: "R24", ic: "🎵", n: "レコード" },
+      { id: "R25", ic: "🥁", n: "おんぷブロック" },
+      { id: "R26", ic: "🚂", n: "トロッコ" },
+      { id: "R27", ic: "⛵", n: "ボート" },
+      { id: "R28", ic: "🧨", n: "TNT" },
+    ],
+  },
+  {
+    key: "common", min: 0.70, pull: 1,
+    name: "コモン", color: "#B0B0B0", glow: "#E8E8E8", label: "ふつう",
+    items: [
+      { id: "C01", ic: "🟩", n: "くさブロック" },
+      { id: "C02", ic: "🟫", n: "つちブロック" },
+      { id: "C03", ic: "🪨", n: "まるいし" },
+      { id: "C04", ic: "⬜", n: "いしブロック" },
+      { id: "C05", ic: "🪵", n: "オークのき" },
+      { id: "C06", ic: "🌲", n: "マツのき" },
+      { id: "C07", ic: "🍃", n: "はっぱ" },
+      { id: "C08", ic: "🏜️", n: "すな" },
+      { id: "C09", ic: "🪟", n: "ガラス" },
+      { id: "C10", ic: "🧱", n: "レンガ" },
+      { id: "C11", ic: "⚫", n: "せきたん" },
+      { id: "C12", ic: "🕯️", n: "たいまつ" },
+      { id: "C13", ic: "🪜", n: "はしご" },
+      { id: "C14", ic: "🚪", n: "きのドア" },
+      { id: "C15", ic: "🛏️", n: "ベッド" },
+      { id: "C16", ic: "🧵", n: "いと" },
+      { id: "C17", ic: "🪶", n: "とりのはね" },
+      { id: "C18", ic: "🐣", n: "ヒヨコ" },
+      { id: "C19", ic: "🌾", n: "こむぎ" },
+      { id: "C20", ic: "🥕", n: "ニンジン" },
+      { id: "C21", ic: "🥔", n: "ジャガイモ" },
+      { id: "C22", ic: "🍎", n: "リンゴ" },
+      { id: "C23", ic: "🍞", n: "パン" },
+      { id: "C24", ic: "🍖", n: "やきにく" },
+      { id: "C25", ic: "🐟", n: "さかな" },
+      { id: "C26", ic: "🦴", n: "ほね" },
+      { id: "C27", ic: "🕸️", n: "クモのいと" },
+      { id: "C28", ic: "🍄", n: "キノコ" },
+      { id: "C29", ic: "🌵", n: "サボテン" },
+      { id: "C30", ic: "🎋", n: "サトウキビ" },
+      { id: "C31", ic: "🪣", n: "バケツ" },
+      { id: "C32", ic: "🧊", n: "こおり" },
+      { id: "C33", ic: "❄️", n: "ゆき" },
+      { id: "C34", ic: "🔥", n: "ひ" },
+      { id: "C35", ic: "🎣", n: "つりざお" },
+      { id: "C36", ic: "⛏️", n: "いしのツルハシ" },
+      { id: "C37", ic: "🗡️", n: "いしのけん" },
+      { id: "C38", ic: "🪓", n: "いしのオノ" },
+      { id: "C39", ic: "📦", n: "はこ" },
+      { id: "C40", ic: "🪺", n: "とりのす" },
+    ],
+  },
 ];
 
-function dropForRate(rate) {
-  const tier = DROP_TIERS.find((t) => rate >= t.min);
+const ALL_ITEMS = DROP_TIERS.flatMap((t) => t.items.map((i) => ({ ...i, tier: t })));
+const ITEM_BY_ID = {};
+ALL_ITEMS.forEach((i) => { ITEM_BY_ID[i.id] = i; });
+const ITEM_TOTAL = ALL_ITEMS.length;
+
+function tierForRate(rate) {
+  return DROP_TIERS.find((t) => rate >= t.min) || null;
+}
+
+/* パックを ひらく。レアリティが たかいほど アイテムが おおく 出る */
+function openPack(rate) {
+  const tier = tierForRate(rate);
   if (!tier) return null;
-  return { ...tier, item: tier.items[Math.floor(Math.random() * tier.items.length)] };
+  const bag = tier.items.slice();
+  const got = [];
+  for (let i = 0; i < tier.pull && bag.length; i++) {
+    got.push(bag.splice(Math.floor(Math.random() * bag.length), 1)[0]);
+  }
+  return { tier, items: got };
 }

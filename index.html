@@ -251,7 +251,8 @@
     </div>
     <div class="panel">
       <div class="panel-head">💎 ドロップ コレクション</div>
-      <div class="inventory" id="bossTrophies"></div>
+      <div class="coll-head" id="collHead">0 / 100 しゅるい あつめた!</div>
+      <div id="bossTrophies"></div>
     </div>
   </section>
 
@@ -262,6 +263,24 @@
     <div class="wrong-list" id="wrongList"></div>
   </section>
 
+</div>
+
+<!-- ===== パック かいふう ===== -->
+<div class="pack-overlay hidden" id="packOverlay">
+  <div class="pack-aura" id="packAura"></div>
+  <div class="pack-rays" id="packRays"></div>
+  <div class="pack-stage" id="packStage">
+    <div class="pack-tier" id="packTier"></div>
+    <div class="pack-card" id="packCard">
+      <div class="pack-card-shine"></div>
+      <div class="pack-card-ic">🎁</div>
+      <div class="pack-card-lb">アイテムパック</div>
+    </div>
+    <div class="pack-tap" id="packTap">タップして あける! 👆</div>
+    <div class="pack-items" id="packItems"></div>
+    <button class="mc-btn wide primary hidden" id="btnPackClose">🎒 もちものに いれる</button>
+  </div>
+  <div class="pack-flash hidden" id="packFlash"></div>
 </div>
 
 <div class="advancement hidden" id="adv">

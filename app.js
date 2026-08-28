@@ -29,7 +29,8 @@ function load() {
     lastRange: d.lastRange || 1,
     answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
     bossDefeated: d.bossDefeated || 0,   // たおした ボスの かず
-    bossDrops: d.bossDrops || [],        // てにいれた ドロップ(アイコン)
+    bossDrops: d.bossDrops || [],        // (きゅうバージョン)てにいれた ドロップ
+    items: d.items || {},                // itemId -> てにいれた こすう
   };
 }
 
@@ -978,6 +979,7 @@ function finish() {
 
   const loot = [{ ic: "🟩", t: `ブロック ×${score}` }];
   let title, msg;
+  let pack = null;
 
   if (Q.mode === "B") {
     const keep = total - Q.demoted.length;
@@ -995,14 +997,19 @@ function finish() {
     const won = Q.boss && Q.bossHp <= 0;
 
     if (won) {
-      const drop = dropForRate(rate);
       P.bossDefeated++;
       P.chests++;
-      if (drop) P.bossDrops.push(drop.item);
+      pack = openPack(rate);
+      if (pack) {
+        pack.items.forEach((it) => {
+          it.isNew = !P.items[it.id];
+          P.items[it.id] = (P.items[it.id] || 0) + 1;
+        });
+      }
       loot.push({ ic: "🧰", t: "チェスト ×1" });
-      if (drop) loot.push({ ic: drop.item, t: drop.name });
+      if (pack) pack.items.forEach((it) => loot.push({ ic: it.ic, t: it.n }));
       title = `🏆 ${Q.boss.name} を たおした!`;
-      msg = `せいとうりつ ${pct}%${drop ? ` → ${drop.name} ドロップ!` : ""}\n` +
+      msg = `せいとうりつ ${pct}%${pack ? ` → ${pack.tier.name} パック!` : ""}\n` +
             (rate >= 1 ? "パーフェクト!さいこうの アイテムだ!" : "もっと せいかいすると もっと レアな アイテムが 出るぞ!");
       sfxChest();
       orbs(12, "💎");
@@ -1047,6 +1054,8 @@ function finish() {
 
   show("result");
   updateHUD();
+
+  if (pack) setTimeout(() => runPack(pack), 350);
 }
 
 document.getElementById("btnBackRanges").addEventListener("click", () => { sfxClick(); show("ranges"); });
@@ -1059,6 +1068,162 @@ document.getElementById("btnRetry").addEventListener("click", () => {
 document.getElementById("btnResultHome").addEventListener("click", () => { sfxClick(); show("home"); });
 document.getElementById("btnReviewWrong").addEventListener("click", () => { sfxClick(); renderWrong(); });
 document.getElementById("btnWrongBack").addEventListener("click", () => show("result"));
+
+/* =========================================================
+   パック かいふう(ボスを たおしたときの ごうかな えんしゅつ)
+   レアリティが たかいほど ためが ながく、ひかり・おと・かみふぶきが ふえる
+   ========================================================= */
+const PACK_FX = {
+  common:    { charge:  800, rays:  0, spin: "",          flash: false, confetti:  0, shake: 0, stagger: 260, notes: [420, 560] },
+  rare:      { charge: 1300, rays: 14, spin: "spin",      flash: false, confetti: 20, shake: 0, stagger: 300, notes: [420, 560, 700, 840] },
+  epic:      { charge: 1900, rays: 24, spin: "spin",      flash: true,  confetti: 45, shake: 1, stagger: 340, notes: [392, 494, 587, 698, 880, 1047] },
+  legendary: { charge: 2600, rays: 40, spin: "spin-fast", flash: true,  confetti: 110, shake: 2, stagger: 420, notes: [330, 392, 494, 587, 698, 880, 1047, 1319, 1568] },
+};
+const CONFETTI_COLORS = ["#FCEE4B", "#4AEDD9", "#B96BFF", "#17DD62", "#E03434", "#FFFFFF"];
+
+let packBusy = false;
+
+function confettiRain(n, colors) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + "s";
+    c.style.animationDelay = Math.random() * 0.9 + "s";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4200);
+  }
+}
+
+function packFlash() {
+  const f = document.getElementById("packFlash");
+  f.classList.remove("hidden");
+  f.style.animation = "none";
+  void f.offsetWidth;
+  f.style.animation = "";
+  setTimeout(() => f.classList.add("hidden"), 600);
+}
+
+function screenShake(level) {
+  if (!level) return;
+  const app = document.getElementById("app");
+  app.classList.add("screen-shake");
+  setTimeout(() => app.classList.remove("screen-shake"), 500 * level);
+}
+
+/* かいふう スタート。カードを タップすると あく */
+function runPack(pack) {
+  const ov = document.getElementById("packOverlay");
+  const fx = PACK_FX[pack.tier.key];
+
+  packBusy = true;
+  ov.className = "pack-overlay t-" + pack.tier.key;
+  ov.style.setProperty("--rc", pack.tier.color);
+  ov.style.setProperty("--rg", pack.tier.glow);
+
+  document.getElementById("packTier").textContent = pack.tier.name + " PACK";
+  document.getElementById("packItems").innerHTML = "";
+  document.getElementById("packTap").classList.remove("hidden");
+  document.getElementById("btnPackClose").classList.add("hidden");
+
+  const card = document.getElementById("packCard");
+  card.classList.remove("burst");
+  card.style.display = "";
+
+  // ほうしゃじょうの ひかりを レアリティのぶんだけ ならべる
+  const rays = document.getElementById("packRays");
+  rays.className = "pack-rays " + fx.spin;
+  rays.innerHTML = "";
+  for (let i = 0; i < fx.rays; i++) {
+    const r = document.createElement("div");
+    r.className = "pack-ray";
+    r.style.transform = `rotate(${(360 / fx.rays) * i}deg)`;
+    if (pack.tier.key === "legendary") {
+      r.style.background = `linear-gradient(to bottom, ${CONFETTI_COLORS[i % CONFETTI_COLORS.length]}, transparent 70%)`;
+    }
+    rays.appendChild(r);
+  }
+
+  card.onclick = () => openPackNow(pack, fx);
+}
+
+function openPackNow(pack, fx) {
+  const ov = document.getElementById("packOverlay");
+  const card = document.getElementById("packCard");
+  if (ov.classList.contains("charging") || ov.classList.contains("opened")) return;
+
+  card.onclick = null;
+  document.getElementById("packTap").classList.add("hidden");
+  ov.classList.add("charging");
+
+  // ための あいだ、だんだん たかい おとに なる
+  const step = fx.charge / fx.notes.length;
+  fx.notes.forEach((f, i) => setTimeout(() => beep(f, 0.1, "square", 0.05), i * step));
+
+  setTimeout(() => {
+    ov.classList.remove("charging");
+    ov.classList.add("opened");
+    card.classList.add("burst");
+    setTimeout(() => { card.style.display = "none"; }, 400);
+
+    if (fx.flash) packFlash();
+    screenShake(fx.shake);
+    sfxChest();
+    if (fx.confetti) {
+      confettiRain(fx.confetti, pack.tier.key === "legendary" ? CONFETTI_COLORS : [pack.tier.color, pack.tier.glow]);
+    }
+
+    setTimeout(() => revealItems(pack, fx), 380);
+  }, fx.charge);
+}
+
+function revealItems(pack, fx) {
+  const wrap = document.getElementById("packItems");
+  wrap.innerHTML = "";
+
+  pack.items.forEach((it, i) => {
+    const el = document.createElement("div");
+    el.className = "pack-item";
+    el.style.setProperty("--ic", pack.tier.color);
+    el.style.animationDelay = i * fx.stagger + "ms";
+    const have = P.items[it.id] || 1;
+    el.innerHTML = `
+      <div class="pack-item-ic">${it.ic}</div>
+      <div class="pack-item-n">${it.n}</div>
+      ${it.isNew ? '<div class="pack-item-tag">NEW!</div>' : ""}
+      ${have > 1 ? `<div class="pack-item-dup">×${have}</div>` : ""}
+    `;
+    wrap.appendChild(el);
+    setTimeout(() => {
+      sfxGraduate();
+      if (it.isNew) orbs(4, it.ic);
+    }, i * fx.stagger);
+  });
+
+  setTimeout(() => {
+    // レイを おとして アイテムの なまえを よみやすくする
+    document.getElementById("packOverlay").classList.add("settled");
+    document.getElementById("btnPackClose").classList.remove("hidden");
+    const gotNew = pack.items.filter((it) => it.isNew).length;
+    if (gotNew > 0) {
+      advancement(
+        `${pack.tier.name} ×${pack.items.length}(はじめて ${gotNew}こ)`,
+        pack.items[0].ic,
+        "アイテムを てにいれた!"
+      );
+    }
+    packBusy = false;
+  }, pack.items.length * fx.stagger + 400);
+}
+
+document.getElementById("btnPackClose").addEventListener("click", () => {
+  sfxClick();
+  const ov = document.getElementById("packOverlay");
+  ov.className = "pack-overlay hidden";
+  packBusy = false;
+  updateHUD();
+});
 
 /* ---------- まちがえた たんご ---------- */
 function renderWrong() {
@@ -1108,23 +1273,32 @@ function renderStats() {
   });
 
   document.getElementById("sBosses").textContent = P.bossDefeated;
-  // てにいれた ドロップを レアリティごとに かぞえる
-  const counts = {};
-  P.bossDrops.forEach((d) => { counts[d] = (counts[d] || 0) + 1; });
+
+  // ドロップ コレクション(100しゅるい)
+  const got = ALL_ITEMS.filter((it) => P.items[it.id]).length;
+  document.getElementById("collHead").textContent = `${got} / ${ITEM_TOTAL} しゅるい あつめた!`;
   const trophy = document.getElementById("bossTrophies");
   trophy.innerHTML = "";
-  DROP_TIERS.slice().reverse().forEach((tier) => {
-    tier.items.forEach((item) => {
-      const n = counts[item] || 0;
+  DROP_TIERS.forEach((tier) => {
+    const n = tier.items.filter((it) => P.items[it.id]).length;
+    const head = document.createElement("div");
+    head.className = "coll-tier";
+    head.style.color = tier.color;
+    head.textContent = `${tier.name} ${n}/${tier.items.length}`;
+    trophy.appendChild(head);
+
+    const grid = document.createElement("div");
+    grid.className = "coll-grid";
+    tier.items.forEach((it) => {
+      const c = P.items[it.id] || 0;
       const el = document.createElement("div");
-      el.className = "inv-slot" + (n === 0 ? " empty" : "");
-      el.innerHTML = `
-        <div class="inv-ic">${n > 0 ? item : "🔒"}</div>
-        <div class="inv-label" style="color:${n > 0 ? tier.color : ""}">${tier.name}</div>
-        <div class="inv-count">${n > 0 ? "×" + n : "-"}</div>
-      `;
-      trophy.appendChild(el);
+      el.className = "coll-slot" + (c === 0 ? " locked" : "");
+      el.title = c === 0 ? "?" : `${it.n} ×${c}`;
+      el.innerHTML = c === 0 ? "🔒" : `${it.ic}${c > 1 ? `<span class="coll-n">${c}</span>` : ""}`;
+      if (c > 0) el.style.boxShadow = `inset 2px 2px 0 var(--slot-dk), inset -2px -2px 0 #FFF, 0 0 0 2px ${tier.color}`;
+      grid.appendChild(el);
     });
+    trophy.appendChild(grid);
   });
 }
 
