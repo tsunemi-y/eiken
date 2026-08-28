@@ -589,9 +589,61 @@ function normalizeJa(s) {
     .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
     .toLowerCase()
     .replace(/[\s　]/g, "")
-    .replace(/[～~ー－ｰ。、，・…]/g, "")
+    .replace(/[～~ー－ｰ。、，・…!！?？]/g, "")
     .trim();
 }
+
+/* もっと ゆるく くらべる ための キー。
+   ・だくてん / はんだくてん を とる  (ぼん = ほん)
+   ・ちいさい かな を おおきく する  (しゃ = しや)
+   ・おくりがな っぽい おしりの ことばを とる
+     (「する」「な」「の」「い」「もの」「こと」「ぼん」など) */
+const TAIL_WORDS = [
+  "すること", "するひと", "する", "される", "した", "して",
+  "のもの", "もの", "こと", "ひと", "とき",
+  "ぼん", "ほん", "ようび", "です", "ます",
+  "な", "の", "い",
+];
+const bigKana = (s) => s.replace(/[ぁぃぅぇぉっゃゅょゎ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 1));
+const noMarks = (s) => s.normalize("NFD").replace(/[゙゚]/g, "").normalize("NFC");
+const TAILS = TAIL_WORDS.map(bigKana);
+
+function looseKey(s) {
+  let k = bigKana(normalizeJa(s));
+  k = k.replace(/^を/, "");   // 「を」は ことばの あたまには こないので とっても あんぜん
+  for (let n = 0; n < 3; n++) {
+    const before = k;
+    for (const t of TAILS) {
+      if (k.length > t.length + 1 && k.endsWith(t)) { k = k.slice(0, -t.length); break; }
+    }
+    if (k === before) break;
+  }
+  return k;
+}
+
+/* だくてんの つけわすれ は 1もじ ぶんだけ ゆるす。
+   (まんがほん = まんがぼん は OK。でも ペット と ベッド は べつもの) */
+function dakutenClose(a, b) {
+  if (a.length !== b.length || noMarks(a) !== noMarks(b)) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) diff++;
+  return diff <= 1;
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 2) return 99;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
 function jaAnswerSet(w) {
   const out = new Set();
   const add = (v) => { const n = normalizeJa(v); if (n) out.add(n); };
@@ -605,9 +657,39 @@ function jaAnswerSet(w) {
   (w.kana || []).forEach(add);
   return out;
 }
+
+/* ゆるい こたえあわせ。
+   こどもが うつ ことを かんがえて、つぎの どれかに あてはまれば せいかい。
+     1. そのまま おなじ
+     2. だくてん・ちいさいかな・おくりがな の ちがいだけ
+     3. こたえの あたまの ぶぶんを うった (まんが → まんがぼん)
+     4. こたえを ふくむ ながい こたえを うった (をかう → かう)
+     5. 1もじ ていどの うちまちがい */
 function isJaCorrect(typed, w) {
   const t = normalizeJa(typed);
-  return t.length > 0 && jaAnswerSet(w).has(t);
+  if (!t) return false;
+  const answers = [...jaAnswerSet(w)];
+  if (answers.includes(t)) return true;
+
+  const tk = looseKey(typed);
+  if (!tk) return false;
+
+  for (const a of answers) {
+    const ak = looseKey(a);
+    if (!ak) continue;
+    if (tk === ak) return true;                                   // 2
+    if (dakutenClose(tk, ak)) return true;                        // 2b
+    const short = tk.length <= ak.length ? tk : ak;
+    const long = tk.length <= ak.length ? ak : tk;
+    if (short.length >= 3 && long.startsWith(short) &&
+        short.length / long.length >= 0.5) return true;           // 3
+    if (short.length >= 3 && long.includes(short) &&
+        short.length / long.length >= 0.6) return true;           // 4
+    const maxLen = Math.max(tk.length, ak.length);
+    if (maxLen >= 4 && levenshtein(tk, ak) <= 1) return true;     // 5
+    if (maxLen >= 7 && levenshtein(tk, ak) <= 2) return true;
+  }
+  return false;
 }
 
 function renderTyping() {
@@ -848,7 +930,10 @@ function answer(btn, ok, correct) {
       const info = WEEKDAYS.find((w2) => w2.day === P.box[correct.id]);
       fb.innerHTML = `🎉 そつぎょう!<span class="fb-ja">${info.icon} ${info.label}ようボックスへ うつったよ!</span>`;
     } else {
-      fb.innerHTML = `⛏️ ブロック ゲット!${Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : ""}`;
+      const combo = Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : "";
+      // にゅうりょくモードは ゆるく はんていするので、せいしきな こたえも 見せる
+      const full = isTypeMode() ? `<span class="fb-ja">${correct.en} = ${correct.ja}</span>` : "";
+      fb.innerHTML = `⛏️ ブロック ゲット!${combo}${full}`;
     }
   } else {
     Q.combo = 0;
