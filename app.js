@@ -168,30 +168,59 @@ function voiceScore(v, langPrefix) {
   if (/compact|espeak|pico/i.test(v.name)) s -= 30;
   return s;
 }
-/* こえの えらびなおしは おもい(getVoices を まいかい なめて ならべかえる)。
-   よみあげの たびに やると えいご→にほんごの あいだが あいてしまうので、
-   いちど えらんだ こえは おぼえておく。 */
-const voiceCache = {};
-function pickVoice(langPrefix = "en") {
-  if (voiceCache[langPrefix]) return voiceCache[langPrefix];
-  voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  if (!voices.length) return null;
-  const candidates = voices.map((v) => ({ v, s: voiceScore(v, langPrefix) })).filter((x) => x.s >= 0);
+/* こえは「なまえ(voiceURI)」だけ おぼえておき、つかう ときは
+   いまの いちらんから ひきなおす。
+
+   こえの オブジェクトそのものを ためこむと、たんまつが こえの いちらんを
+   つくりなおした とき ふるい オブジェクトが むこうに なり、
+   speak() が だまって しっぱいして おとが まったく 出なくなる。
+   ひきなおしは さがすだけ なので、まいかい てんすうを つけて
+   ならべかえる よりも ずっと かるい。 */
+const voicePick = {};   // langPrefix -> voiceURI
+
+function bestVoice(list, langPrefix) {
+  const candidates = list.map((v) => ({ v, s: voiceScore(v, langPrefix) })).filter((x) => x.s >= 0);
   candidates.sort((a, b) => b.s - a.s);
-  const best = candidates.length ? candidates[0].v : null;
-  if (best) voiceCache[langPrefix] = best;
+  return candidates.length ? candidates[0].v : null;
+}
+
+function pickVoice(langPrefix = "en") {
+  if (!window.speechSynthesis) return null;
+  voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const saved = voicePick[langPrefix];
+  if (saved) {
+    const live = voices.find((v) => v.voiceURI === saved);
+    if (live) return live;            // いまの いちらんの なかの いきている こえ
+    delete voicePick[langPrefix];     // なくなっていたら えらびなおす
+  }
+  const best = bestVoice(voices, langPrefix);
+  if (best) voicePick[langPrefix] = best.voiceURI;
   return best;
 }
+
+/* おとが 出せる じょうたいに しておく。
+   Chrome は とまった(paused)まま に なる ことが あり、そうなると
+   なにを speak しても だまったまま に なる。 */
+function wakeSynth() {
+  const synth = window.speechSynthesis;
+  if (!synth) return null;
+  try { if (synth.paused) synth.resume(); } catch (e) { /* きにしない */ }
+  return synth;
+}
+
 if (window.speechSynthesis) {
   // こえの いちらんは あとから とどく ことが あるので、とどいたら えらびなおす
   window.speechSynthesis.onvoiceschanged = () => {
-    delete voiceCache.en;
-    delete voiceCache.ja;
+    delete voicePick.en;
+    delete voicePick.ja;
     pickVoice("en");
     pickVoice("ja");
   };
   pickVoice("en");
   pickVoice("ja");
+  // まえの ページの よみあげが のこって つまっている ことが あるので ながす
+  try { window.speechSynthesis.cancel(); } catch (e) { /* きにしない */ }
 }
 function makeUtterance(text, langPrefix, rate) {
   const u = new SpeechSynthesisUtterance(text);
@@ -202,9 +231,10 @@ function makeUtterance(text, langPrefix, rate) {
   return u;
 }
 function speak(text, rate = 0.85) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(makeUtterance(text, "en", rate));
+  const synth = wakeSynth();
+  if (!synth) return;
+  synth.cancel();
+  synth.speak(makeUtterance(text, "en", rate));
 }
 /* えいご→にほんご の じゅんに つづけて よむ(れいぶんを セットで おぼえる) */
 /* だいたいの よみあげ時間。
@@ -225,9 +255,8 @@ function speakPair(en, ja, onDone) {
     clearTimeout(guard);
     if (onDone) onDone();
   };
-  if (!window.speechSynthesis) { finish(); return; }
-
-  const synth = window.speechSynthesis;
+  const synth = wakeSynth();
+  if (!synth) { finish(); return; }
   synth.cancel();
   const uEn = makeUtterance(en, "en", 0.85);
   const uJa = makeUtterance(ja, "ja", 0.95);
@@ -1294,10 +1323,11 @@ function escapeHtml(t) {
    あなが ぶんの あたまに ある ときも ちゃんと あたまで あける。
    こたえた あとは full=true で ぶんぜんぶを よむ。 */
 function speakCloze(w, full = false) {
-  if (!window.speechSynthesis) return;
+  const synth = wakeSynth();
+  if (!synth) return;
   const c = clozeParts(w);
   if (full || !c) { speak(w.ex || w.en); return; }
-  window.speechSynthesis.cancel();
+  synth.cancel();
 
   const clean = (t) => t.replace(/\s+/g, " ").trim();
   const before = clean(c.before);
@@ -1318,7 +1348,7 @@ function speakCloze(w, full = false) {
     }
     const u = makeUtterance(step.text, "en", 0.85);
     u.onend = () => setTimeout(next, 140);
-    window.speechSynthesis.speak(u);
+    synth.speak(u);
   };
   next();
 }
