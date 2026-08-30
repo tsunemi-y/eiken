@@ -38,6 +38,36 @@
       <div class="cd-pace" id="paceMessage"></div>
     </div>
 
+    <div class="panel today-panel">
+      <div class="panel-head">📅 きょう やったぶん</div>
+      <div class="today-main">
+        <div class="today-big"><span id="todayWords">0</span><span class="today-unit">ご</span></div>
+        <div class="today-goal">もくひょう <span id="todayGoal">0</span>ご</div>
+      </div>
+      <div class="mc-bar"><div class="mc-bar-fill" id="todayBar"></div></div>
+      <div class="today-note" id="todayNote"></div>
+
+      <div class="today-stats">
+        <div class="today-stat"><span class="ts-ic">📦</span><span class="ts-n" id="todayGrad">0</span><span class="ts-l">Ⓑへ</span></div>
+        <div class="today-stat"><span class="ts-ic">⚔️</span><span class="ts-n" id="todayQuiz">0</span><span class="ts-l">クイズ</span></div>
+        <div class="today-stat"><span class="ts-ic">🔁</span><span class="ts-n" id="todayB">0</span><span class="ts-l">Ⓑふくしゅう</span></div>
+      </div>
+
+      <div class="today-ranges-lb">きょう やった Ⓐの はんい</div>
+      <div class="today-ranges" id="todayRanges"></div>
+
+      <div class="today-week-lb">この 7日かん</div>
+      <div class="week-chart" id="weekChart"></div>
+    </div>
+
+    <button class="mc-btn wide primary continue-btn" id="btnContinue">
+      <span class="mc-btn-icon">▶️</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title" id="continueTitle">つづきから</span>
+        <span class="mc-btn-sub" id="continueSub"></span>
+      </span>
+    </button>
+
     <div class="ab-grid">
       <button class="mc-btn ab-btn" id="btnA">
         <span class="ab-letter">A</span>
@@ -97,6 +127,7 @@
     <button class="back-btn" data-back="home">◀ もどる</button>
     <h2 class="scr-title">Ⓐ たんごを えらぶ</h2>
     <p class="scr-desc">15ごずつ。7わり せいかいで ボスを たおせる!<br>せいとうりつが たかいほど レアな アイテムが 出るぞ 💎</p>
+    <div class="range-today-bar" id="rangeToday"></div>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
 

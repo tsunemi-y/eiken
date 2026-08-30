@@ -14,6 +14,16 @@ function today() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+/* きょうの きろく。日づけが かわったら からっぽに もどす */
+function freshDay(t) {
+  const d = today();
+  if (t && t.d === d) {
+    return { d, ranges: t.ranges || [], words: t.words || [], grad: t.grad || [],
+             bWords: t.bWords || [], q: t.q || 0 };
+  }
+  return { d, ranges: [], words: [], grad: [], bWords: [], q: 0 };
+}
+
 function load() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) { d = null; }
@@ -29,6 +39,8 @@ function load() {
     lastRange: d.lastRange || 1,
     answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
     bossDefeated: d.bossDefeated || 0,   // たおした ボスの かず
+    today: freshDay(d.today),            // きょう やったぶんの きろく
+    history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
     bossDrops: d.bossDrops || [],        // (きゅうバージョン)てにいれた ドロップ
     items: d.items || {},                // itemId -> てにいれた こすう
   };
@@ -44,6 +56,65 @@ function wordsInBox(day) {
   return WORD_LIST.filter((w) => P.box[w.id] === day);
 }
 function boxedCount() { return Object.keys(P.box).length; }
+
+/* しけんまで あと なん日 */
+function daysLeft() {
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
+}
+
+/* ---------- きょうの きろく ---------- */
+/* あそんでいる とちゅうで 日づけが かわっても つじつまを あわせる */
+function rollDay() {
+  if (P.today.d !== today()) {
+    const t = P.today;
+    if (t.words.length || t.grad.length) {
+      P.history[t.d] = { w: t.words.length, g: t.grad.length };
+      // ふるい きろくは 30日ぶんだけ のこす
+      const keys = Object.keys(P.history).sort();
+      while (keys.length > 30) delete P.history[keys.shift()];
+    }
+    P.today = freshDay(null);
+    save();
+  }
+}
+function logRange(id) {
+  rollDay();
+  if (!P.today.ranges.includes(id)) { P.today.ranges.push(id); save(); }
+}
+function logQuiz() { rollDay(); P.today.q++; save(); }
+function logWord(id, mode) {
+  rollDay();
+  const list = mode === "B" ? P.today.bWords : P.today.words;
+  if (!list.includes(id)) list.push(id);
+}
+function logGraduate(id) {
+  rollDay();
+  if (!P.today.grad.includes(id)) P.today.grad.push(id);
+}
+/* きょう ふくめて さかのぼって n日ぶんの きろく(グラフよう) */
+function recentDays(n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const rec = key === P.today.d
+      ? { w: P.today.words.length, g: P.today.grad.length }
+      : P.history[key] || { w: 0, g: 0 };
+    out.push({ key, day: d.getDay(), date: d.getDate(), ...rec, isToday: i === 0 });
+  }
+  return out;
+}
+/* 1日に なんご やれば まにあうか */
+function dailyGoal() {
+  const days = daysLeft();
+  const coreBoxed = WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && P.box[w.id] !== undefined).length;
+  const coreRemain = CORE_WORD_IDS.size - coreBoxed;
+  if (coreRemain <= 0) return 0;
+  return Math.max(1, Math.ceil(coreRemain / Math.max(1, days)));
+}
 
 function bumpStreak() {
   const t = today();
@@ -212,9 +283,7 @@ function renderHome() {
   document.getElementById("typingModeSub").textContent =
     `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
 
-  const t = new Date();
-  t.setHours(0, 0, 0, 0);
-  const days = Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
+  const days = daysLeft();
   document.getElementById("daysLeft").textContent = days;
 
   const boxed = boxedCount();
@@ -233,6 +302,8 @@ function renderHome() {
     pace.textContent = `🎯ごうかくラインまで のこり ${coreRemain}ご。1日に ${perDay}ごで まにあうよ!`;
   }
 
+  renderToday();
+
   const wd = new Date().getDay();
   const todayInfo = WEEKDAYS.find((w) => w.day === wd);
   const todayCount = wordsInBox(wd).length;
@@ -244,6 +315,98 @@ function renderHome() {
   const started = WORD_LIST.filter((w) => P.box[w.id] !== undefined || (P.mastery[w.id] || 0) > 0).length;
   renderRankBadge("a", started);
   renderRankBadge("b", boxed);
+}
+
+/* ---------- 📅 きょう やったぶん ---------- */
+/* まだ おわっていない ごうかくラインの はんい。
+   きょう さわった はんいが あれば そこ、なければ つぎに やるべき はんい。 */
+function nextRange() {
+  const unfinished = RANGES.filter((r) => {
+    const ws = wordsInRange(r.id);
+    return ws.some((w) => P.box[w.id] === undefined);
+  });
+  const core = unfinished.filter((r) => !r.bonus);
+  const pool = core.length ? core : unfinished;
+  if (!pool.length) return null;
+  const touchedToday = pool.filter((r) => P.today.ranges.includes(r.id));
+  if (touchedToday.length) return touchedToday[touchedToday.length - 1];
+  const started = pool.filter((r) =>
+    wordsInRange(r.id).some((w) => (P.mastery[w.id] || 0) > 0 || P.box[w.id] !== undefined));
+  return (started.length ? started : pool)[0];
+}
+
+function renderToday() {
+  rollDay();
+  const done = P.today.words.length;
+  const goal = dailyGoal();
+
+  document.getElementById("todayWords").textContent = done;
+  document.getElementById("todayGoal").textContent = goal;
+  document.getElementById("todayBar").style.width =
+    (goal > 0 ? Math.min(100, (done / goal) * 100) : 100) + "%";
+  document.getElementById("todayGrad").textContent = P.today.grad.length;
+  document.getElementById("todayQuiz").textContent = P.today.q;
+  document.getElementById("todayB").textContent = P.today.bWords.length;
+
+  const note = document.getElementById("todayNote");
+  if (goal === 0) note.textContent = "🎉 ごうかくラインは クリアずみ!";
+  else if (done === 0) note.textContent = "まだ きょうは やってないよ。はじめよう!";
+  else if (done >= goal) note.textContent = `✅ きょうの ぶんは かんりょう!(+${done - goal}ご おまけ)`;
+  else note.textContent = `あと ${goal - done}ご で きょうの ぶんは かんりょう!`;
+
+  // きょう さわった Ⓐの はんい
+  const rw = document.getElementById("todayRanges");
+  rw.innerHTML = "";
+  if (P.today.ranges.length === 0) {
+    rw.innerHTML = '<div class="today-chip none">まだ なし</div>';
+  } else {
+    P.today.ranges.slice().sort((a, b) => a - b).forEach((id) => {
+      const r = RANGES.find((x) => x.id === id);
+      if (!r) return;
+      const ws = wordsInRange(id);
+      const boxed = ws.filter((w) => P.box[w.id] !== undefined).length;
+      const fin = boxed === ws.length;
+      const el = document.createElement("div");
+      el.className = "today-chip" + (fin ? " done" : "");
+      el.innerHTML = `${fin ? "✅" : "✏️"} ${r.title}<span class="chip-n">${boxed}/${ws.length}</span>`;
+      el.addEventListener("click", () => { sfxClick(); renderWordlist(id); });
+      rw.appendChild(el);
+    });
+  }
+
+  // この 7日かんの ぼうグラフ
+  const days = recentDays(7);
+  const max = Math.max(goal || 1, ...days.map((d) => d.w));
+  const chart = document.getElementById("weekChart");
+  chart.innerHTML = "";
+  days.forEach((d) => {
+    const info = WEEKDAYS.find((w) => w.day === d.day);
+    const col = document.createElement("div");
+    col.className = "wc-col" + (d.isToday ? " today" : "") + (d.w === 0 ? " zero" : "");
+    col.innerHTML = `
+      <div class="wc-n">${d.w || ""}</div>
+      <div class="wc-bar"><div class="wc-fill" style="height:${max ? (d.w / max) * 100 : 0}%"></div></div>
+      <div class="wc-lb">${info ? info.label : d.date}</div>
+    `;
+    chart.appendChild(col);
+  });
+
+  // つづきから ボタン
+  const nr = nextRange();
+  const btn = document.getElementById("btnContinue");
+  if (!nr) {
+    btn.classList.add("hidden");
+  } else {
+    btn.classList.remove("hidden");
+    const ws = wordsInRange(nr.id);
+    const boxed = ws.filter((w) => P.box[w.id] !== undefined).length;
+    const touched = P.today.ranges.includes(nr.id);
+    document.getElementById("continueTitle").textContent =
+      touched ? `つづきから ${nr.title}` : `つぎは ${nr.title}`;
+    document.getElementById("continueSub").textContent =
+      `${nr.bonus ? "➕ボーナス" : "🎯ごうかく"} ・ ${boxed}/${ws.length}ご ボックスへ`;
+    btn.onclick = () => { sfxClick(); renderWordlist(nr.id); };
+  }
 }
 
 function renderRankBadge(prefix, count) {
@@ -262,8 +425,18 @@ function renderRankBadge(prefix, count) {
 
 /* ---------- Ⓐ はんいえらび ---------- */
 function renderRanges() {
+  rollDay();
+  // がめんの うえに 「きょう どこまで やったか」を 出す
+  const sum = document.getElementById("rangeToday");
+  const nr = nextRange();
+  sum.innerHTML = P.today.ranges.length === 0
+    ? `📅 きょうは まだ Ⓐを やってないよ${nr ? ` ・ つぎは <b>${nr.title}</b>` : ""}`
+    : `📅 きょうは <b>${P.today.ranges.length}はんい</b> / <b>${P.today.words.length}ご</b> れんしゅうした` +
+      `${nr ? ` ・ つづきは <b>${nr.title}</b>` : ""}`;
+
   const wrap = document.getElementById("rangeGrid");
   wrap.innerHTML = "";
+  const nextId = nr ? nr.id : null;
   const sorted = RANGES.slice().sort((a, b) => (a.bonus === b.bonus ? a.id - b.id : a.bonus ? 1 : -1));
   let dividerShown = false;
   sorted.forEach((r) => {
@@ -282,10 +455,17 @@ function renderRanges() {
     const untouched = points === 0;
     const finished = done === ws.length;
     const status = finished ? "✅ かんりょう" : untouched ? "🆕 みはじめ" : "✏️ とちゅう";
+    const doneToday = P.today.ranges.includes(r.id);
+    const isNext = r.id === nextId;
     const el = document.createElement("div");
     el.className =
-      "range-card" + (finished ? " done" : "") + (r.bonus ? " bonus" : "") + (untouched ? " untouched" : "");
+      "range-card" + (finished ? " done" : "") + (r.bonus ? " bonus" : "") + (untouched ? " untouched" : "") +
+      (doneToday ? " today" : "") + (isNext ? " next" : "");
+    const mark = doneToday && isNext ? '<div class="range-mark today">📅 きょう やった ・ つづきは ここ</div>'
+      : doneToday ? '<div class="range-mark today">📅 きょう やった</div>'
+      : isNext ? '<div class="range-mark next">👉 つぎは ここ</div>' : "";
     el.innerHTML = `
+      ${mark}
       <div class="range-tag">${r.bonus ? "➕ ボーナス" : "🎯 ごうかく"}</div>
       <div class="range-status">${status}</div>
       <div class="range-title">${r.title}</div>
@@ -306,6 +486,7 @@ let currentWordlistRange = 1;
 function promoteToBox(id) {
   delete P.mastery[id];
   P.box[id] = new Date().getDay();
+  logGraduate(id);
   save();
   updateHUD();
 }
@@ -505,6 +686,8 @@ function startQuiz(rangeId, mode) {
     mode, rangeId, words, i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false,
     boss, bossHp, bossHpMax: bossHp, bossDown: false,
   };
+  logRange(rangeId);
+  logQuiz();
   document.getElementById("quizTotal").textContent = words.length;
   show("quiz");
   renderBossStage();
@@ -975,6 +1158,7 @@ function answer(btn, ok, correct) {
     orbs(Q.combo >= 3 ? 6 : 3, "🟢");
     damageBoss();
 
+    logWord(correct.id, Q.mode);
     if (Q.mode === "A") {
       const n = (P.mastery[correct.id] || 0) + 1;
       if (n >= MASTER_COUNT) {
@@ -982,6 +1166,7 @@ function answer(btn, ok, correct) {
         P.box[correct.id] = new Date().getDay();
         Q.graduated.push(correct);
         graduatedNow = true;
+        logGraduate(correct.id);
         sfxGraduate();
       } else {
         P.mastery[correct.id] = n;
