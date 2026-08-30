@@ -503,37 +503,54 @@ button {
 
 /* ---------- タイピングれんしゅう ---------- */
 /* ---------- ボスバトル ---------- */
-.boss-stage {
-  position: relative;
+/* =========================================================
+   🎁 パックゲージ(クイズちゅう ずっと 出ている)
+   せいかいが ふえるほど レアリティが 上がるのが 見た目で わかる
+   ========================================================= */
+.pack-gauge {
+  background: #171122;
+  padding: 14px 12px 12px;
+  margin-bottom: 10px;
   text-align: center;
-  padding: 18px 12px 14px;
-  margin: 8px 0 10px;
-  background: #1A1420;
-  box-shadow: inset 3px 3px 0 #3A3048, inset -3px -3px 0 #0C0810, 0 0 0 3px #000;
-  overflow: hidden;
+  box-shadow: inset 3px 3px 0 #2C2140, inset -3px -3px 0 #0B0810, 0 0 0 3px #000;
 }
-.boss-icon { font-size: 62px; line-height: 1.1; filter: drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
-.boss-icon.hit { animation: bossHit .32s steps(3); }
-@keyframes bossHit { 50% { transform: translateX(10px) scale(1.08); filter: brightness(3) saturate(0); } }
-.boss-icon.dead { animation: bossDead .8s ease-in forwards; }
-@keyframes bossDead { to { transform: rotate(90deg) translateY(40px); opacity: 0; } }
-.boss-name { font-size: 15px; margin: 6px 0 8px; text-shadow: 2px 2px 0 #000; }
-.boss-hp-bar {
-  height: 16px;
-  background: #1E1E1E;
-  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #4A4A4A, 0 0 0 2px #000;
-  overflow: hidden;
+.pg-pack {
+  font-size: 46px; line-height: 1.1;
+  filter: drop-shadow(0 0 10px var(--c, #6E6E6E)) drop-shadow(0 4px 0 rgba(0,0,0,.5));
 }
-.boss-hp-fill {
-  height: 100%;
-  width: 100%;
-  background: repeating-linear-gradient(90deg, #E03434 0 8px, #B02222 8px 10px);
-  transition: width .35s steps(8);
-}
-.boss-hp-text { font-family: "Press Start 2P", monospace; font-size: 11px; color: #FF9A8A; margin-top: 6px; }
+.pg-pack.got { animation: pgFloat 2.2s ease-in-out infinite; }
+@keyframes pgFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.pg-pack.up { animation: pgUp .45s cubic-bezier(.2,1.6,.5,1); }
+@keyframes pgUp { 0% { transform: scale(1); } 55% { transform: scale(1.45) rotate(-8deg); } 100% { transform: scale(1); } }
+.pg-pack.t-legendary { animation: pgFloat 1.1s ease-in-out infinite; }
 
-.boss-you { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
-.boss-you-label { font-size: 12px; color: var(--text-dim); }
+.pg-tier {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px; line-height: 1.8;
+  margin: 8px 0 10px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* せいかいすうの マス。みぎに いくほど レアリティが 上がる */
+.pg-track { display: flex; gap: 2px; margin-bottom: 10px; }
+.pg-cell {
+  flex: 1; height: 18px;
+  position: relative;
+  background: var(--c, #3A3A3A);
+  opacity: .22;
+  box-shadow: inset 0 0 0 1px #000;
+}
+.pg-cell.on { opacity: 1; box-shadow: inset 0 0 0 1px #000, 0 0 8px var(--c); }
+.pg-cell.lost { opacity: .08; }
+/* レアリティが 切りかわる マスの あたま */
+.pg-cell.mark::before {
+  content: "";
+  position: absolute; left: 0; top: -4px;
+  width: 100%; height: 4px;
+  background: var(--c, #FFF);
+}
+.pg-next { font-size: 11px; line-height: 1.8; color: var(--text-dim); }
+.pg-next b { font-family: "Press Start 2P", monospace; font-size: 10px; }
 
 .typing-input-wrap { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
 .typing-input {
@@ -1101,3 +1118,17 @@ button {
   animation: listenPulse .9s steps(2) infinite;
 }
 @keyframes listenPulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* パックの パーフェクトの おび / コレクションの すすみぐあい */
+.pack-perfect {
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px; letter-spacing: 2px;
+  color: #000; background: var(--gold);
+  padding: 8px 6px; margin-bottom: 10px;
+  box-shadow: 0 0 0 3px #000, 0 0 24px var(--gold);
+  animation: perfectFlash .7s steps(2) infinite;
+}
+@keyframes perfectFlash { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+.pack-coll { margin-bottom: 14px; }
+.pc-lb { font-size: 11px; color: #FFF; text-shadow: 2px 2px 0 #000; margin-bottom: 6px; }
+.pc-lb b { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--gold); }

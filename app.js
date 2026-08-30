@@ -39,7 +39,7 @@ function load() {
     lastRange: d.lastRange || 1,
     answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
     gHard: !!d.gHard,                    // 大もん1を にほんごなし(ほんばん)で やるか
-    bossDefeated: d.bossDefeated || 0,   // たおした ボスの かず
+    packs: d.packs !== undefined ? d.packs : (d.bossDefeated || 0),   // あけた パックの かず
     today: freshDay(d.today),            // きょう やったぶんの きろく
     history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
     bossDrops: d.bossDrops || [],        // (きゅうバージョン)てにいれた ドロップ
@@ -812,68 +812,110 @@ function shuffle(a) {
   return b;
 }
 
-const BOSS_WIN_RATE = 0.7;   // このわりあい せいかいすると ボスを たおせる
+/* =========================================================
+   🎁 パックゲージ(Ⓐの クイズに くみこみ)
+
+   せいかいが ふえるほど もらえる パックの レアリティが 上がる。
+   「あと なんもん せいかいすれば つぎの レアリティか」を
+   クイズちゅう ずっと 見せて、さいごまで 手を ぬかないように する。
+   ========================================================= */
+function packGaugeState() {
+  const total = Q.words.length;
+  const remaining = total - Q.i;                 // まだ こたえていない かず
+  const maxPossible = Q.correct + remaining;     // ぜんぶ せいかいした ときの かず
+  return {
+    total,
+    now: tierForScore(Q.correct, total),                 // いま とどいている レアリティ
+    best: tierForScore(maxPossible, total),              // これから とどきうる さいこう
+    maxPossible,
+  };
+}
+
+function renderPackGauge() {
+  const gauge = document.getElementById("packGauge");
+  if (Q.mode === "B") { gauge.classList.add("hidden"); return; }
+  gauge.classList.remove("hidden");
+
+  const st = packGaugeState();
+  const total = st.total;
+
+  // マスを ならべる。みぎに いくほど レアリティが 上がるのが 見た目で わかる
+  const track = document.getElementById("pgTrack");
+  track.innerHTML = "";
+  for (let j = 1; j <= total; j++) {
+    const tier = tierForScore(j, total);
+    const cell = document.createElement("div");
+    cell.className = "pg-cell" + (j <= Q.correct ? " on" : "") + (j > st.maxPossible ? " lost" : "");
+    // レアリティに とどく まえの マスも、せいかいが つみあがるのが わかるよう みどりに
+    cell.style.setProperty("--c", tier ? tier.color : "#5EA827");
+    // レアリティが 切りかわる マスに しるしを つける
+    const prev = tierForScore(j - 1, total);
+    if (tier && (!prev || prev.key !== tier.key)) {
+      cell.classList.add("mark");
+      cell.dataset.tier = tier.name.slice(0, 1);
+    }
+    track.appendChild(cell);
+  }
+
+  const pack = document.getElementById("pgPack");
+  pack.textContent = st.now ? "🎁" : "📦";
+  pack.style.setProperty("--c", st.now ? st.now.color : "#6E6E6E");
+  pack.className = "pg-pack" + (st.now ? " got t-" + st.now.key : "");
+
+  const tierEl = document.getElementById("pgTier");
+  tierEl.textContent = st.now ? `いま ${st.now.name} パック` : "まだ パックなし";
+  tierEl.style.color = st.now ? st.now.color : "var(--text-dim)";
+
+  // つぎの レアリティまで あと なんもん か
+  const next = DROP_TIERS.slice().reverse()
+    .find((t) => (!st.now || t.min > st.now.min) && st.maxPossible >= needForTier(t, total));
+  const el = document.getElementById("pgNext");
+  if (next) {
+    const left = needForTier(next, total) - Q.correct;
+    el.innerHTML = `あと <b style="color:${next.color}">${left}もん</b> せいかいで <b style="color:${next.color}">${next.name}</b>!`;
+  } else if (st.now) {
+    el.innerHTML = `<b style="color:${st.now.color}">さいこうランク かくてい!</b>`;
+  } else {
+    el.innerHTML = `のこり ぜんぶ せいかいしても パックは とどかない…<br>さいごまで やりきろう!`;
+  }
+}
+
+/* せいかいした ときの えんしゅつ(パックが 1だん上がったら はでに しらせる) */
+function bumpPackGauge(beforeTier) {
+  const st = packGaugeState();
+  const pack = document.getElementById("pgPack");
+  pack.classList.remove("up");
+  void pack.offsetWidth;
+  pack.classList.add("up");
+  if (st.now && (!beforeTier || st.now.key !== beforeTier.key)) {
+    sfxGraduate();
+    orbs(8, "🎁");
+    advancement(`${st.now.name} パック かくとく けん!`, "🎁", "ランク アップ!");
+    const r = pack.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, st.now.color);
+  }
+}
 
 function startQuiz(rangeId, mode) {
   const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
   const words = shuffle(pool);
-  const boss = bossAt(P.bossDefeated);
-  const bossHp = Math.max(1, Math.ceil(words.length * BOSS_WIN_RATE));
   Q = {
     mode, rangeId, words, i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false,
-    boss, bossHp, bossHpMax: bossHp, bossDown: false,
   };
   logRange(rangeId);
   logQuiz();
   document.getElementById("quizTotal").textContent = words.length;
   show("quiz");
-  renderBossStage();
+  renderPackGauge();
   renderQuiz();
-}
-
-/* ---------- ⚔️ ボス(Ⓐの クイズに くみこみ) ----------
-   15もんちゅう 7わり(11もん)せいかいで ボスを たおせる。
-   せいとうりつが たかいほど レアな ドロップが 出る。
---------------------------------------------------------- */
-function renderBossStage() {
-  const stage = document.getElementById("bossStage");
-  if (!Q.boss) { stage.classList.add("hidden"); return; }
-  stage.classList.remove("hidden");
-  const icon = document.getElementById("bossIcon");
-  icon.textContent = Q.boss.icon;
-  icon.className = "boss-icon" + (Q.bossDown ? " dead" : "");
-  document.getElementById("bossName").textContent =
-    `${Q.boss.name}${Q.boss.loop > 0 ? ` (つよさ +${Q.boss.loop})` : ""}`;
-  document.getElementById("bossHpNow").textContent = Math.max(0, Q.bossHp);
-  document.getElementById("bossHpMax").textContent = Q.bossHpMax;
-  document.getElementById("bossHpFill").style.width =
-    Math.max(0, (Q.bossHp / Q.bossHpMax) * 100) + "%";
-}
-
-function damageBoss() {
-  if (!Q.boss || Q.bossDown) return;
-  Q.bossHp--;
-  const icon = document.getElementById("bossIcon");
-  icon.classList.remove("hit");
-  void icon.offsetWidth;
-  icon.classList.add("hit");
-  const r = icon.getBoundingClientRect();
-  blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#E03434");
-  if (Q.bossHp <= 0) {
-    Q.bossDown = true;
-    sfxGraduate();
-    orbs(10, "💥");
-    advancement(`${Q.boss.name} を たおした!`, Q.boss.icon, "ボス げきは!");
-  }
-  renderBossStage();
 }
 
 function startBoxQuiz(day) {
   const pool = wordsInBox(day);
-  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false, boss: null };
+  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false };
   document.getElementById("quizTotal").textContent = Q.words.length;
   show("quiz");
-  renderBossStage();
+  renderPackGauge();
   renderQuiz();
 }
 
@@ -1516,7 +1558,9 @@ function answer(btn, ok, correct) {
   fb.classList.remove("hidden", "ok", "ng");
   let graduatedNow = false;
 
+  let packTierBefore = null;
   if (ok) {
+    packTierBefore = tierForScore(Q.correct, Q.words.length);   // ふえる まえの ランク
     Q.correct++;
     Q.combo++;
     P.blocks++;
@@ -1524,7 +1568,7 @@ function answer(btn, ok, correct) {
     const r = btn.getBoundingClientRect();
     blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
     orbs(Q.combo >= 3 ? 6 : 3, "🟢");
-    damageBoss();
+
 
     logWord(correct.id, Q.mode);
     if (Q.mode === "A") {
@@ -1577,6 +1621,9 @@ function answer(btn, ok, correct) {
     else speak(correct.en);
   }
 
+  renderPackGauge();
+  if (ok) bumpPackGauge(packTierBefore);
+
   // あなうめは ぶんまるごとを えいご→にほんご で きかせる(リスニングの れんしゅう)
   if (useCloze(correct)) speakPair(correct.ex, correct.exJa);
 
@@ -1617,46 +1664,44 @@ function finish() {
   } else {
     const rate = total > 0 ? score / total : 0;
     const pct = Math.round(rate * 100);
-    const won = Q.boss && Q.bossHp <= 0;
+    pack = openPack(rate, P.items);
 
-    if (won) {
-      P.bossDefeated++;
+    if (pack) {
+      P.packs++;
       P.chests++;
-      pack = openPack(rate);
-      if (pack) {
-        pack.items.forEach((it) => {
-          it.isNew = !P.items[it.id];
-          P.items[it.id] = (P.items[it.id] || 0) + 1;
-        });
-      }
+      pack.perfect = rate >= 1;
+      pack.items.forEach((it) => {
+        it.isNew = !P.items[it.id];
+        P.items[it.id] = (P.items[it.id] || 0) + 1;
+      });
       loot.push({ ic: "🧰", t: "チェスト ×1" });
-      if (pack) pack.items.forEach((it) => loot.push({ ic: it.ic, t: it.n }));
-      title = `🏆 ${Q.boss.name} を たおした!`;
-      msg = `せいとうりつ ${pct}%${pack ? ` → ${pack.tier.name} パック!` : ""}\n` +
-            (rate >= 1 ? "パーフェクト!さいこうの アイテムだ!" : "もっと せいかいすると もっと レアな アイテムが 出るぞ!");
+      pack.items.forEach((it) => loot.push({ ic: it.ic, t: it.n }));
+      title = `🎁 ${pack.tier.name} パック かくとく!`;
+      const upper = DROP_TIERS.slice().reverse().find((t) => t.min > pack.tier.min);
+      msg = `せいとうりつ ${pct}% → アイテム ${pack.items.length}こ\n` +
+            (pack.perfect
+              ? "パーフェクト!さいこうの パックだ!"
+              : `あと ${needForTier(upper, total) - score}もん せいかいしていたら ${upper.name} だった!`);
       sfxChest();
       orbs(12, "💎");
-    } else if (Q.boss) {
-      title = `💀 ${Q.boss.name} を たおせなかった…`;
-      msg = `せいとうりつ ${pct}%(あと ${Q.bossHp}ダメージ)\n` +
-            `${Math.round(BOSS_WIN_RATE * 100)}%いじょう せいかいすると たおせるよ!`;
     } else {
-      title = "⛏️ れんしゅう かんりょう!";
-      msg = `${score}/${total} せいかい。`;
+      const low = DROP_TIERS[DROP_TIERS.length - 1];
+      title = "📦 パックは とどかなかった…";
+      msg = `せいとうりつ ${pct}%\n` +
+            `${needForTier(low, total)}もん せいかいすると ${low.name} パックが もらえるよ!`;
     }
 
     if (Q.graduated.length > 0) {
       P.chests += Q.graduated.length;
       loot.push({ ic: "🧰", t: `そつぎょう チェスト ×${Q.graduated.length}` });
       msg += `\n🎉 ${Q.graduated.length}ご Ⓑボックスへ そつぎょう!`;
-      if (!won) { sfxChest(); orbs(10, "💎"); }
+      if (!pack) { sfxChest(); orbs(10, "💎"); }
     }
   }
   save();
 
-  const wonBoss = Q.mode !== "B" && Q.boss && Q.bossHp <= 0;
   document.getElementById("resultChest").textContent =
-    Q.mode === "B" ? "📦" : wonBoss ? Q.boss.icon : Q.boss ? "💀" : "⛏️";
+    Q.mode === "B" ? "📦" : pack ? "🎁" : "📦";
   document.getElementById("resultTitle").textContent = title;
   document.getElementById("resultScore").textContent = score;
   document.getElementById("resultTotal").textContent = total;
@@ -1746,6 +1791,8 @@ function runPack(pack) {
   ov.style.setProperty("--rg", pack.tier.glow);
 
   document.getElementById("packTier").textContent = pack.tier.name + " PACK";
+  document.getElementById("packPerfect").classList.toggle("hidden", !pack.perfect);
+  document.getElementById("packColl").classList.add("hidden");
   document.getElementById("packItems").innerHTML = "";
   document.getElementById("packTap").classList.remove("hidden");
   document.getElementById("btnPackClose").classList.add("hidden");
@@ -1827,6 +1874,13 @@ function revealItems(pack, fx) {
   setTimeout(() => {
     // レイを おとして アイテムの なまえを よみやすくする
     document.getElementById("packOverlay").classList.add("settled");
+    // ずかんが どこまで うまったか を その場で 見せる
+    const got = ALL_ITEMS.filter((it) => P.items[it.id]).length;
+    const coll = document.getElementById("packColl");
+    coll.innerHTML =
+      `<div class="pc-lb">コレクション <b>${got}</b> / ${ITEM_TOTAL} しゅるい</div>` +
+      `<div class="mc-bar thin"><div class="mc-bar-fill" style="width:${(got / ITEM_TOTAL) * 100}%"></div></div>`;
+    coll.classList.remove("hidden");
     document.getElementById("btnPackClose").classList.remove("hidden");
     const gotNew = pack.items.filter((it) => it.isNew).length;
     if (gotNew > 0) {
@@ -1895,12 +1949,12 @@ function renderStats() {
     inv.appendChild(el);
   });
 
-  document.getElementById("sBosses").textContent = P.bossDefeated;
+  document.getElementById("sPacks").textContent = P.packs;
 
   // ドロップ コレクション(100しゅるい)
   const got = ALL_ITEMS.filter((it) => P.items[it.id]).length;
   document.getElementById("collHead").textContent = `${got} / ${ITEM_TOTAL} しゅるい あつめた!`;
-  const trophy = document.getElementById("bossTrophies");
+  const trophy = document.getElementById("collectionGrid");
   trophy.innerHTML = "";
   DROP_TIERS.forEach((tier) => {
     const n = tier.items.filter((it) => P.items[it.id]).length;

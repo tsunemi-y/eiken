@@ -1124,31 +1124,6 @@ function tierInfo(count, total) {
 }
 
 /* =========================================================
-   ボス戦の ボス(たおすたびに つよい ボスが 出てくる)
-   hp = せいかいすう。ボスを たおすと レアな ドロップが もらえる。
-   ========================================================= */
-const BOSSES = [
-  { name: "ゾンビ",         icon: "🧟", hp: 5,  color: "#4A7A3A", drop: "🥩", dropName: "くさったにく" },
-  { name: "スケルトン",     icon: "💀", hp: 6,  color: "#B0B0B0", drop: "🏹", dropName: "ゆみ" },
-  { name: "クモ",           icon: "🕷️", hp: 7,  color: "#5A3A3A", drop: "🧵", dropName: "いと" },
-  { name: "クリーパー",     icon: "🟩", hp: 8,  color: "#5EA827", drop: "💣", dropName: "かやく" },
-  { name: "エンダーマン",   icon: "👤", hp: 9,  color: "#2A1E3D", drop: "🔮", dropName: "エンダーパール" },
-  { name: "ブレイズ",       icon: "🔥", hp: 10, color: "#E0A020", drop: "🕯️", dropName: "ブレイズロッド" },
-  { name: "ウィザースケルトン", icon: "☠️", hp: 11, color: "#2C2C2C", drop: "🖤", dropName: "ウィザーのほね" },
-  { name: "ゴーレム",       icon: "🗿", hp: 12, color: "#8A8A8A", drop: "🌹", dropName: "ポピー" },
-  { name: "ウィザー",       icon: "👹", hp: 14, color: "#1A1A1A", drop: "⭐", dropName: "ネザースター" },
-  { name: "エンダードラゴン", icon: "🐉", hp: 16, color: "#8C5FCF", drop: "🥚", dropName: "ドラゴンのたまご" },
-];
-
-function bossAt(defeatedCount) {
-  // ぜんぶ たおしたら さいごの ボスが くりかえし つよく なって 出てくる
-  if (defeatedCount < BOSSES.length) return { ...BOSSES[defeatedCount], loop: 0 };
-  const loop = Math.floor(defeatedCount / BOSSES.length);
-  const base = BOSSES[defeatedCount % BOSSES.length];
-  return { ...base, hp: base.hp + loop * 4, loop };
-}
-
-/* =========================================================
    にゅうりょくモードで「きいて 日本語を かく」のが むずかしい たんご
 
    ぜんちし・せつぞくし・be動詞・かんし など、
@@ -1516,14 +1491,34 @@ function tierForRate(rate) {
   return DROP_TIERS.find((t) => rate >= t.min) || null;
 }
 
-/* パックを ひらく。レアリティが たかいほど アイテムが おおく 出る */
-function openPack(rate) {
+function shuffleArr(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
+}
+
+/* パックを ひらく。レアリティが たかいほど アイテムが おおく 出る。
+   owned(もっている アイテム)を わたすと、まだ もっていない ものから
+   さきに 出す。ずかんが うまりやすく、おなじ ものばかりで がっかりしない。 */
+function openPack(rate, owned) {
   const tier = tierForRate(rate);
   if (!tier) return null;
-  const bag = tier.items.slice();
-  const got = [];
-  for (let i = 0; i < tier.pull && bag.length; i++) {
-    got.push(bag.splice(Math.floor(Math.random() * bag.length), 1)[0]);
-  }
-  return { tier, items: got };
+  const has = owned || {};
+  const fresh = tier.items.filter((it) => !has[it.id]);
+  const dup = tier.items.filter((it) => has[it.id]);
+  const bag = [...shuffleArr(fresh), ...shuffleArr(dup)];
+  return { tier, items: bag.slice(0, tier.pull) };
+}
+
+/* このもんだいすうで、そのレアリティに とどくのに ひつような せいかいすう */
+function needForTier(tier, total) {
+  return Math.max(1, Math.ceil(tier.min * total));
+}
+
+/* せいかいすう から いまの レアリティを もとめる(とどいて いなければ null) */
+function tierForScore(score, total) {
+  return DROP_TIERS.find((t) => score >= needForTier(t, total)) || null;
 }

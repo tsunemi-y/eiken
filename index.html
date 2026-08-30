@@ -253,16 +253,16 @@
       <button class="mc-btn small" id="btnPrev">◀ まえ</button>
       <button class="mc-btn small primary" id="btnNext">つぎ ▶</button>
     </div>
-    <button class="mc-btn wide danger" id="btnGoQuiz">⚔️ ボスバトルへ すすむ!</button>
+    <button class="mc-btn wide danger" id="btnGoQuiz">🎁 パックを かけて クイズ!</button>
   </section>
 
   <!-- ===== クイズ ===== -->
   <section class="screen hidden" id="screen-quiz">
-    <div class="boss-stage hidden" id="bossStage">
-      <div class="boss-icon" id="bossIcon">🧟</div>
-      <div class="boss-name" id="bossName">ゾンビ</div>
-      <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill"></div></div>
-      <div class="boss-hp-text">HP <span id="bossHpNow">11</span> / <span id="bossHpMax">11</span></div>
+    <div class="pack-gauge hidden" id="packGauge">
+      <div class="pg-pack" id="pgPack">🎁</div>
+      <div class="pg-tier" id="pgTier">まだ パックなし</div>
+      <div class="pg-track" id="pgTrack"></div>
+      <div class="pg-next" id="pgNext"></div>
     </div>
 
     <div class="quiz-head">
@@ -325,7 +325,7 @@
       <div class="panel stat"><div class="stat-ic">🧰</div><div class="stat-num" id="sChests">0</div><div class="stat-lb">チェスト</div></div>
       <div class="panel stat"><div class="stat-ic">📦</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">ボックスの ご</div></div>
       <div class="panel stat"><div class="stat-ic">🔥</div><div class="stat-num" id="sStreak">0</div><div class="stat-lb">れんぞく日</div></div>
-      <div class="panel stat"><div class="stat-ic">⚔️</div><div class="stat-num" id="sBosses">0</div><div class="stat-lb">たおした ボス</div></div>
+      <div class="panel stat"><div class="stat-ic">🎁</div><div class="stat-num" id="sPacks">0</div><div class="stat-lb">あけた パック</div></div>
     </div>
     <div class="panel">
       <div class="panel-head">📦 ようびボックスの なかみ</div>
@@ -334,7 +334,7 @@
     <div class="panel">
       <div class="panel-head">💎 ドロップ コレクション</div>
       <div class="coll-head" id="collHead">0 / 100 しゅるい あつめた!</div>
-      <div id="bossTrophies"></div>
+      <div id="collectionGrid"></div>
     </div>
   </section>
 
@@ -352,6 +352,7 @@
   <div class="pack-aura" id="packAura"></div>
   <div class="pack-rays" id="packRays"></div>
   <div class="pack-stage" id="packStage">
+    <div class="pack-perfect hidden" id="packPerfect">★ P E R F E C T ★</div>
     <div class="pack-tier" id="packTier"></div>
     <div class="pack-card" id="packCard">
       <div class="pack-card-shine"></div>
@@ -360,6 +361,7 @@
     </div>
     <div class="pack-tap" id="packTap">タップして あける! 👆</div>
     <div class="pack-items" id="packItems"></div>
+    <div class="pack-coll hidden" id="packColl"></div>
     <button class="mc-btn wide primary hidden" id="btnPackClose">🎒 もちものに いれる</button>
   </div>
   <div class="pack-flash hidden" id="packFlash"></div>
