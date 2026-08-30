@@ -1104,7 +1104,7 @@ function renderGrammarMode() {
 }
 
 document.getElementById("btnGrammar").addEventListener("click", () => { sfxClick(); startGrammar(); });
-document.getElementById("btnGSpeak").addEventListener("click", () => G && speakCloze(G.words[G.i]));
+document.getElementById("btnGSpeak").addEventListener("click", () => G && speakCloze(G.words[G.i], G.locked));
 document.getElementById("btnGRetry").addEventListener("click", () => { sfxClick(); startGrammar(); });
 document.getElementById("btnGHome").addEventListener("click", () => { sfxClick(); show("home"); });
 /* むずかしさの きりかえは タグを おす(ボタン本体は れんしゅう かいし) */
@@ -1190,9 +1190,40 @@ function renderClozeSentence(w, enId, jaId, blank, showJa = true) {
 function escapeHtml(t) {
   return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
-/* あなうめの もんだいは 「ぶんぜんぶ」を よむ。
-   ( ) の ところは よみとばさず、ぶんとして きかせる。 */
-function speakCloze(w) { speak(w.ex || w.en); }
+/* あなうめの ぶんを よむ。
+   ( ) の ところを よんでしまうと きいただけで こたえが わかるので、
+   そこは よまずに 「ポン」と おとを 出して あける。
+   あなが ぶんの あたまに ある ときも ちゃんと あたまで あける。
+   こたえた あとは full=true で ぶんぜんぶを よむ。 */
+function speakCloze(w, full = false) {
+  if (!window.speechSynthesis) return;
+  const c = clozeParts(w);
+  if (full || !c) { speak(w.ex || w.en); return; }
+  window.speechSynthesis.cancel();
+
+  const clean = (t) => t.replace(/\s+/g, " ").trim();
+  const before = clean(c.before);
+  const after = clean(c.after);
+  const seq = [];
+  if (/[A-Za-z]/.test(before)) seq.push({ text: before });
+  seq.push({ gap: true });                       // ここが ( )
+  if (/[A-Za-z]/.test(after)) seq.push({ text: after });
+
+  let i = 0;
+  const next = () => {
+    if (i >= seq.length) return;
+    const step = seq[i++];
+    if (step.gap) {
+      beep(760, 0.14, "sine", 0.05);             // あなの しるしの おと
+      setTimeout(next, 620);
+      return;
+    }
+    const u = makeUtterance(step.text, "en", 0.85);
+    u.onend = () => setTimeout(next, 140);
+    window.speechSynthesis.speak(u);
+  };
+  next();
+}
 
 /* ヒントの もとに する こたえ(いちばん みじかい ひらがなの こたえ) */
 function hintAnswer(w) {
@@ -1336,7 +1367,7 @@ document.getElementById("quizInput").addEventListener("keydown", (e) => {
 document.getElementById("btnQuizSpeak").addEventListener("click", () => {
   if (!Q) return;
   const w = Q.words[Q.i];
-  if (useCloze(w)) speakCloze(w); else speak(w.en);
+  if (useCloze(w)) speakCloze(w, Q.locked); else speak(w.en);
 });
 
 function answer(btn, ok, correct) {
