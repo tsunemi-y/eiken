@@ -590,7 +590,7 @@ function normalizeJa(s) {
     .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
     .toLowerCase()
     .replace(/[\s　]/g, "")
-    .replace(/[～~ー－ｰ。、，・…!！?？]/g, "")
+    .replace(/[～〜~ー－ｰ〜。、，・…!！?？]/g, "")
     .trim();
 }
 
@@ -656,6 +656,7 @@ function jaAnswerSet(w) {
     add(p.replace(/[（()）\[\]]/g, ""));             // かっこだけ とる
   });
   (w.kana || []).forEach(add);
+  (JA_ALT[w.en] || []).forEach(add);   // 子どもの いいかえ も せいかいに する
   return out;
 }
 
@@ -682,8 +683,11 @@ function isJaCorrect(typed, w) {
     if (dakutenClose(tk, ak)) return true;                        // 2b
     const short = tk.length <= ak.length ? tk : ak;
     const long = tk.length <= ak.length ? ak : tk;
-    if (short.length >= 3 && long.startsWith(short) &&
-        short.length / long.length >= 0.5) return true;           // 3
+    // 「うえ / うえへ」「ここ / ここに」のように 2もじの こたえも おおい ので
+    // 2もじから みとめる。そのかわり ながさの わりあいを きびしくする。
+    const minRatio = short.length >= 3 ? 0.5 : 0.6;
+    if (short.length >= 2 && long.startsWith(short) &&
+        short.length / long.length >= minRatio) return true;      // 3
     if (short.length >= 3 && long.includes(short) &&
         short.length / long.length >= 0.6) return true;           // 4
     const maxLen = Math.max(tk.length, ak.length);
@@ -818,6 +822,34 @@ function buildChoices(w) {
 }
 
 const isTypeMode = () => P.answerMode === "type";
+/* その もんだいを にゅうりょくで こたえさせるか。
+   ぜんちし・be動詞などは かけないので 4たくに おとす。 */
+const useTypeInput = (w) => isTypeMode() && !isTypeHard(w);
+
+/* ヒントの もとに する こたえ(いちばん みじかい ひらがなの こたえ) */
+function hintAnswer(w) {
+  const list = [...jaAnswerSet(w)].filter((a) => a.length >= 2 && !/[一-鿿]/.test(a));
+  if (!list.length) return null;
+  return list.sort((a, b) => a.length - b.length)[0];
+}
+
+/* 「と ○ ○」のように あたまの もじだけ 見せる。
+   2かいめの ヒントは あたま2もじ。 */
+function showHint(level) {
+  const w = Q.words[Q.i];
+  const a = hintAnswer(w);
+  const box = document.getElementById("quizHint");
+  if (!a) { box.classList.add("hidden"); return; }
+  const open = Math.min(level, a.length - 1);
+  const chars = a.split("").map((c, i) => (i < open ? c : "○")).join(" ");
+  box.innerHTML =
+    `<div class="hint-chars">${chars}</div>` +
+    `<div class="hint-note">${a.length}もじ。あたまは「${a.slice(0, open || 1)}」</div>`;
+  box.classList.remove("hidden");
+  Q.hint = level;
+  // ヒントは がめんの したの ほうに 出るので、見えるところまで うごかす
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 
 function renderQuiz() {
   const w = Q.words[Q.i];
@@ -833,11 +865,16 @@ function renderQuiz() {
   cb.classList.toggle("hidden", Q.combo < 2);
   document.getElementById("comboNum").textContent = Q.combo;
 
-  const typeMode = isTypeMode();
+  const typeMode = useTypeInput(w);
   const choicesWrap = document.getElementById("choices");
   const typeWrap = document.getElementById("quizTypeWrap");
   choicesWrap.classList.toggle("hidden", typeMode);
   typeWrap.classList.toggle("hidden", !typeMode);
+  // にゅうりょくモードなのに 4たくで 出る たんごは、そのわけを 見せる
+  document.getElementById("typeFallback").classList.toggle("hidden", !(isTypeMode() && !typeMode));
+  document.getElementById("quizHint").classList.add("hidden");
+  Q.tries = 0;
+  Q.hint = 0;
   document.getElementById("btnQuizSpeak").classList.remove("hidden");
 
   if (typeMode) {
@@ -873,11 +910,38 @@ function submitQuizTyped() {
   const input = document.getElementById("quizInput");
   if (!input.value.trim()) return;
   const ok = isJaCorrect(input.value, w);
+
+  // 1かいめの まちがいは 不せいかいに しない。
+  // ヒントを 出して もういちど かかせる(手が とまらないように)
+  if (!ok && Q.tries === 0 && hintAnswer(w)) {
+    Q.tries = 1;
+    sfxNg();
+    input.className = "typing-input ng";
+    showHint(1);
+    const fb = document.getElementById("feedback");
+    fb.classList.remove("hidden", "ok");
+    fb.classList.add("ng");
+    fb.innerHTML = `おしい! ヒントを みて もういちど<span class="fb-ja">つぎ まちがえたら ふせいかいだよ</span>`;
+    setTimeout(() => {
+      input.value = "";
+      input.className = "typing-input";
+      input.focus();
+      speak(w.en);
+    }, 700);
+    return;
+  }
+
   input.className = "typing-input " + (ok ? "ok" : "ng");
   answer(input, ok, w);
 }
 
 document.getElementById("btnQuizSubmit").addEventListener("click", submitQuizTyped);
+document.getElementById("btnQuizHint").addEventListener("click", () => {
+  if (!Q || Q.locked) return;
+  sfxClick();
+  showHint((Q.hint || 0) + 1);
+  document.getElementById("quizInput").focus();
+});
 document.getElementById("quizInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") submitQuizTyped();
 });
@@ -887,7 +951,7 @@ function answer(btn, ok, correct) {
   if (Q.locked) return;
   Q.locked = true;
 
-  if (!isTypeMode()) {
+  if (!useTypeInput(correct)) {
     document.querySelectorAll("#choices .choice").forEach((b) => {
       if (b.textContent === correct.ja) b.classList.add("ok");
       else b.classList.add("dim");
@@ -933,7 +997,7 @@ function answer(btn, ok, correct) {
     } else {
       const combo = Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : "";
       // にゅうりょくモードは ゆるく はんていするので、せいしきな こたえも 見せる
-      const full = isTypeMode() ? `<span class="fb-ja">${correct.en} = ${correct.ja}</span>` : "";
+      const full = useTypeInput(correct) ? `<span class="fb-ja">${correct.en} = ${correct.ja}</span>` : "";
       fb.innerHTML = `⛏️ ブロック ゲット!${combo}${full}`;
     }
   } else {

@@ -900,3 +900,29 @@ button {
 }
 .coll-slot.locked { background: #4A4A4A; opacity: .45; font-size: 13px; }
 .coll-n { position: absolute; bottom: 0; right: 2px; font-size: 9px; font-weight: bold; color: #FFF; text-shadow: 1px 1px 0 #000; }
+
+/* ---------- にゅうりょくモードの ヒント ---------- */
+.type-btns { display: flex; gap: 8px; }
+.hint-btn { flex: 0 0 auto; padding: 8px 14px; font-size: 12px; }
+.mc-btn.grow { flex: 1; }
+.quiz-hint {
+  padding: 12px 10px;
+  background: rgba(0,0,0,.45);
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
+  text-align: center;
+}
+.hint-chars {
+  font-family: "Press Start 2P", monospace;
+  font-size: 22px; letter-spacing: 8px;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 #000;
+}
+.hint-note { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+.type-fallback {
+  margin: 10px 0 4px;
+  padding: 10px;
+  font-size: 11px; text-align: center;
+  color: var(--diamond);
+  background: rgba(0,0,0,.35);
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
+}

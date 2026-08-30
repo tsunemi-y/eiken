@@ -208,11 +208,16 @@
       <div class="dots" id="dots"></div>
     </div>
 
+    <div class="type-fallback hidden" id="typeFallback">⌨️ この たんごは かきにくいので 4たくで こたえよう</div>
     <div class="choices" id="choices"></div>
     <div class="typing-input-wrap hidden" id="quizTypeWrap">
+      <div class="quiz-hint hidden" id="quizHint"></div>
       <input type="text" id="quizInput" class="typing-input" autocapitalize="off" autocomplete="off"
         autocorrect="off" spellcheck="false" placeholder="にほんごで こたえる">
-      <button class="mc-btn primary" id="btnQuizSubmit">こたえる</button>
+      <div class="type-btns">
+        <button class="mc-btn small hint-btn" id="btnQuizHint">💡 ヒント</button>
+        <button class="mc-btn primary grow" id="btnQuizSubmit">こたえる</button>
+      </div>
     </div>
     <div class="feedback hidden" id="feedback"></div>
   </section>
