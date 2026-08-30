@@ -91,6 +91,15 @@
       </span>
     </button>
 
+    <button class="mc-btn wide grammar-btn" id="btnGrammar">
+      <span class="mc-btn-icon">📝</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">大もん1 れんしゅう</span>
+        <span class="mc-btn-sub">ぶんの ( ) を うめる ・ ほんばんと おなじ かたち</span>
+      </span>
+      <span class="g-mode" id="gModeTag">やさしい</span>
+    </button>
+
     <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
 
     <button class="mc-btn wide" id="btnTypingMode">
@@ -181,6 +190,36 @@
     </div>
   </section>
 
+  <!-- ===== 大問1れんしゅう(ぶんの あなうめ) ===== -->
+  <section class="screen hidden" id="screen-grammar">
+    <button class="back-btn" data-back="home">◀ やめる</button>
+    <div class="quiz-head">
+      <div class="mastery-tag">📝 大もん1 れんしゅう</div>
+      <div class="quiz-pos"><span id="gPos">1</span>/<span id="gTotal">15</span></div>
+    </div>
+    <div class="mc-bar thin"><div class="mc-bar-fill" id="gBar"></div></div>
+
+    <div class="panel quiz-panel">
+      <div class="quiz-label">( ) に 入るのは どれ?</div>
+      <div class="cloze">
+        <div class="cloze-en" id="gEn"></div>
+        <div class="cloze-ja" id="gJa"></div>
+      </div>
+      <button class="sound-btn" id="btnGSpeak">🔊 ぶんを きく</button>
+    </div>
+
+    <div class="choices" id="gChoices"></div>
+    <div class="feedback hidden" id="gFeedback"></div>
+
+    <div class="panel hidden" id="gResult">
+      <div class="panel-head">📝 大もん1 けっか</div>
+      <div class="result-score"><span id="gScore">0</span> / <span id="gResultTotal">0</span> せいかい</div>
+      <div class="result-msg" id="gMsg"></div>
+      <button class="mc-btn wide primary" id="btnGRetry">📝 もういちど</button>
+      <button class="mc-btn wide" id="btnGHome">🏠 ホームへ</button>
+    </div>
+  </section>
+
   <!-- ===== おぼえる(カード) ===== -->
   <section class="screen hidden" id="screen-learn">
     <button class="back-btn" data-back="home">◀ やめる</button>
@@ -202,6 +241,7 @@
         <div class="slot big" id="cardEmoji">🏠</div>
         <div class="card-ja" id="cardJa">いえ</div>
         <div class="vis hidden" id="cardVis"></div>
+        <div class="cloze-note hidden" id="cardClozeNote">📝 この たんごは <b>ぶんの なか</b>で おぼえよう!クイズも ぶんの あなうめで 出るよ</div>
         <div class="card-ex" id="cardEx"></div>
         <button class="sound-btn" id="btnSpeak2">🔊 きく</button>
       </div>
@@ -235,6 +275,10 @@
       <div class="quiz-label" id="quizLabel">この たんごの いみは?</div>
       <div class="slot big" id="quizSlot">❓</div>
       <div class="quiz-en" id="quizEn">house</div>
+      <div class="cloze hidden" id="quizCloze">
+        <div class="cloze-en" id="clozeEn"></div>
+        <div class="cloze-ja" id="clozeJa"></div>
+      </div>
       <button class="sound-btn" id="btnQuizSpeak">🔊 きく</button>
       <div class="dots" id="dots"></div>
     </div>

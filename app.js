@@ -38,6 +38,7 @@ function load() {
     box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
     lastRange: d.lastRange || 1,
     answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
+    gHard: !!d.gHard,                    // 大もん1を にほんごなし(ほんばん)で やるか
     bossDefeated: d.bossDefeated || 0,   // たおした ボスの かず
     today: freshDay(d.today),            // きょう やったぶんの きろく
     history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
@@ -239,7 +240,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -279,6 +280,7 @@ function renderHome() {
   updateHUD();
 
   renderAnswerMode();
+  renderGrammarMode();
 
   document.getElementById("typingModeSub").textContent =
     `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
@@ -618,12 +620,20 @@ function renderCard() {
   document.getElementById("cardEnBack").textContent = w.en;
   document.getElementById("cardEmoji").textContent = w.emoji;
   document.getElementById("cardJa").textContent = w.ja;
+  // きのうご(at / of / is など)は、たんごより「ぶんの どこに 入るか」が
+  // だいじ なので、例文の なかの その たんごを 目だたせる
+  const c = useCloze(w) ? clozeParts(w) : null;
+  const exEn = c
+    ? `${escapeHtml(c.before)}<span class="ex-mark">${escapeHtml(c.answer)}</span>${escapeHtml(c.after)}`
+    : escapeHtml(w.ex);
   document.getElementById("cardEx").innerHTML =
-    `<span class="card-ex-en" id="cardExEn">🔊 ${w.ex}</span><br>${w.exJa}`;
+    `<span class="card-ex-en" id="cardExEn">🔊 ${exEn}</span><br>${escapeHtml(w.exJa)}`;
   document.getElementById("cardExEn").addEventListener("click", (e) => {
     e.stopPropagation();
     speakPair(w.ex, w.exJa);
   });
+
+  document.getElementById("cardClozeNote").classList.toggle("hidden", !c);
 
   const vis = document.getElementById("cardVis");
   if (w.vis) { vis.innerHTML = visHTML(w.vis); vis.classList.remove("hidden"); }
@@ -958,6 +968,159 @@ document.getElementById("typingInput").addEventListener("keydown", (e) => {
 document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
 document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
 
+/* =========================================================
+   📝 大もん1 れんしゅう(ぶんの あなうめ)
+
+   えいけん5きゅうの 大もん1は「短文の語句空所補充」。
+   ここでは 合格ラインの たんごから 15もん つくって、
+   ほんばんと おなじ かたちで れんしゅうする。
+
+   ・やさしい … にほんごの やくを 見せる(いみが わかった うえで えらぶ)
+   ・ほんばん … にほんごを かくす(ほんとうの しけんと おなじ)
+   まちがえても Ⓐ・Ⓑの きろくは かわらない。なんども やれる れんしゅう。
+   ========================================================= */
+const GRAMMAR_BATCH_SIZE = 15;
+let G = null;
+
+/* あなうめに つかえる ごうかくラインの たんご */
+function grammarPool() {
+  return WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && clozeParts(w));
+}
+
+function startGrammar() {
+  const pool = grammarPool();
+  if (pool.length === 0) return;
+  // きのうご(at / of / is など)を おおめに 入れる。ほんばんの 大もん1も
+  // ぜんちし・be動詞・じょどうしが 中心 なので そこを あつく する。
+  const hard = shuffle(pool.filter((w) => isTypeHard(w)));
+  const rest = shuffle(pool.filter((w) => !isTypeHard(w)));
+  const nHard = Math.min(hard.length, Math.round(GRAMMAR_BATCH_SIZE * 0.6));
+  const words = shuffle([...hard.slice(0, nHard), ...rest.slice(0, GRAMMAR_BATCH_SIZE - nHard)]);
+
+  G = { words, i: 0, correct: 0, wrong: [], locked: false };
+  document.getElementById("gTotal").textContent = words.length;
+  document.getElementById("gResult").classList.add("hidden");
+  show("grammar");
+  renderGrammar();
+}
+
+function renderGrammar() {
+  const w = G.words[G.i];
+  G.locked = false;
+  document.getElementById("gPos").textContent = G.i + 1;
+  document.getElementById("gBar").style.width = (G.i / G.words.length) * 100 + "%";
+  document.getElementById("gFeedback").classList.add("hidden");
+
+  renderClozeSentence(w, "gEn", "gJa", true, !P.gHard);
+
+  const wrap = document.getElementById("gChoices");
+  wrap.innerHTML = "";
+  clozeChoices(w, shuffle).forEach((en) => {
+    const b = document.createElement("button");
+    b.className = "choice choice-en";
+    b.textContent = en;
+    const ok = en.toLowerCase() === w.en.toLowerCase();
+    if (ok) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerGrammar(b, ok, w));
+    wrap.appendChild(b);
+  });
+  speakCloze(w);
+}
+
+function answerGrammar(btn, ok, w) {
+  if (G.locked) return;
+  G.locked = true;
+
+  document.querySelectorAll("#gChoices .choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!ok) btn.classList.add("ng");
+
+  // こたえを あなに 入れて、にほんごも かならず 見せる
+  renderClozeSentence(w, "gEn", "gJa", false, true);
+
+  const fb = document.getElementById("gFeedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  if (ok) {
+    G.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    const r = btn.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${w.en} = ${w.ja}</span>`;
+  } else {
+    G.wrong.push(w);
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">こたえは <b>${escapeHtml(w.en)}</b> ・ ${w.en} = ${w.ja}</span>`;
+  }
+
+  speakPair(w.ex, w.exJa);
+
+  setTimeout(() => {
+    G.i++;
+    if (G.i >= G.words.length) {
+      document.getElementById("gBar").style.width = "100%";
+      finishGrammar();
+    } else {
+      renderGrammar();
+    }
+  }, ok ? 2800 : 3400);
+}
+
+function finishGrammar() {
+  bumpStreak();
+  const total = G.words.length;
+  document.getElementById("gScore").textContent = G.correct;
+  document.getElementById("gResultTotal").textContent = total;
+  const pct = Math.round((G.correct / total) * 100);
+  const msg = document.getElementById("gMsg");
+  // えいけん5きゅうの ごうかくラインは だいたい 6わり
+  if (pct >= 100) {
+    msg.textContent = "パーフェクト!ほんばんでも だいじょうぶ!";
+    sfxChest(); orbs(12, "💎");
+  } else if (pct >= 60) {
+    msg.textContent = `せいとうりつ ${pct}%。ごうかくラインを こえてるよ!この ちょうしで!`;
+    sfxChest(); orbs(8, "🟢");
+  } else {
+    msg.textContent = `せいとうりつ ${pct}%。ぶんを こえに 出して よむと おぼえやすいよ。もういちど!`;
+  }
+  if (G.wrong.length) {
+    msg.textContent += `\n\nまちがえた たんご: ${G.wrong.map((w) => w.en).join(", ")}`;
+  }
+  document.getElementById("gResult").classList.remove("hidden");
+  addXP(G.correct);
+}
+
+function renderGrammarMode() {
+  document.getElementById("gModeTag").textContent = P.gHard ? "ほんばん" : "やさしい";
+  document.getElementById("gModeTag").classList.toggle("hard", P.gHard);
+}
+
+document.getElementById("btnGrammar").addEventListener("click", () => { sfxClick(); startGrammar(); });
+document.getElementById("btnGSpeak").addEventListener("click", () => G && speakCloze(G.words[G.i]));
+document.getElementById("btnGRetry").addEventListener("click", () => { sfxClick(); startGrammar(); });
+document.getElementById("btnGHome").addEventListener("click", () => { sfxClick(); show("home"); });
+/* むずかしさの きりかえは タグを おす(ボタン本体は れんしゅう かいし) */
+document.getElementById("gModeTag").addEventListener("click", (e) => {
+  e.stopPropagation();
+  sfxClick();
+  P.gHard = !P.gHard;
+  save();
+  renderGrammarMode();
+  advancement(
+    P.gHard ? "にほんごなし。ほんばんと おなじ!" : "にほんごの やくを 見ながら",
+    "📝",
+    P.gHard ? "ほんばんモード" : "やさしいモード"
+  );
+});
+
 /* ---------- こたえかたの きりかえ(4たく ⇄ にゅうりょく) ---------- */
 function renderAnswerMode() {
   const typeMode = isTypeMode();
@@ -1007,7 +1170,29 @@ function buildChoices(w) {
 const isTypeMode = () => P.answerMode === "type";
 /* その もんだいを にゅうりょくで こたえさせるか。
    ぜんちし・be動詞などは かけないので 4たくに おとす。 */
-const useTypeInput = (w) => isTypeMode() && !isTypeHard(w);
+const useTypeInput = (w) => isTypeMode() && !isTypeHard(w) && !useCloze(w);
+/* きのうご(at / of / is / am など)は たんご 1つでは おぼえられないので、
+   えいけん5きゅう 大問1 と おなじ「ぶんの あなうめ」で 出す。 */
+const useCloze = (w) => isTypeHard(w) && !!clozeParts(w);
+
+/* ぶんを ( ) つきで えがく。こたえたあとは あなに こたえを 入れて 見せる */
+function renderClozeSentence(w, enId, jaId, blank, showJa = true) {
+  const c = clozeParts(w);
+  const en = document.getElementById(enId);
+  const ja = document.getElementById(jaId);
+  if (!c) { en.textContent = w.ex || ""; ja.textContent = w.exJa || ""; return; }
+  en.innerHTML = blank
+    ? `${escapeHtml(c.before)}<span class="cloze-blank">(&nbsp;&nbsp;&nbsp;)</span>${escapeHtml(c.after)}`
+    : `${escapeHtml(c.before)}<span class="cloze-fill">${escapeHtml(c.answer)}</span>${escapeHtml(c.after)}`;
+  ja.textContent = showJa ? (w.exJa || "") : "";
+  ja.classList.toggle("hidden", !showJa);
+}
+function escapeHtml(t) {
+  return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+/* あなうめの もんだいは 「ぶんぜんぶ」を よむ。
+   ( ) の ところは よみとばさず、ぶんとして きかせる。 */
+function speakCloze(w) { speak(w.ex || w.en); }
 
 /* ヒントの もとに する こたえ(いちばん みじかい ひらがなの こたえ) */
 function hintAnswer(w) {
@@ -1048,19 +1233,38 @@ function renderQuiz() {
   cb.classList.toggle("hidden", Q.combo < 2);
   document.getElementById("comboNum").textContent = Q.combo;
 
+  const cloze = useCloze(w);
   const typeMode = useTypeInput(w);
   const choicesWrap = document.getElementById("choices");
   const typeWrap = document.getElementById("quizTypeWrap");
   choicesWrap.classList.toggle("hidden", typeMode);
   typeWrap.classList.toggle("hidden", !typeMode);
+  // あなうめのときは 「えいご→いみ」の 見ためを かくす
+  document.getElementById("quizCloze").classList.toggle("hidden", !cloze);
+  document.getElementById("quizSlot").classList.toggle("hidden", cloze);
+  document.getElementById("quizEn").classList.toggle("hidden", cloze);
   // にゅうりょくモードなのに 4たくで 出る たんごは、そのわけを 見せる
-  document.getElementById("typeFallback").classList.toggle("hidden", !(isTypeMode() && !typeMode));
+  document.getElementById("typeFallback").classList.toggle("hidden", !(isTypeMode() && !typeMode) || cloze);
   document.getElementById("quizHint").classList.add("hidden");
   Q.tries = 0;
   Q.hint = 0;
   document.getElementById("btnQuizSpeak").classList.remove("hidden");
 
-  if (typeMode) {
+  if (cloze) {
+    // あなうめ: ぶんの ( ) に 入る たんごを えらぶ(えいけん5きゅう 大問1 と おなじ)
+    document.getElementById("quizLabel").textContent = "( ) に 入るのは どれ?";
+    renderClozeSentence(w, "clozeEn", "clozeJa", true);
+    choicesWrap.innerHTML = "";
+    clozeChoices(w, shuffle).forEach((en) => {
+      const b = document.createElement("button");
+      b.className = "choice choice-en";
+      b.textContent = en;
+      if (en.toLowerCase() === w.en.toLowerCase()) b.dataset.correct = "1";
+      b.addEventListener("click", () => answer(b, en.toLowerCase() === w.en.toLowerCase(), w));
+      choicesWrap.appendChild(b);
+    });
+    speakCloze(w);
+  } else if (typeMode) {
     // にゅうりょくモード: はつおんを きいて にほんごを かく(えは ヒントに なるので かくす)
     document.getElementById("quizLabel").textContent = "たんごを きいて、にほんごで かこう";
     document.getElementById("quizSlot").textContent = "❓";
@@ -1080,6 +1284,7 @@ function renderQuiz() {
       const b = document.createElement("button");
       b.className = "choice";
       b.textContent = c.ja;
+      if (c.id === w.id) b.dataset.correct = "1";
       b.addEventListener("click", () => answer(b, c.id === w.id, w));
       choicesWrap.appendChild(b);
     });
@@ -1128,7 +1333,11 @@ document.getElementById("btnQuizHint").addEventListener("click", () => {
 document.getElementById("quizInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") submitQuizTyped();
 });
-document.getElementById("btnQuizSpeak").addEventListener("click", () => Q && speak(Q.words[Q.i].en));
+document.getElementById("btnQuizSpeak").addEventListener("click", () => {
+  if (!Q) return;
+  const w = Q.words[Q.i];
+  if (useCloze(w)) speakCloze(w); else speak(w.en);
+});
 
 function answer(btn, ok, correct) {
   if (Q.locked) return;
@@ -1136,7 +1345,7 @@ function answer(btn, ok, correct) {
 
   if (!useTypeInput(correct)) {
     document.querySelectorAll("#choices .choice").forEach((b) => {
-      if (b.textContent === correct.ja) b.classList.add("ok");
+      if (b.dataset.correct === "1") b.classList.add("ok");
       else b.classList.add("dim");
     });
     if (!ok) btn.classList.add("ng");
@@ -1175,6 +1384,7 @@ function answer(btn, ok, correct) {
     save();
     updateHUD();
 
+    if (useCloze(correct)) renderClozeSentence(correct, "clozeEn", "clozeJa", false);
     fb.classList.add("ok");
     if (graduatedNow) {
       const info = WEEKDAYS.find((w2) => w2.day === P.box[correct.id]);
@@ -1204,8 +1414,12 @@ function answer(btn, ok, correct) {
     fb.classList.add("ng");
     const extra = Q.mode === "B" ? "<br>Ⓐの れんしゅうに もどったよ" : "";
     fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${correct.emoji} ${correct.en} = ${correct.ja}${extra}</span>`;
-    speak(correct.en);
+    if (useCloze(correct)) renderClozeSentence(correct, "clozeEn", "clozeJa", false);
+    else speak(correct.en);
   }
+
+  // あなうめは ぶんまるごとを えいご→にほんご で きかせる(リスニングの れんしゅう)
+  if (useCloze(correct)) speakPair(correct.ex, correct.exJa);
 
   setTimeout(() => {
     Q.i++;
@@ -1215,7 +1429,8 @@ function answer(btn, ok, correct) {
     } else {
       renderQuiz();
     }
-  }, ok && !graduatedNow ? 900 : 1900);
+  }, useCloze(correct) ? (ok && !graduatedNow ? 2800 : 3400)
+                       : (ok && !graduatedNow ? 900 : 1900));
 }
 
 /* ---------- けっか ---------- */
