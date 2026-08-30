@@ -168,15 +168,30 @@ function voiceScore(v, langPrefix) {
   if (/compact|espeak|pico/i.test(v.name)) s -= 30;
   return s;
 }
+/* こえの えらびなおしは おもい(getVoices を まいかい なめて ならべかえる)。
+   よみあげの たびに やると えいご→にほんごの あいだが あいてしまうので、
+   いちど えらんだ こえは おぼえておく。 */
+const voiceCache = {};
 function pickVoice(langPrefix = "en") {
+  if (voiceCache[langPrefix]) return voiceCache[langPrefix];
   voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (!voices.length) return null;
   const candidates = voices.map((v) => ({ v, s: voiceScore(v, langPrefix) })).filter((x) => x.s >= 0);
   candidates.sort((a, b) => b.s - a.s);
-  return candidates.length ? candidates[0].v : null;
+  const best = candidates.length ? candidates[0].v : null;
+  if (best) voiceCache[langPrefix] = best;
+  return best;
 }
 if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = pickVoice;
-  pickVoice();
+  // こえの いちらんは あとから とどく ことが あるので、とどいたら えらびなおす
+  window.speechSynthesis.onvoiceschanged = () => {
+    delete voiceCache.en;
+    delete voiceCache.ja;
+    pickVoice("en");
+    pickVoice("ja");
+  };
+  pickVoice("en");
+  pickVoice("ja");
 }
 function makeUtterance(text, langPrefix, rate) {
   const u = new SpeechSynthesisUtterance(text);
@@ -194,12 +209,25 @@ function speak(text, rate = 0.85) {
 /* えいご→にほんご の じゅんに つづけて よむ(れいぶんを セットで おぼえる) */
 function speakPair(en, ja) {
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const uEn = makeUtterance(en, "en", 0.85);
-  uEn.onend = () => {
-    window.speechSynthesis.speak(makeUtterance(ja, "ja", 0.95));
-  };
-  window.speechSynthesis.speak(uEn);
+  const uJa = makeUtterance(ja, "ja", 0.95);
+
+  // えいごが おわってから にほんごを つくると、こえの じゅんびに 時間が
+  // かかって あいだが あいてしまう。さきに 2つとも ならべておくと、
+  // えいごを よんでいる あいだに にほんごの じゅんびが すすむ。
+  let jaStarted = false;
+  uJa.onstart = () => { jaStarted = true; };
+  synth.speak(uEn);
+  synth.speak(uJa);
+
+  // ならべても にほんごが はじまらない たんまつ が あるので、その ときだけ よびだす
+  uEn.onend = () => setTimeout(() => {
+    if (!jaStarted && !synth.speaking && !synth.pending) {
+      synth.speak(makeUtterance(ja, "ja", 0.95));
+    }
+  }, 300);
 }
 
 /* ---------- エフェクト ---------- */
