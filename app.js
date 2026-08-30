@@ -207,8 +207,26 @@ function speak(text, rate = 0.85) {
   window.speechSynthesis.speak(makeUtterance(text, "en", rate));
 }
 /* えいご→にほんご の じゅんに つづけて よむ(れいぶんを セットで おぼえる) */
-function speakPair(en, ja) {
-  if (!window.speechSynthesis) return;
+/* だいたいの よみあげ時間。
+   Web Speech は たんまつに よっては onend が こない ことが あるので、
+   「よみおわるまで すすめない」を つくる ときの ほけんに つかう。 */
+function estimateSpeakMs(text) {
+  return Math.max(1200, String(text).length * 130);
+}
+
+/* えいご→にほんご を つづけて よむ。
+   onDone は にほんごが よみおわった とき(または ほけんの 時間ぎれ)に よばれる。 */
+function speakPair(en, ja, onDone) {
+  let done = false;
+  let guard = null;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(guard);
+    if (onDone) onDone();
+  };
+  if (!window.speechSynthesis) { finish(); return; }
+
   const synth = window.speechSynthesis;
   synth.cancel();
   const uEn = makeUtterance(en, "en", 0.85);
@@ -219,15 +237,23 @@ function speakPair(en, ja) {
   // えいごを よんでいる あいだに にほんごの じゅんびが すすむ。
   let jaStarted = false;
   uJa.onstart = () => { jaStarted = true; };
+  uJa.onend = finish;
+  uJa.onerror = finish;
   synth.speak(uEn);
   synth.speak(uJa);
 
   // ならべても にほんごが はじまらない たんまつ が あるので、その ときだけ よびだす
   uEn.onend = () => setTimeout(() => {
     if (!jaStarted && !synth.speaking && !synth.pending) {
-      synth.speak(makeUtterance(ja, "ja", 0.95));
+      const retry = makeUtterance(ja, "ja", 0.95);
+      retry.onend = finish;
+      retry.onerror = finish;
+      synth.speak(retry);
     }
   }, 300);
+
+  // ほけん。onend が こない たんまつでも かならず ここで とく
+  guard = setTimeout(finish, estimateSpeakMs(en) + estimateSpeakMs(ja) + 1500);
 }
 
 /* ---------- エフェクト ---------- */
@@ -272,6 +298,7 @@ const S = {};
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
+  if (name !== "learn") { speakGen++; setLearnLock(false); }
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -641,6 +668,8 @@ function visHTML(vis) {
 function renderCard() {
   const w = L.words[L.i];
   L.flipped = false;
+  speakGen++;          // まえの よみあげの あとしまつが とどいても むしする
+  setLearnLock(false);
 
   document.getElementById("cardNo").textContent = `No.${w.no}`;
   document.getElementById("cardEn").textContent = w.en;
@@ -658,7 +687,7 @@ function renderCard() {
     `<span class="card-ex-en" id="cardExEn">🔊 ${exEn}</span><br>${escapeHtml(w.exJa)}`;
   document.getElementById("cardExEn").addEventListener("click", (e) => {
     e.stopPropagation();
-    speakPair(w.ex, w.exJa);
+    playPairLocked(w.ex, w.exJa);
   });
 
   document.getElementById("cardClozeNote").classList.toggle("hidden", !c);
@@ -677,12 +706,48 @@ function renderCard() {
   speak(w.en);
 }
 
+/* =========================================================
+   よみおわるまで つぎに すすめない しくみ
+
+   子どもが めんどくさがって、にほんごの よみあげを きかずに
+   「つぎ」を おして しまう ため、よみあげちゅうは ボタンを とめる。
+   よみあげが こわれても かならず とけるように、speakPair 側の
+   ほけんタイマーで さいごには onDone が よばれる。
+   ========================================================= */
+let speakGen = 0;
+
+function setLearnLock(on) {
+  ["btnPrev", "btnNext", "btnGoQuiz"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = on;
+    el.classList.toggle("dim", on);
+  });
+  const note = document.getElementById("listenNote");
+  if (note) note.classList.toggle("hidden", !on);
+}
+
+/* れいぶんを よみながら、おわるまで ボタンを とめる */
+function playPairLocked(en, ja) {
+  const gen = ++speakGen;
+  setLearnLock(true);
+  speakPair(en, ja, () => {
+    // あたらしい よみあげが はじまって いたら、そちらに まかせる
+    if (gen === speakGen) setLearnLock(false);
+  });
+}
+
 function flipCard() {
   const w = L.words[L.i];
   L.flipped = !L.flipped;
   document.getElementById("cardFront").classList.toggle("hidden", L.flipped);
   document.getElementById("cardBack").classList.toggle("hidden", !L.flipped);
-  if (L.flipped) { sfxClick(); speak(w.en); }
+  if (L.flipped) {
+    sfxClick();
+    // うらは「いみ + れいぶん」。ここで れいぶんを えいご→にほんごで きかせ、
+    // よみおわるまで「つぎ」を おせないように する
+    playPairLocked(w.ex, w.exJa);
+  }
 }
 
 document.getElementById("card").addEventListener("click", (e) => {
@@ -691,15 +756,20 @@ document.getElementById("card").addEventListener("click", (e) => {
 });
 document.getElementById("btnSpeak").addEventListener("click", () => speak(L.words[L.i].en));
 document.getElementById("btnSpeak2").addEventListener("click", () => speak(L.words[L.i].en));
-document.getElementById("btnPrev").addEventListener("click", () => {
+document.getElementById("btnPrev").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled) return;
   if (L.i > 0) { L.i--; sfxClick(); renderCard(); }
 });
-document.getElementById("btnNext").addEventListener("click", () => {
+document.getElementById("btnNext").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled) return;
   L.i = L.i < L.words.length - 1 ? L.i + 1 : 0;
   sfxClick();
   renderCard();
 });
-document.getElementById("btnGoQuiz").addEventListener("click", () => startQuiz(L.range, "A"));
+document.getElementById("btnGoQuiz").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled) return;
+  startQuiz(L.range, "A");
+});
 
 /* ---------- クイズ(Ⓐ・Ⓑ きょうつう) ---------- */
 let Q = null;

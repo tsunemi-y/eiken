@@ -1089,3 +1089,15 @@ button {
 }
 .g-mode.hard { background: var(--redstone); color: #FFF; text-shadow: 1px 1px 0 #000; }
 #gMsg { white-space: pre-line; }
+
+/* ---------- よみあげちゅうの おしらせ(つぎに すすめない あいだ) ---------- */
+.listen-note {
+  margin: 10px 0;
+  padding: 12px 10px;
+  font-size: 12px; text-align: center;
+  color: var(--gold);
+  background: rgba(0,0,0,.45);
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
+  animation: listenPulse .9s steps(2) infinite;
+}
+@keyframes listenPulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
