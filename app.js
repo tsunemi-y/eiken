@@ -1841,9 +1841,11 @@ document.getElementById("btnL2Home").addEventListener("click", () => { sfxClick(
 /* =========================================================
    📝 大もん1 れんしゅう(ぶんの あなうめ)
 
-   えいけん5きゅうの 大もん1は「短文の語句空所補充」。
-   ここでは 合格ラインの たんごから 15もん つくって、
-   ほんばんと おなじ かたちで れんしゅうする。
+   えいけん5きゅうの 大もん1は「短文の語句空所補充」。会話や たん文の
+   なかの ( ) に 入る ことばを 4つから えらぶ もんだいで、たんごの
+   いみを しっているだけでは とけず、文の いみが わからないと こたえが
+   きまらない。dialogue-data.js の DAIMON1_POOL(オリジナルの もんだい
+   31もん)から 出題する。
 
    ・やさしい … にほんごの やくを 見せる(いみが わかった うえで えらぶ)
    ・ほんばん … にほんごを かくす(ほんとうの しけんと おなじ)
@@ -1852,52 +1854,100 @@ document.getElementById("btnL2Home").addEventListener("click", () => { sfxClick(
 const GRAMMAR_BATCH_SIZE = 15;
 let G = null;
 
-/* あなうめに つかえる ごうかくラインの たんご */
-function grammarPool() {
-  return WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && clozeParts(w));
-}
-
 function startGrammar() {
-  const pool = grammarPool();
+  const pool = DAIMON1_POOL;
   if (pool.length === 0) return;
-  // きのうご(at / of / is など)を おおめに 入れる。ほんばんの 大もん1も
-  // ぜんちし・be動詞・じょどうしが 中心 なので そこを あつく する。
-  const hard = shuffle(pool.filter((w) => isTypeHard(w)));
-  const rest = shuffle(pool.filter((w) => !isTypeHard(w)));
-  const nHard = Math.min(hard.length, Math.round(GRAMMAR_BATCH_SIZE * 0.6));
-  const words = shuffle([...hard.slice(0, nHard), ...rest.slice(0, GRAMMAR_BATCH_SIZE - nHard)]);
-
-  G = { words, i: 0, correct: 0, wrong: [], locked: false };
-  document.getElementById("gTotal").textContent = words.length;
+  const items = shuffle(pool).slice(0, Math.min(GRAMMAR_BATCH_SIZE, pool.length));
+  G = { items, i: 0, correct: 0, wrong: [], locked: false };
+  document.getElementById("gTotal").textContent = items.length;
   document.getElementById("gResult").classList.add("hidden");
   show("grammar");
   renderGrammar();
 }
 
+/* pre/blank/post を 1つの 文しょうに くみたてる。
+   revealed=false なら あなの ところを ( ) の まま、
+   revealed=true なら せいかいを うめて 見せる。 */
+function grammarLines(it, revealed) {
+  const blankText = revealed
+    ? `<span class="cloze-fill">${escapeHtml(it.correct)}</span>`
+    : `<span class="cloze-blank">(　　　　　)</span>`;
+  const after = it.after && /^[.,!?]/.test(it.after) ? it.after : ` ${it.after}`;
+  const blankLine =
+    (it.blankSpeaker ? `<b>${it.blankSpeaker}</b>: ` : "") +
+    `${escapeHtml(it.before)} ${blankText}${escapeHtml(after)}`;
+  const lines = [
+    ...it.pre.map((l) => `<b>${l.speaker}</b>: ${escapeHtml(l.text)}`),
+    blankLine,
+    ...it.post.map((l) => `<b>${l.speaker}</b>: ${escapeHtml(l.text)}`),
+  ];
+  return lines.map((l) => `<div class="d2-line">${l}</div>`).join("");
+}
+
 function renderGrammar() {
-  const w = G.words[G.i];
+  const it = G.items[G.i];
   G.locked = false;
   document.getElementById("gPos").textContent = G.i + 1;
-  document.getElementById("gBar").style.width = (G.i / G.words.length) * 100 + "%";
+  document.getElementById("gBar").style.width = (G.i / G.items.length) * 100 + "%";
   document.getElementById("gFeedback").classList.add("hidden");
 
-  renderClozeSentence(w, "gEn", "gJa", true, !P.gHard);
+  document.getElementById("gEn").innerHTML = grammarLines(it, false);
+  document.getElementById("gJa").textContent = P.gHard ? "" : it.fullJa;
+  document.getElementById("gJa").classList.toggle("hidden", P.gHard);
 
   const wrap = document.getElementById("gChoices");
   wrap.innerHTML = "";
-  clozeChoices(w, shuffle).forEach((en) => {
+  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
     const b = document.createElement("button");
     b.className = "choice choice-en";
-    b.textContent = en;
-    const ok = en.toLowerCase() === w.en.toLowerCase();
-    if (ok) b.dataset.correct = "1";
-    b.addEventListener("click", () => answerGrammar(b, ok, w));
+    b.textContent = text;
+    if (text === it.correct) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerGrammar(b, text === it.correct, it));
     wrap.appendChild(b);
   });
-  speakCloze(w);
+
+  speakGrammar(it, false);
 }
 
-function answerGrammar(btn, ok, w) {
+/* あなの ところを とばして よむ(こたえが きこえないように)。
+   revealed=true の ときは せいかいを 入れて ぜんぶ よむ。 */
+function speakGrammar(it, revealed) {
+  const synth = wakeSynth();
+  if (!synth) return;
+  synth.cancel();
+
+  const texts = [...it.pre.map((l) => l.text)];
+  if (revealed) {
+    const after = it.after && /^[.,!?]/.test(it.after) ? it.after : ` ${it.after}`;
+    texts.push(`${it.before} ${it.correct}${after}`.replace(/\s+/g, " ").trim());
+  } else {
+    if (it.before) texts.push(it.before);
+    texts.push({ gap: true });
+    if (it.after) texts.push(it.after);
+  }
+  texts.push(...it.post.map((l) => l.text));
+
+  let i = 0;
+  const next = () => {
+    if (i >= texts.length) return;
+    const step = texts[i++];
+    if (step && step.gap) {
+      beep(760, 0.14, "sine", 0.05);
+      setTimeout(next, 620);
+      return;
+    }
+    const u = makeUtterance(step, "en", 0.85);
+    u.onend = () => setTimeout(next, 300);
+    synth.speak(u);
+  };
+  next();
+}
+document.getElementById("btnGSpeak").addEventListener("click", () => {
+  if (!G) return;
+  speakGrammar(G.items[G.i], G.locked);
+});
+
+function answerGrammar(btn, ok, it) {
   if (G.locked) return;
   G.locked = true;
 
@@ -1908,7 +1958,9 @@ function answerGrammar(btn, ok, w) {
   if (!ok) btn.classList.add("ng");
 
   // こたえを あなに 入れて、にほんごも かならず 見せる
-  renderClozeSentence(w, "gEn", "gJa", false, true);
+  document.getElementById("gEn").innerHTML = grammarLines(it, true);
+  document.getElementById("gJa").textContent = it.fullJa;
+  document.getElementById("gJa").classList.remove("hidden");
 
   const fb = document.getElementById("gFeedback");
   fb.classList.remove("hidden", "ok", "ng");
@@ -1921,32 +1973,32 @@ function answerGrammar(btn, ok, w) {
     const r = btn.getBoundingClientRect();
     blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${w.en} = ${w.ja}</span>`;
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.correct} = ${it.correctJa}</span>`;
   } else {
-    G.wrong.push(w);
+    G.wrong.push(it);
     sfxNg();
     document.getElementById("app").classList.add("shake");
     setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
     fb.classList.add("ng");
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">こたえは <b>${escapeHtml(w.en)}</b> ・ ${w.en} = ${w.ja}</span>`;
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">こたえは <b>${escapeHtml(it.correct)}</b> ・ ${it.correctJa}</span>`;
   }
 
-  speakPair(w.ex, w.exJa);
+  speakGrammar(it, true);
 
   setTimeout(() => {
     G.i++;
-    if (G.i >= G.words.length) {
+    if (G.i >= G.items.length) {
       document.getElementById("gBar").style.width = "100%";
       finishGrammar();
     } else {
       renderGrammar();
     }
-  }, ok ? 2800 : 3400);
+  }, ok ? 2800 : 3600);
 }
 
 function finishGrammar() {
   bumpStreak();
-  const total = G.words.length;
+  const total = G.items.length;
   document.getElementById("gScore").textContent = G.correct;
   document.getElementById("gResultTotal").textContent = total;
   const pct = Math.round((G.correct / total) * 100);
@@ -1962,7 +2014,7 @@ function finishGrammar() {
     msg.textContent = `せいとうりつ ${pct}%。ぶんを こえに 出して よむと おぼえやすいよ。もういちど!`;
   }
   if (G.wrong.length) {
-    msg.textContent += `\n\nまちがえた たんご: ${G.wrong.map((w) => w.en).join(", ")}`;
+    msg.textContent += `\n\nまちがえた ことば: ${G.wrong.map((it) => it.correct).join(", ")}`;
   }
   document.getElementById("gResult").classList.remove("hidden");
   addXP(G.correct);
@@ -1974,16 +2026,20 @@ function renderGrammarMode() {
 }
 
 document.getElementById("btnGrammar").addEventListener("click", () => { sfxClick(); startGrammar(); });
-document.getElementById("btnGSpeak").addEventListener("click", () => G && speakCloze(G.words[G.i], G.locked));
 document.getElementById("btnGRetry").addEventListener("click", () => { sfxClick(); startGrammar(); });
 document.getElementById("btnGHome").addEventListener("click", () => { sfxClick(); show("home"); });
-/* むずかしさの きりかえは タグを おす(ボタン本体は れんしゅう かいし) */
+/* むずかしさの きりかえは タグを おす(ボタン本体は れんしゅう かいし)。
+   もんだいの とちゅうで おしても、こたえる まえなら すぐ にほんごの
+   ひょうじが きりかわるように する。 */
 document.getElementById("gModeTag").addEventListener("click", (e) => {
   e.stopPropagation();
   sfxClick();
   P.gHard = !P.gHard;
   save();
   renderGrammarMode();
+  if (G && !G.locked) {
+    document.getElementById("gJa").classList.toggle("hidden", P.gHard);
+  }
   advancement(
     P.gHard ? "にほんごなし。ほんばんと おなじ!" : "にほんごの やくを 見ながら",
     "📝",
