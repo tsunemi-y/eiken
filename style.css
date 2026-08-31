@@ -984,13 +984,6 @@ button {
 .grammar-btn .mc-btn-body { flex: 1; gap: 3px; }
 .grammar-btn .mc-btn-title { font-size: 14px; }
 .grammar-btn .mc-btn-sub { color: var(--text-dim); }
-.g-mode {
-  flex: 0 0 auto;
-  font-size: 10px; padding: 7px 9px;
-  color: #000; background: var(--diamond);
-  box-shadow: 0 0 0 2px #000;
-}
-.g-mode.hard { background: var(--redstone); color: #FFF; text-shadow: 1px 1px 0 #000; }
 #gMsg { white-space: pre-line; }
 
 /* ---------- よみあげちゅうの おしらせ(つぎに すすめない あいだ) ---------- */
