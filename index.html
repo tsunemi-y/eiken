@@ -33,31 +33,8 @@
   <!-- ===== ホーム ===== -->
   <section class="screen" id="screen-home">
     <div class="panel countdown">
-      <div class="cd-label">えいけん5きゅう まで</div>
-      <div class="cd-num"><span id="daysLeft">--</span><span class="cd-unit">にち</span></div>
+      <div class="cd-num">🎯 えいけんまで <span id="daysLeft">--</span><span class="cd-unit">にち</span></div>
       <div class="cd-pace" id="paceMessage"></div>
-    </div>
-
-    <div class="panel today-panel">
-      <div class="panel-head">📅 きょう やったぶん</div>
-      <div class="today-main">
-        <div class="today-big"><span id="todayWords">0</span><span class="today-unit">ご</span></div>
-        <div class="today-goal">もくひょう <span id="todayGoal">0</span>ご</div>
-      </div>
-      <div class="mc-bar"><div class="mc-bar-fill" id="todayBar"></div></div>
-      <div class="today-note" id="todayNote"></div>
-
-      <div class="today-stats">
-        <div class="today-stat"><span class="ts-ic">📦</span><span class="ts-n" id="todayGrad">0</span><span class="ts-l">Ⓑへ</span></div>
-        <div class="today-stat"><span class="ts-ic">⚔️</span><span class="ts-n" id="todayQuiz">0</span><span class="ts-l">クイズ</span></div>
-        <div class="today-stat"><span class="ts-ic">🔁</span><span class="ts-n" id="todayB">0</span><span class="ts-l">Ⓑふくしゅう</span></div>
-      </div>
-
-      <div class="today-ranges-lb">きょう やった Ⓐの はんい</div>
-      <div class="today-ranges" id="todayRanges"></div>
-
-      <div class="today-week-lb">この 7日かん</div>
-      <div class="week-chart" id="weekChart"></div>
     </div>
 
     <button class="mc-btn wide primary continue-btn" id="btnContinue">
@@ -83,14 +60,6 @@
     </div>
 
 
-    <button class="mc-btn wide" id="btnAnswerMode">
-      <span class="mc-btn-icon" id="answerModeIcon">🔘</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">こたえかた:<span id="answerModeName"> 4たく</span></span>
-        <span class="mc-btn-sub">タップで きりかえ(4たく ⇄ にゅうりょく)</span>
-      </span>
-    </button>
-
     <button class="mc-btn wide grammar-btn" id="btnGrammar">
       <span class="mc-btn-icon">📝</span>
       <span class="mc-btn-body">
@@ -98,14 +67,6 @@
         <span class="mc-btn-sub">ぶんの ( ) を うめる ・ ほんばんと おなじ かたち</span>
       </span>
       <span class="g-mode" id="gModeTag">やさしい</span>
-    </button>
-
-    <button class="mc-btn wide" id="btnStats"><span class="mc-btn-icon">🏆</span><span class="mc-btn-title">せいせき</span></button>
-
-    <button class="mc-btn wide" id="btnTypingMode">
-      <span class="mc-btn-icon">⌨️</span>
-      <span class="mc-btn-title">タイピングれんしゅう</span>
-      <span class="mc-btn-sub" id="typingModeSub">ごうかくに ひつような たんごを ランダムで</span>
     </button>
 
     <button class="mc-btn wide" id="btnListeningMode">
@@ -148,27 +109,6 @@
       </span>
     </button>
 
-    <div class="panel rank-panel">
-      <div class="panel-head">⛏️ ほった ランク</div>
-
-      <div class="rank-row">
-        <div class="rank-badge" id="aRankBadge">🟩</div>
-        <div class="rank-body">
-          <div class="rank-label">Ⓐ れんしゅう ランク <span id="aRankName">くさはら</span></div>
-          <div class="mc-bar thin"><div class="mc-bar-fill" id="aRankBar"></div></div>
-          <div class="rank-foot" id="aRankFoot">0 / 300 ご てをつけた</div>
-        </div>
-      </div>
-
-      <div class="rank-row">
-        <div class="rank-badge" id="bRankBadge">🟩</div>
-        <div class="rank-body">
-          <div class="rank-label">Ⓑ マスター ランク <span id="bRankName">くさはら</span></div>
-          <div class="mc-bar thin"><div class="mc-bar-fill" id="bRankBar"></div></div>
-          <div class="rank-foot" id="bRankFoot">0 / 300 ご ボックスへ</div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- ===== A: はんいえらび ===== -->
@@ -197,37 +137,6 @@
     <h2 class="scr-title">Ⓑ ようびボックス</h2>
     <p class="scr-desc">そつぎょうした たんごが、おぼえた ようびの はこに はいるよ。<br>まちがえると Ⓐに もどるから きをつけて!</p>
     <div class="box-grid" id="boxGrid"></div>
-  </section>
-
-  <!-- ===== タイピングれんしゅう(ごうかくラインから ランダム) ===== -->
-  <section class="screen hidden" id="screen-typing">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">⌨️ タイピング れんしゅう</div>
-      <div class="quiz-pos"><span id="typingPos">1</span>/<span id="typingTotal">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="typingBar"></div></div>
-
-    <div class="panel quiz-panel">
-      <div class="quiz-label">この えの えいごを かこう</div>
-      <div class="slot big" id="typingSlot">❓</div>
-      <div class="card-ja" id="typingJa">りんご</div>
-    </div>
-
-    <div class="typing-input-wrap">
-      <input type="text" id="typingInput" class="typing-input" autocapitalize="off" autocomplete="off"
-        autocorrect="off" spellcheck="false" placeholder="えいごで にゅうりょく">
-      <button class="mc-btn primary" id="btnTypingSubmit">こたえる</button>
-    </div>
-    <div class="feedback hidden" id="typingFeedback"></div>
-
-    <div class="panel hidden" id="typingResult">
-      <div class="panel-head">⌨️ タイピング けっか</div>
-      <div class="result-score"><span id="typingScore">0</span> / <span id="typingResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
-      <button class="mc-btn wide primary" id="btnTypingRetry">⌨️ もういちど</button>
-      <button class="mc-btn wide" id="btnTypingHome">🏠 ホームへ</button>
-    </div>
   </section>
 
   <!-- ===== リスニングれんしゅう(ほんばん だい3ぶ形式) ===== -->
@@ -489,28 +398,6 @@
       <button class="mc-btn wide" id="btnRetry">⚔️ もういちど</button>
       <button class="mc-btn wide" id="btnReviewWrong">📕 まちがえた たんごを みる</button>
       <button class="mc-btn wide" id="btnResultHome">🏠 ホームへ</button>
-    </div>
-  </section>
-
-  <!-- ===== せいせき ===== -->
-  <section class="screen hidden" id="screen-stats">
-    <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">🏆 せいせき</h2>
-    <div class="stat-grid">
-      <div class="panel stat"><div class="stat-ic">🟩</div><div class="stat-num" id="sBlocks">0</div><div class="stat-lb">ブロック</div></div>
-      <div class="panel stat"><div class="stat-ic">🧰</div><div class="stat-num" id="sChests">0</div><div class="stat-lb">チェスト</div></div>
-      <div class="panel stat"><div class="stat-ic">📦</div><div class="stat-num" id="sWords">0</div><div class="stat-lb">ボックスの ご</div></div>
-      <div class="panel stat"><div class="stat-ic">🔥</div><div class="stat-num" id="sStreak">0</div><div class="stat-lb">れんぞく日</div></div>
-      <div class="panel stat"><div class="stat-ic">🎁</div><div class="stat-num" id="sPacks">0</div><div class="stat-lb">あけた パック</div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">📦 ようびボックスの なかみ</div>
-      <div class="inventory" id="inventory"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">💎 ドロップ コレクション</div>
-      <div class="coll-head" id="collHead">0 / 100 しゅるい あつめた!</div>
-      <div id="collectionGrid"></div>
     </div>
   </section>
 

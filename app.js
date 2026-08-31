@@ -323,7 +323,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "wrong", "grammar", "listening", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -334,7 +334,7 @@ function show(name) {
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
-  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes, stats: renderStats }[name] || (() => {}))();
+  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes }[name] || (() => {}))();
 }
 
 /* ---------- HUD ---------- */
@@ -366,11 +366,7 @@ function addXP(n) {
 function renderHome() {
   updateHUD();
 
-  renderAnswerMode();
   renderGrammarMode();
-
-  document.getElementById("typingModeSub").textContent =
-    `ごうかくに ひつような たんごを ランダムで(${TYPING_BATCH_SIZE}ご)`;
 
   const days = daysLeft();
   document.getElementById("daysLeft").textContent = days;
@@ -401,9 +397,6 @@ function renderHome() {
   notif.textContent = todayCount;
   notif.classList.toggle("hidden", todayCount === 0);
 
-  const started = WORD_LIST.filter((w) => P.box[w.id] !== undefined || (P.mastery[w.id] || 0) > 0).length;
-  renderRankBadge("a", started);
-  renderRankBadge("b", boxed);
 }
 
 /* ---------- 📅 きょう やったぶん ---------- */
@@ -426,59 +419,6 @@ function nextRange() {
 
 function renderToday() {
   rollDay();
-  const done = P.today.words.length;
-  const goal = dailyGoal();
-
-  document.getElementById("todayWords").textContent = done;
-  document.getElementById("todayGoal").textContent = goal;
-  document.getElementById("todayBar").style.width =
-    (goal > 0 ? Math.min(100, (done / goal) * 100) : 100) + "%";
-  document.getElementById("todayGrad").textContent = P.today.grad.length;
-  document.getElementById("todayQuiz").textContent = P.today.q;
-  document.getElementById("todayB").textContent = P.today.bWords.length;
-
-  const note = document.getElementById("todayNote");
-  if (goal === 0) note.textContent = "🎉 ごうかくラインは クリアずみ!";
-  else if (done === 0) note.textContent = "まだ きょうは やってないよ。はじめよう!";
-  else if (done >= goal) note.textContent = `✅ きょうの ぶんは かんりょう!(+${done - goal}ご おまけ)`;
-  else note.textContent = `あと ${goal - done}ご で きょうの ぶんは かんりょう!`;
-
-  // きょう さわった Ⓐの はんい
-  const rw = document.getElementById("todayRanges");
-  rw.innerHTML = "";
-  if (P.today.ranges.length === 0) {
-    rw.innerHTML = '<div class="today-chip none">まだ なし</div>';
-  } else {
-    P.today.ranges.slice().sort((a, b) => a - b).forEach((id) => {
-      const r = RANGES.find((x) => x.id === id);
-      if (!r) return;
-      const ws = wordsInRange(id);
-      const boxed = ws.filter((w) => P.box[w.id] !== undefined).length;
-      const fin = boxed === ws.length;
-      const el = document.createElement("div");
-      el.className = "today-chip" + (fin ? " done" : "");
-      el.innerHTML = `${fin ? "✅" : "✏️"} ${r.title}<span class="chip-n">${boxed}/${ws.length}</span>`;
-      el.addEventListener("click", () => { sfxClick(); renderWordlist(id); });
-      rw.appendChild(el);
-    });
-  }
-
-  // この 7日かんの ぼうグラフ
-  const days = recentDays(7);
-  const max = Math.max(goal || 1, ...days.map((d) => d.w));
-  const chart = document.getElementById("weekChart");
-  chart.innerHTML = "";
-  days.forEach((d) => {
-    const info = WEEKDAYS.find((w) => w.day === d.day);
-    const col = document.createElement("div");
-    col.className = "wc-col" + (d.isToday ? " today" : "") + (d.w === 0 ? " zero" : "");
-    col.innerHTML = `
-      <div class="wc-n">${d.w || ""}</div>
-      <div class="wc-bar"><div class="wc-fill" style="height:${max ? (d.w / max) * 100 : 0}%"></div></div>
-      <div class="wc-lb">${info ? info.label : d.date}</div>
-    `;
-    chart.appendChild(col);
-  });
 
   // つづきから ボタン
   const nr = nextRange();
@@ -495,20 +435,6 @@ function renderToday() {
     document.getElementById("continueSub").textContent =
       `${nr.bonus ? "➕ボーナス" : "🎯ごうかく"} ・ ${boxed}/${ws.length}ご ボックスへ`;
     btn.onclick = () => { sfxClick(); renderWordlist(nr.id); };
-  }
-}
-
-function renderRankBadge(prefix, count) {
-  const info = tierInfo(count, TOTAL);
-  document.getElementById(`${prefix}RankBadge`).textContent = info.tier.icon;
-  document.getElementById(`${prefix}RankBadge`).style.background = info.tier.color;
-  document.getElementById(`${prefix}RankName`).textContent = info.tier.name;
-  document.getElementById(`${prefix}RankBar`).style.width = info.pct + "%";
-  const foot = document.getElementById(`${prefix}RankFoot`);
-  if (info.nextTier) {
-    foot.textContent = `${count} / ${TOTAL}ご ・ あと${info.nextNeed - count}ごで ${info.nextTier.icon}${info.nextTier.name}!`;
-  } else {
-    foot.textContent = `${count} / ${TOTAL}ご ・ さいこう ランク!`;
   }
 }
 
@@ -922,25 +848,6 @@ function startBoxQuiz(day) {
   renderQuiz();
 }
 
-/* ---------- ⌨️ タイピングれんしゅう(Ⓑの単語だけ、Ⓑの状態は かえない) ---------- */
-let TY = null;
-
-const TYPING_BATCH_SIZE = 15;
-
-function startTyping() {
-  const pool = shuffle(WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id))).slice(0, TYPING_BATCH_SIZE);
-  if (pool.length === 0) return;
-  TY = { words: pool, i: 0, correct: 0, locked: false };
-  document.getElementById("typingTotal").textContent = TY.words.length;
-  document.getElementById("typingResult").classList.add("hidden");
-  show("typing");
-  renderTyping();
-}
-
-function normalizeTyped(s) {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 /* ---------- にほんごの こたえあわせ ----------
    カタカナ→ひらがな、ぜんかく→はんかく、スペース・くとうてん・
    「～」を むしして くらべる。「,」「/」で わかれた どの こたえでも OK。
@@ -1061,84 +968,6 @@ function isJaCorrect(typed, w) {
   }
   return false;
 }
-
-function renderTyping() {
-  const w = TY.words[TY.i];
-  TY.locked = false;
-  document.getElementById("typingPos").textContent = TY.i + 1;
-  document.getElementById("typingBar").style.width = (TY.i / TY.words.length) * 100 + "%";
-  document.getElementById("typingSlot").textContent = w.emoji;
-  document.getElementById("typingJa").textContent = w.ja;
-  const input = document.getElementById("typingInput");
-  input.value = "";
-  input.className = "typing-input";
-  document.getElementById("typingFeedback").classList.add("hidden");
-  setTimeout(() => input.focus(), 50);
-}
-
-function submitTyping() {
-  if (!TY || TY.locked) return;
-  const w = TY.words[TY.i];
-  const input = document.getElementById("typingInput");
-  const typed = normalizeTyped(input.value);
-  if (!typed) return;
-  TY.locked = true;
-  const ok = typed === normalizeTyped(w.en);
-
-  const fb = document.getElementById("typingFeedback");
-  fb.classList.remove("hidden", "ok", "ng");
-
-  if (ok) {
-    TY.correct++;
-    P.blocks++;
-    save();
-    updateHUD();
-    sfxOk();
-    input.className = "typing-input ok";
-    const r = input.getBoundingClientRect();
-    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
-    fb.classList.add("ok");
-    fb.innerHTML = "⛏️ せいかい!";
-  } else {
-    sfxNg();
-    input.className = "typing-input ng";
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは 「${w.en}」だよ</span>`;
-  }
-  speak(w.en);
-
-  setTimeout(() => {
-    TY.i++;
-    if (TY.i >= TY.words.length) {
-      document.getElementById("typingBar").style.width = "100%";
-      finishTyping();
-    } else {
-      renderTyping();
-    }
-  }, ok ? 1000 : 2000);
-}
-
-function finishTyping() {
-  bumpStreak();
-  document.getElementById("typingScore").textContent = TY.correct;
-  document.getElementById("typingResultTotal").textContent = TY.words.length;
-  document.getElementById("typingResult").classList.remove("hidden");
-  if (TY.correct === TY.words.length) {
-    sfxChest();
-    orbs(10, "💎");
-    advancement("タイピング ぜんもん せいかい!", "⌨️", "すごい!");
-  }
-}
-
-document.getElementById("btnTypingMode").addEventListener("click", () => { sfxClick(); startTyping(); });
-document.getElementById("btnTypingSubmit").addEventListener("click", submitTyping);
-document.getElementById("typingInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submitTyping();
-});
-document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
-document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
 
 /* =========================================================
    🎧 リスニングれんしゅう(ほんばん だい3ぶ「イラストの内容一致選択」形式)
@@ -2070,24 +1899,6 @@ document.getElementById("gModeTag").addEventListener("click", (e) => {
   );
 });
 
-/* ---------- こたえかたの きりかえ(4たく ⇄ にゅうりょく) ---------- */
-function renderAnswerMode() {
-  const typeMode = isTypeMode();
-  document.getElementById("answerModeIcon").textContent = typeMode ? "⌨️" : "🔘";
-  document.getElementById("answerModeName").textContent = typeMode ? " にゅうりょく" : " 4たく";
-}
-document.getElementById("btnAnswerMode").addEventListener("click", () => {
-  sfxClick();
-  P.answerMode = isTypeMode() ? "choice" : "type";
-  save();
-  renderAnswerMode();
-  advancement(
-    isTypeMode() ? "にほんごを じぶんで かく モード" : "4つから えらぶ モード",
-    isTypeMode() ? "⌨️" : "🔘",
-    "こたえかたを かえた!"
-  );
-});
-
 function renderMasteryTag(w) {
   const tag = document.getElementById("masteryTag");
   if (Q.mode === "B") { tag.textContent = "📦 ボックスの ふくしゅう"; return; }
@@ -2116,7 +1927,10 @@ function buildChoices(w) {
   return shuffle([w, ...wrongs]);
 }
 
-const isTypeMode = () => P.answerMode === "type";
+/* こたえかた選択の ボタンは けしたが、まえに にゅうりょくモードを
+   えらんでいた たんまつが そのまま ロックされないよう、ここで
+   つねに false に する(4たくモード いっぽんに なる) */
+const isTypeMode = () => false;
 /* その もんだいを にゅうりょくで こたえさせるか。
    ぜんちし・be動詞などは かけないので 4たくに おとす。 */
 const useTypeInput = (w) => isTypeMode() && !isTypeHard(w) && !useCloze(w);
@@ -2707,63 +2521,10 @@ function renderWrong() {
   show("wrong");
 }
 
-/* ---------- せいせき ---------- */
-function renderStats() {
-  document.getElementById("sBlocks").textContent = P.blocks;
-  document.getElementById("sChests").textContent = P.chests;
-  document.getElementById("sWords").textContent = boxedCount();
-  document.getElementById("sStreak").textContent = P.streak.n;
-
-  const wd = new Date().getDay();
-  const inv = document.getElementById("inventory");
-  inv.innerHTML = "";
-  WEEKDAYS.forEach((info) => {
-    const n = wordsInBox(info.day).length;
-    const el = document.createElement("div");
-    el.className = "inv-slot" + (n === 0 ? " empty" : "") + (info.day === wd ? " today" : "");
-    el.innerHTML = `
-      <div class="inv-ic">${n === 0 ? "・" : info.icon}</div>
-      <div class="inv-label">${info.label}よう</div>
-      <div class="inv-count">${n}ご</div>
-    `;
-    inv.appendChild(el);
-  });
-
-  document.getElementById("sPacks").textContent = P.packs;
-
-  // ドロップ コレクション(100しゅるい)
-  const got = ALL_ITEMS.filter((it) => P.items[it.id]).length;
-  document.getElementById("collHead").textContent = `${got} / ${ITEM_TOTAL} しゅるい あつめた!`;
-  const trophy = document.getElementById("collectionGrid");
-  trophy.innerHTML = "";
-  DROP_TIERS.forEach((tier) => {
-    const n = tier.items.filter((it) => P.items[it.id]).length;
-    const head = document.createElement("div");
-    head.className = "coll-tier";
-    head.style.color = tier.color;
-    head.textContent = `${tier.name} ${n}/${tier.items.length}`;
-    trophy.appendChild(head);
-
-    const grid = document.createElement("div");
-    grid.className = "coll-grid";
-    tier.items.forEach((it) => {
-      const c = P.items[it.id] || 0;
-      const el = document.createElement("div");
-      el.className = "coll-slot" + (c === 0 ? " locked" : "");
-      el.title = c === 0 ? "?" : `${it.n} ×${c}`;
-      el.innerHTML = c === 0 ? "🔒" : `${it.ic}${c > 1 ? `<span class="coll-n">${c}</span>` : ""}`;
-      if (c > 0) el.style.boxShadow = `inset 2px 2px 0 var(--slot-dk), inset -2px -2px 0 #FFF, 0 0 0 2px ${tier.color}`;
-      grid.appendChild(el);
-    });
-    trophy.appendChild(grid);
-  });
-}
-
 /* ---------- ナビ ---------- */
 document.getElementById("btnHome").addEventListener("click", () => show("home"));
 document.getElementById("btnA").addEventListener("click", () => { sfxClick(); show("ranges"); });
 document.getElementById("btnB").addEventListener("click", () => { sfxClick(); show("boxes"); });
-document.getElementById("btnStats").addEventListener("click", () => { sfxClick(); show("stats"); });
 document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(b.dataset.back)));
 
 /* ---------- スタート ---------- */

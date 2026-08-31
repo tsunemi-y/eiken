@@ -168,34 +168,18 @@ button {
 .panel-head { font-size: 14px; margin-bottom: 10px; text-shadow: 2px 2px 0 #000; }
 .panel-foot { font-size: 12px; color: var(--text-dim); text-align: right; margin-top: 8px; }
 
-/* ---------- ランク(ホーム) ---------- */
-.rank-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.rank-row:last-child { margin-bottom: 0; }
-.rank-badge {
-  width: 44px; height: 44px;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-  box-shadow: inset 3px 3px 0 rgba(255,255,255,.35), inset -3px -3px 0 rgba(0,0,0,.45), 0 0 0 2px #000;
-}
-.rank-body { flex: 1; min-width: 0; }
-.rank-label { font-size: 12px; margin-bottom: 5px; }
-.rank-label span { color: var(--gold); font-weight: bold; }
-.rank-foot { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
-
-/* カウントダウン */
-.countdown { text-align: center; background: #2A1E3D; }
-.cd-label { font-size: 12px; color: #C6A8FF; }
+/* カウントダウン(1行だけの コンパクトひょうじ) */
+.countdown { text-align: center; background: #2A1E3D; padding: 8px 14px; margin-bottom: 10px; }
 .cd-num {
   font-family: "Press Start 2P", monospace;
-  font-size: 40px;
+  font-size: 15px;
   color: var(--gold);
-  text-shadow: 3px 3px 0 #6A5A00;
-  margin: 8px 0 4px;
-  line-height: 1.2;
+  text-shadow: 2px 2px 0 #6A5A00;
+  line-height: 1.4;
 }
-.cd-unit { font-size: 15px; margin-left: 6px; color: #FFF; text-shadow: 2px 2px 0 #000; }
-.cd-pace { font-size: 12px; color: #DCC9FF; line-height: 1.6; }
+.cd-num #daysLeft { font-size: 20px; }
+.cd-unit { font-size: 11px; margin-left: 3px; color: #FFF; text-shadow: 1px 1px 0 #000; }
+.cd-pace { font-size: 11px; color: #DCC9FF; line-height: 1.5; margin-top: 3px; }
 
 /* ---------- マイクラ ボタン ---------- */
 .mc-btn {
@@ -613,28 +597,6 @@ button {
 }
 .result-msg { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-bottom: 16px; }
 
-/* ---------- せいせき ---------- */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-.stat { text-align: center; padding: 14px 6px; margin: 0; }
-.stat-ic { font-size: 26px; }
-.stat-num { font-family: "Press Start 2P", monospace; font-size: 20px; color: var(--gold); margin: 8px 0 6px; }
-.stat-lb { font-size: 11px; color: var(--text-dim); }
-
-.inventory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.inv-slot {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px;
-  padding: 10px 4px;
-  background: var(--slot);
-  box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px #000;
-}
-.inv-slot.today { box-shadow: inset 3px 3px 0 var(--slot-dk), inset -3px -3px 0 #FFF, 0 0 0 2px var(--gold); }
-.inv-slot.empty { background: #4A4A4A; opacity: .5; }
-.inv-ic { font-size: 20px; }
-.inv-label { font-size: 10px; color: var(--text-sh); }
-.inv-count { font-size: 11px; font-weight: bold; color: #1A1A1A; }
-.inv-slot.empty .inv-label, .inv-slot.empty .inv-count { color: var(--text-dim); }
-
 /* ---------- まちがえた たんご ---------- */
 .wrong-list { display: flex; flex-direction: column; gap: 8px; }
 .wrong-item {
@@ -903,21 +865,6 @@ button {
   100% { transform: translate(0,0); }
 }
 
-/* ドロップ コレクション(せいせき) */
-.coll-head { font-size: 11px; color: var(--text-dim); margin: 4px 0 8px; text-align: center; }
-.coll-tier { font-family: "Press Start 2P", monospace; font-size: 9px; margin: 12px 0 6px; text-shadow: 2px 2px 0 #000; }
-.coll-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-.coll-slot {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  font-size: 19px;
-  background: var(--slot);
-  box-shadow: inset 2px 2px 0 var(--slot-dk), inset -2px -2px 0 #FFF, 0 0 0 2px #000;
-}
-.coll-slot.locked { background: #4A4A4A; opacity: .45; font-size: 13px; }
-.coll-n { position: absolute; bottom: 0; right: 2px; font-size: 9px; font-weight: bold; color: #FFF; text-shadow: 1px 1px 0 #000; }
-
 /* ---------- にゅうりょくモードの ヒント ---------- */
 .type-btns { display: flex; gap: 8px; }
 .hint-btn { flex: 0 0 auto; padding: 8px 14px; font-size: 12px; }
@@ -943,65 +890,6 @@ button {
   background: rgba(0,0,0,.35);
   box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
 }
-
-/* =========================================================
-   📅 きょう やったぶん
-   ========================================================= */
-.today-panel { text-align: center; }
-.today-main { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin: 6px 0 10px; }
-.today-big {
-  font-family: "Press Start 2P", monospace;
-  font-size: 34px; color: var(--xp);
-  text-shadow: 3px 3px 0 #000;
-}
-.today-unit { font-family: inherit; font-size: 15px; margin-left: 4px; color: var(--text-dim); }
-.today-goal { font-size: 12px; color: var(--text-dim); }
-.today-note { font-size: 12px; color: var(--gold); margin-top: 10px; line-height: 1.7; }
-
-.today-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 4px; }
-.today-stat {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 8px 4px;
-  background: rgba(0,0,0,.35);
-  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
-}
-.ts-ic { font-size: 17px; }
-.ts-n { font-family: "Press Start 2P", monospace; font-size: 14px; color: var(--gold); }
-.ts-l { font-size: 9px; color: var(--text-dim); }
-
-.today-ranges-lb, .today-week-lb {
-  font-size: 10px; color: var(--text-dim);
-  text-align: left; margin: 14px 0 6px;
-}
-.today-ranges { display: flex; flex-wrap: wrap; gap: 6px; }
-.today-chip {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 10px;
-  font-size: 11px;
-  background: var(--slot);
-  color: #1A1A1A;
-  box-shadow: inset 2px 2px 0 #FFF, inset -2px -2px 0 var(--slot-dk), 0 0 0 2px #000;
-  cursor: pointer;
-}
-.today-chip.done { background: var(--grass); color: #FFF; text-shadow: 1px 1px 0 #000; }
-.today-chip.none { background: #4A4A4A; color: var(--text-dim); opacity: .7; cursor: default; box-shadow: none; }
-.chip-n { font-family: "Press Start 2P", monospace; font-size: 9px; opacity: .8; }
-
-/* 7日かんの ぼうグラフ */
-.week-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; }
-.wc-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.wc-n { font-family: "Press Start 2P", monospace; font-size: 9px; color: var(--gold); min-height: 12px; }
-.wc-bar {
-  width: 100%; height: 54px;
-  display: flex; align-items: flex-end;
-  background: rgba(0,0,0,.4);
-  box-shadow: inset 2px 2px 0 #000;
-}
-.wc-fill { width: 100%; background: var(--xp); box-shadow: inset -2px -2px 0 var(--xp-d); min-height: 0; }
-.wc-col.zero .wc-fill { background: #4A4A4A; }
-.wc-col.today .wc-fill { background: var(--gold); box-shadow: inset -2px -2px 0 #C9B800; }
-.wc-lb { font-size: 9px; color: var(--text-dim); }
-.wc-col.today .wc-lb { color: var(--gold); font-weight: bold; }
 
 /* Ⓐ はんいえらび の 「きょう」 */
 .range-today-bar {
@@ -1035,8 +923,6 @@ button {
 .continue-btn .mc-btn-body { flex: 1; gap: 3px; }
 .continue-btn .mc-btn-title { font-size: 14px; line-height: 1.4; }
 
-/* 0この日も バーの あとを のこす */
-.wc-col.zero .wc-fill { background: #4A4A4A; min-height: 3px; }
 .range-next { background: var(--diamond); }
 
 /* =========================================================
