@@ -1884,6 +1884,25 @@ function grammarLines(it, revealed) {
   return lines.map((l) => `<div class="d2-line">${l}</div>`).join("");
 }
 
+/* やさしいモードで 見せる 日本語訳を つくる。
+   こたえの ことばが そのまま 日本語訳に 出ていたら、答えを 教える
+   ことに なってしまう(「めがねを さがしてるの」と 見せたら
+   glasses と まる見え)。そこで こたえの ぶぶんだけ (　　) に ふせる。
+   ふせる ばしょが あいまいな とき(「の」のように みじかい・
+   なんかいも 出てくる ことば)は、あんぜんの ため 日本語じたいを
+   見せない(ほんばんと おなじ あつかいに する)。 */
+function grammarJaHint(it) {
+  if (it.correctJa.length < 2) return null;
+  // ちょうど 1かい だけ 出てくる ときしか ふせない。
+  // 2かい 出てきたり(「はじまる」が しつもんと こたえの りょうほうに
+  // 出るなど)、べつの ことばの いちぶに たまたま ふくまれている
+  // ときは、どこを ふせても もれる か、へんに ふせて しまうので、
+  // あんぜんの ため 日本語じたい 見せない。
+  const count = it.fullJa.split(it.correctJa).length - 1;
+  if (count !== 1) return null;
+  return it.fullJa.replace(it.correctJa, "(　　　　)");
+}
+
 function renderGrammar() {
   const it = G.items[G.i];
   G.locked = false;
@@ -1892,8 +1911,9 @@ function renderGrammar() {
   document.getElementById("gFeedback").classList.add("hidden");
 
   document.getElementById("gEn").innerHTML = grammarLines(it, false);
-  document.getElementById("gJa").textContent = P.gHard ? "" : it.fullJa;
-  document.getElementById("gJa").classList.toggle("hidden", P.gHard);
+  const jaHint = P.gHard ? null : grammarJaHint(it);
+  document.getElementById("gJa").textContent = jaHint || "";
+  document.getElementById("gJa").classList.toggle("hidden", !jaHint);
 
   const wrap = document.getElementById("gChoices");
   wrap.innerHTML = "";
@@ -2038,7 +2058,10 @@ document.getElementById("gModeTag").addEventListener("click", (e) => {
   save();
   renderGrammarMode();
   if (G && !G.locked) {
-    document.getElementById("gJa").classList.toggle("hidden", P.gHard);
+    const it = G.items[G.i];
+    const jaHint = P.gHard ? null : grammarJaHint(it);
+    document.getElementById("gJa").textContent = jaHint || "";
+    document.getElementById("gJa").classList.toggle("hidden", !jaHint);
   }
   advancement(
     P.gHard ? "にほんごなし。ほんばんと おなじ!" : "にほんごの やくを 見ながら",
