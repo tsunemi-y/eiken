@@ -116,6 +116,14 @@
       </span>
     </button>
 
+    <button class="mc-btn wide" id="btnWordOrderMode">
+      <span class="mc-btn-icon">🧩</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">ごじゅんれんしゅう</span>
+        <span class="mc-btn-sub">単語タイルを ならべて 文を つくる ・ 大もん3の ちからだめし</span>
+      </span>
+    </button>
+
     <div class="panel rank-panel">
       <div class="panel-head">⛏️ ほった ランク</div>
 
@@ -222,6 +230,34 @@
       <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
       <button class="mc-btn wide primary" id="btnLnRetry">🎧 もういちど</button>
       <button class="mc-btn wide" id="btnLnHome">🏠 ホームへ</button>
+    </div>
+  </section>
+
+  <!-- ===== ごじゅんれんしゅう(ほんばん だい3もん形式) ===== -->
+  <section class="screen hidden" id="screen-wordorder">
+    <button class="back-btn" data-back="home">◀ やめる</button>
+    <div class="quiz-head">
+      <div class="mastery-tag">🧩 ごじゅん れんしゅう</div>
+      <div class="quiz-pos"><span id="woPos">1</span>/<span id="woTotal">10</span></div>
+    </div>
+    <div class="mc-bar thin"><div class="mc-bar-fill" id="woBar"></div></div>
+
+    <div class="panel quiz-panel wo-panel">
+      <div class="quiz-label">この いみに なるように ならべよう</div>
+      <div class="wo-ja" id="woJa">わたしは いえに います。</div>
+      <div class="wo-build" id="woBuild"></div>
+      <div class="wo-bank" id="woBank"></div>
+      <button class="mc-btn small" id="btnWoReset">🔁 やりなおす</button>
+    </div>
+
+    <div class="feedback hidden" id="woFeedback"></div>
+
+    <div class="panel hidden" id="woResult">
+      <div class="panel-head">🧩 ごじゅん けっか</div>
+      <div class="result-score"><span id="woScore">0</span> / <span id="woResultTotal">0</span> せいかい</div>
+      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
+      <button class="mc-btn wide primary" id="btnWoRetry">🧩 もういちど</button>
+      <button class="mc-btn wide" id="btnWoHome">🏠 ホームへ</button>
     </div>
   </section>
 

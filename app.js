@@ -323,7 +323,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening", "wordorder"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -1302,6 +1302,170 @@ function finishListening() {
 document.getElementById("btnListeningMode").addEventListener("click", () => { sfxClick(); startListening(); });
 document.getElementById("btnLnRetry").addEventListener("click", () => { sfxClick(); startListening(); });
 document.getElementById("btnLnHome").addEventListener("click", () => { sfxClick(); show("home"); });
+
+/* =========================================================
+   🧩 ごじゅんれんしゅう(大もん3「語句整序」の ちからだめし)
+
+   本番は 4つの あたえられた ごを ならべかえる もんだいだけど、
+   ここでは 文まるごとを タイルに して、日本語の いみを 見ながら
+   タップで じゅんばんに くみたてる れんしゅうに している
+   (単語力が いらない ぶん、文の くみたて そのものに しゅうちゅう できる)。
+
+   Ⓐ・Ⓑの きろくは かえない、ごじゅんかんかく だけの れんしゅう。
+   ========================================================= */
+const WORDORDER_BATCH_SIZE = 10;
+let WO = null;
+
+function buildWordOrderQuestions(n) {
+  const pool = wordOrderPool();
+  const targets = shuffle(pool).slice(0, n);
+  return targets.map((w) => {
+    const { tokens, end } = tokenizeEx(w.ex);
+    let bank;
+    do { bank = shuffle(tokens); } while (tokens.length > 1 && bank.join(" ") === tokens.join(" "));
+    return { w, tokens, end, bank };
+  });
+}
+
+function startWordOrder() {
+  const qs = buildWordOrderQuestions(WORDORDER_BATCH_SIZE);
+  if (qs.length === 0) return;
+  WO = { qs, i: 0, correct: 0, locked: false, placed: [], bank: [] };
+  document.getElementById("woTotal").textContent = qs.length;
+  document.getElementById("woResult").classList.add("hidden");
+  show("wordorder");
+  renderWordOrder();
+}
+
+function renderWordOrder() {
+  const q = WO.qs[WO.i];
+  WO.locked = false;
+  WO.placed = [];
+  WO.bank = q.bank.map((t, idx) => ({ t, idx, used: false }));
+  document.getElementById("woPos").textContent = WO.i + 1;
+  document.getElementById("woBar").style.width = (WO.i / WO.qs.length) * 100 + "%";
+  document.getElementById("woJa").textContent = q.w.exJa || q.w.ja;
+  document.getElementById("woFeedback").classList.add("hidden");
+  renderWoTiles();
+}
+
+/* いま くみたてている文(build)と のこりの タイル(bank)を かきなおす */
+function renderWoTiles() {
+  const q = WO.qs[WO.i];
+  const build = document.getElementById("woBuild");
+  const bank = document.getElementById("woBank");
+
+  build.innerHTML = "";
+  for (let j = 0; j < q.tokens.length; j++) {
+    const item = WO.placed[j];
+    const slot = document.createElement("button");
+    slot.className = "wo-slot" + (item ? " filled" : "");
+    slot.textContent = item ? item.t : "";
+    if (item) {
+      slot.addEventListener("click", () => {
+        if (WO.locked) return;
+        sfxClick();
+        WO.bank.find((b) => b.idx === item.idx).used = false;
+        WO.placed.splice(j, 1);
+        renderWoTiles();
+      });
+    }
+    build.appendChild(slot);
+  }
+  const endEl = document.createElement("span");
+  endEl.className = "wo-end";
+  endEl.textContent = q.end;
+  build.appendChild(endEl);
+
+  bank.innerHTML = "";
+  WO.bank.forEach((b) => {
+    if (b.used) return;
+    const tile = document.createElement("button");
+    tile.className = "wo-tile";
+    tile.textContent = b.t;
+    tile.addEventListener("click", () => {
+      if (WO.locked || WO.placed.length >= q.tokens.length) return;
+      sfxClick();
+      b.used = true;
+      WO.placed.push(b);
+      renderWoTiles();
+      if (WO.placed.length === q.tokens.length) checkWordOrder();
+    });
+    bank.appendChild(tile);
+  });
+}
+
+function checkWordOrder() {
+  if (!WO || WO.locked) return;
+  WO.locked = true;
+  const q = WO.qs[WO.i];
+  const built = WO.placed.map((b) => b.t);
+  const ok = built.every((t, j) => t.toLowerCase() === q.tokens[j].toLowerCase());
+
+  // 1文字ずつ あっているか(あっていない ばしょは あかく する)
+  const slots = document.querySelectorAll("#woBuild .wo-slot");
+  slots.forEach((slot, j) => {
+    slot.classList.add(built[j] && built[j].toLowerCase() === q.tokens[j].toLowerCase() ? "ok" : "ng");
+  });
+
+  const fb = document.getElementById("woFeedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  const fullEn = q.tokens.join(" ") + q.end;
+
+  if (ok) {
+    WO.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    orbs(4, "🟢");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${fullEn}</span>`;
+  } else {
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは「${fullEn}」だよ</span>`;
+  }
+  speakPair(q.w.ex, q.w.exJa);
+
+  setTimeout(() => {
+    WO.i++;
+    if (WO.i >= WO.qs.length) {
+      document.getElementById("woBar").style.width = "100%";
+      finishWordOrder();
+    } else {
+      renderWordOrder();
+    }
+  }, ok ? 2400 : 3000);
+}
+
+document.getElementById("btnWoReset").addEventListener("click", () => {
+  if (!WO || WO.locked) return;
+  sfxClick();
+  WO.placed = [];
+  WO.bank.forEach((b) => { b.used = false; });
+  renderWoTiles();
+});
+
+function finishWordOrder() {
+  bumpStreak();
+  document.getElementById("woScore").textContent = WO.correct;
+  document.getElementById("woResultTotal").textContent = WO.qs.length;
+  document.getElementById("woResult").classList.remove("hidden");
+  addXP(WO.correct);
+  if (WO.correct === WO.qs.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("ごじゅん ぜんもん せいかい!", "🧩", "すごい!");
+  }
+}
+
+document.getElementById("btnWordOrderMode").addEventListener("click", () => { sfxClick(); startWordOrder(); });
+document.getElementById("btnWoRetry").addEventListener("click", () => { sfxClick(); startWordOrder(); });
+document.getElementById("btnWoHome").addEventListener("click", () => { sfxClick(); show("home"); });
+
 
 
 /* =========================================================

@@ -1153,3 +1153,40 @@ button {
   color: #FFF;
   text-shadow: 2px 2px 0 #000;
 }
+
+/* ---------- 🧩 ごじゅんれんしゅう ---------- */
+.wo-panel { text-align: center; }
+.wo-ja { font-size: 15px; color: var(--diamond); margin-bottom: 16px; line-height: 1.7; }
+
+.wo-build {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 6px; margin-bottom: 16px; min-height: 46px;
+}
+.wo-slot {
+  min-width: 56px; height: 40px;
+  padding: 0 10px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  background: rgba(0,0,0,.4);
+  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
+  border-bottom: 3px solid #5A5A5A;
+}
+.wo-slot.filled { background: #3A5A8A; color: #FFF; box-shadow: inset 2px 2px 0 #5A7EBA, inset -2px -2px 0 #1E3252, 0 0 0 2px #000; border-bottom: none; }
+.wo-slot.ok { background: var(--grass); box-shadow: inset 2px 2px 0 #86D64C, inset -2px -2px 0 #2E5C12, 0 0 0 2px #FFF; }
+.wo-slot.ng { background: #9C3B2E; box-shadow: inset 2px 2px 0 #D26150, inset -2px -2px 0 #5E1F16, 0 0 0 2px #000; }
+.wo-end { font-family: "Press Start 2P", monospace; font-size: 16px; color: var(--text-dim); margin-left: 4px; }
+
+.wo-bank {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; margin-bottom: 14px; min-height: 44px;
+}
+.wo-tile {
+  padding: 10px 14px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  background: var(--slot);
+  color: #1A1A1A;
+  text-shadow: none;
+  box-shadow: inset 3px 3px 0 #FFF, inset -3px -3px 0 var(--slot-dk), 0 0 0 2px #000;
+}
+.wo-tile:active { box-shadow: inset -3px -3px 0 #FFF, inset 3px 3px 0 var(--slot-dk), 0 0 0 2px #000; }

@@ -1256,6 +1256,38 @@ function clozeChoices(w, shuffleFn) {
 }
 
 /* =========================================================
+   ごじゅん れんしゅう(大もん3「語句整序」の ちからだめし)
+
+   本番の 大もん3は、あたえられた 4つの ごを ならべかえて
+   文を つくる もんだい。単語の いみは ぜんぶ わかっている 前提で、
+   「ごじゅん(文の くみたて)」の ちからだけを とう。
+
+   ここでは 例文を まるごと つかい、日本語の いみを 見ながら
+   単語タイルを タップして えいごの 文を くみたてる れんしゅうを する。
+   ========================================================= */
+
+/* 例文を「単語タイルの はいれつ」と「文末のきごう(.?!)」に わける。
+   コンマなどが 入っている ぶんは タイルが きたなくなるので のぞく。 */
+function tokenizeEx(en) {
+  let str = String(en || "").trim();
+  const m = str.match(/^(.*?)([.?!]+)$/);
+  let end = "";
+  if (m) { str = m[1]; end = m[2]; }
+  const tokens = str.split(/\s+/).filter(Boolean);
+  return { tokens, end };
+}
+function cleanToken(t) { return /^[A-Za-z0-9']+$/.test(t); }
+
+/* ごじゅん れんしゅうに つかえる 文(3〜8ごで、きごうが きれいな もの) */
+function wordOrderPool() {
+  return WORD_LIST.filter((w) => {
+    if (!(CORE_WORD_IDS.has(w.id) && w.ex)) return false;
+    const { tokens } = tokenizeEx(w.ex);
+    return tokens.length >= 3 && tokens.length <= 8 && tokens.every(cleanToken);
+  });
+}
+
+/* =========================================================
    こたえの いいかえ(にゅうりょくモード ようの どうぎご)
 
    パス単の やくは 1つだけ だけど、子どもは べつの いいかたで
