@@ -323,12 +323,14 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening", "wordorder"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
   if (name !== "learn") { speakGen++; setLearnLock(false); }
   if (name !== "listening" && LN) { LN.gen++; }
+  if (name !== "listen1" && L1) { L1.gen++; }
+  if (name !== "listen2" && L2) { L2.gen++; }
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -1465,6 +1467,374 @@ function finishWordOrder() {
 document.getElementById("btnWordOrderMode").addEventListener("click", () => { sfxClick(); startWordOrder(); });
 document.getElementById("btnWoRetry").addEventListener("click", () => { sfxClick(); startWordOrder(); });
 document.getElementById("btnWoHome").addEventListener("click", () => { sfxClick(); show("home"); });
+
+/* =========================================================
+   💬 大もん2 れんしゅう(会話文の文空所補充)
+
+   Aの はつげんに つづく Bの こたえの ( ) を、4つの えいごの
+   せんたくしから えらぶ。ほんばんと おなじ「よむ」もんだいなので、
+   もじを かくさず 出す(🔊は はつおんの かくにん よう)。
+
+   Ⓐ・Ⓑの きろくは かえない。
+   ========================================================= */
+const DAIMON2_BATCH_SIZE = 10;
+let D2 = null;
+
+function startDaimon2() {
+  const items = shuffle(DAIMON2_POOL).slice(0, DAIMON2_BATCH_SIZE);
+  if (items.length === 0) return;
+  D2 = { items, i: 0, correct: 0, locked: false };
+  document.getElementById("d2Total").textContent = items.length;
+  document.getElementById("d2Result").classList.add("hidden");
+  show("daimon2");
+  renderDaimon2();
+}
+
+function d2FullB(it, useCorrect) {
+  const head = useCorrect ? it.correct : "(　　　　　　　　　　)";
+  return it.after ? `${head} ${it.after}` : head;
+}
+
+function renderDaimon2() {
+  const it = D2.items[D2.i];
+  D2.locked = false;
+  document.getElementById("d2Pos").textContent = D2.i + 1;
+  document.getElementById("d2Bar").style.width = (D2.i / D2.items.length) * 100 + "%";
+  document.getElementById("d2Feedback").classList.add("hidden");
+
+  document.getElementById("d2Dialogue").innerHTML =
+    `<div class="d2-line"><b>A</b>: ${escapeHtml(it.a)}</div>` +
+    `<div class="d2-line"><b>B</b>: <span class="cloze-blank">${escapeHtml(d2FullB(it, false))}</span></div>`;
+
+  const wrap = document.getElementById("d2Choices");
+  wrap.innerHTML = "";
+  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
+    const b = document.createElement("button");
+    b.className = "choice choice-en";
+    b.textContent = text;
+    if (text === it.correct) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerDaimon2(b, text === it.correct, it));
+    wrap.appendChild(b);
+  });
+
+  speak(it.a);
+}
+document.getElementById("btnD2Speak").addEventListener("click", () => {
+  if (!D2) return;
+  const it = D2.items[D2.i];
+  speak(D2.locked ? `${it.a} ${d2FullB(it, true)}` : it.a);
+});
+
+function answerDaimon2(btn, ok, it) {
+  if (!D2 || D2.locked) return;
+  D2.locked = true;
+
+  document.querySelectorAll("#d2Choices .choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!ok) btn.classList.add("ng");
+
+  document.getElementById("d2Dialogue").innerHTML =
+    `<div class="d2-line"><b>A</b>: ${escapeHtml(it.a)}</div>` +
+    `<div class="d2-line"><b>B</b>: <span class="cloze-fill">${escapeHtml(d2FullB(it, true))}</span></div>`;
+
+  const fb = document.getElementById("d2Feedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  if (ok) {
+    D2.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    orbs(4, "🟢");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.correctJa}</span>`;
+  } else {
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは「${escapeHtml(it.correct)}」<br>${it.correctJa}</span>`;
+  }
+  speak(`${it.a} ${d2FullB(it, true)}`);
+
+  setTimeout(() => {
+    D2.i++;
+    if (D2.i >= D2.items.length) {
+      document.getElementById("d2Bar").style.width = "100%";
+      finishDaimon2();
+    } else {
+      renderDaimon2();
+    }
+  }, ok ? 2200 : 2800);
+}
+
+function finishDaimon2() {
+  bumpStreak();
+  document.getElementById("d2Score").textContent = D2.correct;
+  document.getElementById("d2ResultTotal").textContent = D2.items.length;
+  document.getElementById("d2Result").classList.remove("hidden");
+  addXP(D2.correct);
+  if (D2.correct === D2.items.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("大もん2 ぜんもん せいかい!", "💬", "すごい!");
+  }
+}
+
+document.getElementById("btnDaimon2Mode").addEventListener("click", () => { sfxClick(); startDaimon2(); });
+document.getElementById("btnD2Retry").addEventListener("click", () => { sfxClick(); startDaimon2(); });
+document.getElementById("btnD2Home").addEventListener("click", () => { sfxClick(); show("home"); });
+
+/* =========================================================
+   🎧 リスニング だい1ぶ れんしゅう(会話の応答文選択)
+
+   1つの はつげんを きいて、いちばん あう うけこたえを 3つから
+   えらぶ。もじは 出さない(きくだけで こたえる)。
+   ========================================================= */
+const LISTEN1_BATCH_SIZE = 10;
+let L1 = null;
+
+function startListen1() {
+  const items = shuffle(LISTEN1_POOL).slice(0, LISTEN1_BATCH_SIZE);
+  if (items.length === 0) return;
+  L1 = { items, i: 0, correct: 0, locked: false, gen: 0, opts: null };
+  document.getElementById("l1Total").textContent = items.length;
+  document.getElementById("l1Result").classList.add("hidden");
+  show("listen1");
+  renderListen1();
+}
+
+function setL1Lock(on) {
+  document.querySelectorAll("#l1Choices .ln-choice").forEach((b) => { b.disabled = on; });
+}
+
+/* まず はつげんを よみ、そのあと ①②③の うけこたえを ながす */
+function playListen1Seq() {
+  if (!L1) return;
+  const gen = ++L1.gen;
+  const it = L1.items[L1.i];
+  setL1Lock(true);
+
+  let t = 0;
+  setTimeout(() => { if (L1 && L1.gen === gen) speak(it.prompt, 0.85); }, t);
+  t += estimateSpeakMs(it.prompt) + 700;
+
+  L1.opts.forEach((opt) => {
+    setTimeout(() => { if (L1 && L1.gen === gen) beep(880, 0.1, "sine", 0.05); }, t);
+    t += 260;
+    setTimeout(() => { if (L1 && L1.gen === gen) speak(opt.text, 0.85); }, t);
+    t += estimateSpeakMs(opt.text) + 500;
+  });
+  setTimeout(() => { if (L1 && L1.gen === gen) setL1Lock(false); }, t);
+}
+document.getElementById("btnL1Replay").addEventListener("click", () => { sfxClick(); if (L1) playListen1Seq(); });
+
+function renderListen1() {
+  const it = L1.items[L1.i];
+  L1.locked = false;
+  L1.opts = shuffle([{ text: it.correct, ok: true }, ...it.wrongs.map((w) => ({ text: w, ok: false }))]);
+  document.getElementById("l1Pos").textContent = L1.i + 1;
+  document.getElementById("l1Bar").style.width = (L1.i / L1.items.length) * 100 + "%";
+  document.getElementById("l1Feedback").classList.add("hidden");
+
+  const wrap = document.getElementById("l1Choices");
+  wrap.innerHTML = "";
+  L1.opts.forEach((opt, idx) => {
+    const b = document.createElement("button");
+    b.className = "ln-choice";
+    b.innerHTML = `<span class="ln-num">${idx + 1}</span>`;
+    if (opt.ok) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerListen1(b, opt, it));
+    wrap.appendChild(b);
+  });
+
+  playListen1Seq();
+}
+
+function answerListen1(btn, opt, it) {
+  if (!L1 || L1.locked) return;
+  L1.locked = true;
+  L1.gen++;
+  setL1Lock(true);
+
+  document.querySelectorAll("#l1Choices .ln-choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!opt.ok) btn.classList.add("ng");
+
+  const fb = document.getElementById("l1Feedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  if (opt.ok) {
+    L1.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    orbs(4, "🟢");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>${it.correct} = ${it.correctJa}</span>`;
+  } else {
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>せいかいは「${escapeHtml(it.correct)}」<br>${it.correctJa}</span>`;
+  }
+  speakPair(`${it.prompt} ${it.correct}`, `${it.promptJa} ${it.correctJa}`);
+
+  setTimeout(() => {
+    L1.i++;
+    if (L1.i >= L1.items.length) {
+      document.getElementById("l1Bar").style.width = "100%";
+      finishListen1();
+    } else {
+      renderListen1();
+    }
+  }, opt.ok ? 2600 : 3200);
+}
+
+function finishListen1() {
+  bumpStreak();
+  document.getElementById("l1Score").textContent = L1.correct;
+  document.getElementById("l1ResultTotal").textContent = L1.items.length;
+  document.getElementById("l1Result").classList.remove("hidden");
+  addXP(L1.correct);
+  if (L1.correct === L1.items.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("リスニング1部 ぜんもん せいかい!", "🎧", "すごい!");
+  }
+}
+
+document.getElementById("btnListen1Mode").addEventListener("click", () => { sfxClick(); startListen1(); });
+document.getElementById("btnL1Retry").addEventListener("click", () => { sfxClick(); startListen1(); });
+document.getElementById("btnL1Home").addEventListener("click", () => { sfxClick(); show("home"); });
+
+/* =========================================================
+   🎧 リスニング だい2ぶ れんしゅう(会話の内容一致選択)
+
+   2ぎょうの 会話と しつもんを きいて、ないように あう こたえを
+   4つの もじの せんたくしから えらぶ(せんたくしだけは 見える、
+   会話・しつもんの もじは 出さない)。
+   ========================================================= */
+const LISTEN2_BATCH_SIZE = 10;
+let L2 = null;
+
+function startListen2() {
+  const items = shuffle(LISTEN2_POOL).slice(0, LISTEN2_BATCH_SIZE);
+  if (items.length === 0) return;
+  L2 = { items, i: 0, correct: 0, locked: false, gen: 0 };
+  document.getElementById("l2Total").textContent = items.length;
+  document.getElementById("l2Result").classList.add("hidden");
+  show("listen2");
+  renderListen2();
+}
+
+function setL2ChoicesLock(on) {
+  document.querySelectorAll("#l2Choices .choice").forEach((b) => { b.disabled = on; });
+}
+
+/* A → B → しつもん の じゅんに よむ */
+function playListen2Seq() {
+  if (!L2) return;
+  const gen = ++L2.gen;
+  const it = L2.items[L2.i];
+  setL2ChoicesLock(true);
+
+  let t = 0;
+  [it.a, it.b, it.q].forEach((line, idx) => {
+    setTimeout(() => { if (L2 && L2.gen === gen) speak(line, 0.85); }, t);
+    t += estimateSpeakMs(line) + (idx === 1 ? 700 : 500);
+  });
+  setTimeout(() => { if (L2 && L2.gen === gen) setL2ChoicesLock(false); }, t);
+}
+document.getElementById("btnL2Replay").addEventListener("click", () => { sfxClick(); if (L2) playListen2Seq(); });
+
+function renderListen2() {
+  const it = L2.items[L2.i];
+  L2.locked = false;
+  document.getElementById("l2Pos").textContent = L2.i + 1;
+  document.getElementById("l2Bar").style.width = (L2.i / L2.items.length) * 100 + "%";
+  document.getElementById("l2Feedback").classList.add("hidden");
+
+  const wrap = document.getElementById("l2Choices");
+  wrap.innerHTML = "";
+  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
+    const b = document.createElement("button");
+    b.className = "choice choice-en";
+    b.textContent = text;
+    if (text === it.correct) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerListen2(b, text === it.correct, it));
+    wrap.appendChild(b);
+  });
+
+  playListen2Seq();
+}
+
+function answerListen2(btn, ok, it) {
+  if (!L2 || L2.locked) return;
+  L2.locked = true;
+  L2.gen++;
+  setL2ChoicesLock(true);
+
+  document.querySelectorAll("#l2Choices .choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!ok) btn.classList.add("ng");
+
+  const fb = document.getElementById("l2Feedback");
+  fb.classList.remove("hidden", "ok", "ng");
+  const dialogueJa = `A: ${it.a}<br>B: ${it.b}<br>Q: ${it.q} = ${it.qJa}`;
+  if (ok) {
+    L2.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    orbs(4, "🟢");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${dialogueJa}</span>`;
+  } else {
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">せいかいは「${escapeHtml(it.correct)}」<br>${dialogueJa}</span>`;
+  }
+  speak(`${it.a} ${it.b} ${it.q}`);
+
+  setTimeout(() => {
+    L2.i++;
+    if (L2.i >= L2.items.length) {
+      document.getElementById("l2Bar").style.width = "100%";
+      finishListen2();
+    } else {
+      renderListen2();
+    }
+  }, ok ? 3200 : 3800);
+}
+
+function finishListen2() {
+  bumpStreak();
+  document.getElementById("l2Score").textContent = L2.correct;
+  document.getElementById("l2ResultTotal").textContent = L2.items.length;
+  document.getElementById("l2Result").classList.remove("hidden");
+  addXP(L2.correct);
+  if (L2.correct === L2.items.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("リスニング2部 ぜんもん せいかい!", "🎧", "すごい!");
+  }
+}
+
+document.getElementById("btnListen2Mode").addEventListener("click", () => { sfxClick(); startListen2(); });
+document.getElementById("btnL2Retry").addEventListener("click", () => { sfxClick(); startListen2(); });
+document.getElementById("btnL2Home").addEventListener("click", () => { sfxClick(); show("home"); });
+
 
 
 

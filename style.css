@@ -1190,3 +1190,13 @@ button {
   box-shadow: inset 3px 3px 0 #FFF, inset -3px -3px 0 var(--slot-dk), 0 0 0 2px #000;
 }
 .wo-tile:active { box-shadow: inset -3px -3px 0 #FFF, inset 3px 3px 0 var(--slot-dk), 0 0 0 2px #000; }
+
+/* ---------- 💬 大もん2 れんしゅう ---------- */
+.d2-panel { text-align: left; }
+.d2-dialogue { margin: 4px 0 14px; }
+.d2-line { font-size: 15px; line-height: 2.1; color: #FFF; text-shadow: 2px 2px 0 #000; }
+.d2-line b { color: var(--gold); margin-right: 4px; }
+.d2-line .cloze-blank, .d2-line .cloze-fill { font-size: 13px; }
+
+/* ---------- 🎧 リスニング だい1ぶ(2たく + 正解の 3つ) ---------- */
+.l1-choices { grid-template-columns: repeat(3, 1fr); }
