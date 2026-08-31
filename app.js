@@ -323,11 +323,12 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "stats", "wrong", "typing", "grammar", "listening"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
   if (name !== "learn") { speakGen++; setLearnLock(false); }
+  if (name !== "listening" && LN) { LN.gen++; }
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -1136,6 +1137,172 @@ document.getElementById("typingInput").addEventListener("keydown", (e) => {
 });
 document.getElementById("btnTypingRetry").addEventListener("click", () => { sfxClick(); startTyping(); });
 document.getElementById("btnTypingHome").addEventListener("click", () => { sfxClick(); show("home"); });
+
+/* =========================================================
+   🎧 リスニングれんしゅう(ほんばん だい3ぶ「イラストの内容一致選択」形式)
+
+   1つの え(イラスト)を 見せて、3つの みじかい 英文を きく。
+   え に あう ぶんを えらぶ。えいごの もじは 出さない
+   (きくだけで こたえる、ほんばんと おなじ しくみ)。
+
+   Ⓐ・Ⓑの きろくは かえない、ききとりだけの れんしゅう。
+   ========================================================= */
+const LISTENING_BATCH_SIZE = 10;
+let LN = null;
+
+/* え として つかいやすい たんご(絵文字が わかりやすく、きのうご ではない) */
+function listeningPool() {
+  return WORD_LIST.filter(
+    (w) => CORE_WORD_IDS.has(w.id) && w.emoji && w.emoji !== "❓" && w.ex && !isTypeHard(w)
+  );
+}
+
+/* まちがいの ぶんを えらぶ。え(絵文字)が おなじ・いみが にている ものは のぞく */
+function listeningDistractors(target, pool, n) {
+  const targetFirst = String(target.ja).split(/[,、]/)[0];
+  const cand = pool.filter(
+    (w) => w.id !== target.id && w.emoji !== target.emoji &&
+           String(w.ja).split(/[,、]/)[0] !== targetFirst
+  );
+  return shuffle(cand).slice(0, n);
+}
+
+function buildListeningQuestions(n) {
+  const pool = listeningPool();
+  const targets = shuffle(pool).slice(0, n);
+  return targets.map((w) => {
+    const distractors = listeningDistractors(w, pool, 2);
+    const opts = shuffle([w, ...distractors]);
+    return { picture: w, opts, correctIndex: opts.findIndex((o) => o.id === w.id) };
+  });
+}
+
+function startListening() {
+  const qs = buildListeningQuestions(LISTENING_BATCH_SIZE);
+  if (qs.length === 0) return;
+  LN = { qs, i: 0, correct: 0, locked: false, gen: 0 };
+  document.getElementById("lnTotal").textContent = qs.length;
+  document.getElementById("lnResult").classList.add("hidden");
+  show("listening");
+  renderListening();
+}
+
+function setListenChoicesLock(on) {
+  document.querySelectorAll("#lnChoices .ln-choice").forEach((b) => { b.disabled = on; });
+}
+
+/* ①②③の ぶんを じゅんばんに よむ。ばんごうは ボタンに 見えているので
+   よまず、かわりに みじかい「ピロン」おとで くぎる。
+   とちゅうで つぎの もんだいに すすんでいたら(gen が かわっていたら)
+   なにも しない。 */
+function playListeningSeq() {
+  if (!LN) return;
+  const gen = ++LN.gen;
+  const q = LN.qs[LN.i];
+  setListenChoicesLock(true);
+
+  let t = 0;
+  const gap = 500;
+  q.opts.forEach((opt) => {
+    setTimeout(() => { if (LN && LN.gen === gen) beep(880, 0.1, "sine", 0.05); }, t);
+    t += 260;
+    setTimeout(() => { if (LN && LN.gen === gen) speak(opt.ex, 0.85); }, t);
+    t += estimateSpeakMs(opt.ex) + gap;
+  });
+  setTimeout(() => { if (LN && LN.gen === gen) setListenChoicesLock(false); }, t);
+}
+
+function renderListening() {
+  const q = LN.qs[LN.i];
+  LN.locked = false;
+  document.getElementById("lnPos").textContent = LN.i + 1;
+  document.getElementById("lnBar").style.width = (LN.i / LN.qs.length) * 100 + "%";
+  document.getElementById("lnSlot").textContent = q.picture.emoji;
+  document.getElementById("lnFeedback").classList.add("hidden");
+
+  const wrap = document.getElementById("lnChoices");
+  wrap.innerHTML = "";
+  q.opts.forEach((opt, idx) => {
+    const b = document.createElement("button");
+    b.className = "ln-choice";
+    b.innerHTML = `<span class="ln-num">${idx + 1}</span>`;
+    if (idx === q.correctIndex) b.dataset.correct = "1";
+    b.addEventListener("click", () => answerListening(b, idx, q));
+    wrap.appendChild(b);
+  });
+
+  playListeningSeq();
+}
+
+/* もう一度 ボタン: いまの もんだいの おとを もういちど さいせい */
+document.getElementById("btnLnReplay").addEventListener("click", () => {
+  sfxClick();
+  if (LN) playListeningSeq();
+});
+
+function answerListening(btn, idx, q) {
+  if (!LN || LN.locked) return;
+  LN.locked = true;
+  LN.gen++;               // のこっている よみあげの よやくを むこうに する
+  setListenChoicesLock(true);
+
+  const ok = idx === q.correctIndex;
+  document.querySelectorAll("#lnChoices .ln-choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!ok) btn.classList.add("ng");
+
+  const fb = document.getElementById("lnFeedback");
+  fb.classList.remove("hidden", "ok", "ng");
+
+  if (ok) {
+    LN.correct++;
+    P.blocks++;
+    save();
+    updateHUD();
+    sfxOk();
+    const r = btn.getBoundingClientRect();
+    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
+    fb.classList.add("ok");
+    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${q.picture.en} = ${q.picture.ja}</span>`;
+  } else {
+    sfxNg();
+    document.getElementById("app").classList.add("shake");
+    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
+    fb.classList.add("ng");
+    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">こたえは ①〜③のうち ${q.correctIndex + 1}<br>${q.picture.en} = ${q.picture.ja}</span>`;
+  }
+  speakPair(q.picture.ex, q.picture.exJa);
+
+  setTimeout(() => {
+    LN.i++;
+    if (LN.i >= LN.qs.length) {
+      document.getElementById("lnBar").style.width = "100%";
+      finishListening();
+    } else {
+      renderListening();
+    }
+  }, ok ? 2400 : 3000);
+}
+
+function finishListening() {
+  bumpStreak();
+  document.getElementById("lnScore").textContent = LN.correct;
+  document.getElementById("lnResultTotal").textContent = LN.qs.length;
+  document.getElementById("lnResult").classList.remove("hidden");
+  addXP(LN.correct);
+  if (LN.correct === LN.qs.length) {
+    sfxChest();
+    orbs(10, "💎");
+    advancement("リスニング ぜんもん せいかい!", "🎧", "すごい!");
+  }
+}
+
+document.getElementById("btnListeningMode").addEventListener("click", () => { sfxClick(); startListening(); });
+document.getElementById("btnLnRetry").addEventListener("click", () => { sfxClick(); startListening(); });
+document.getElementById("btnLnHome").addEventListener("click", () => { sfxClick(); show("home"); });
+
 
 /* =========================================================
    📝 大もん1 れんしゅう(ぶんの あなうめ)

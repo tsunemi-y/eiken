@@ -108,6 +108,14 @@
       <span class="mc-btn-sub" id="typingModeSub">ごうかくに ひつような たんごを ランダムで</span>
     </button>
 
+    <button class="mc-btn wide" id="btnListeningMode">
+      <span class="mc-btn-icon">🎧</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">リスニングれんしゅう</span>
+        <span class="mc-btn-sub">えを 見て、3つの ぶんから えらぶ ・ ほんばんの だい3ぶと おなじ かたち</span>
+      </span>
+    </button>
+
     <div class="panel rank-panel">
       <div class="panel-head">⛏️ ほった ランク</div>
 
@@ -187,6 +195,33 @@
       <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
       <button class="mc-btn wide primary" id="btnTypingRetry">⌨️ もういちど</button>
       <button class="mc-btn wide" id="btnTypingHome">🏠 ホームへ</button>
+    </div>
+  </section>
+
+  <!-- ===== リスニングれんしゅう(ほんばん だい3ぶ形式) ===== -->
+  <section class="screen hidden" id="screen-listening">
+    <button class="back-btn" data-back="home">◀ やめる</button>
+    <div class="quiz-head">
+      <div class="mastery-tag">🎧 リスニング れんしゅう</div>
+      <div class="quiz-pos"><span id="lnPos">1</span>/<span id="lnTotal">10</span></div>
+    </div>
+    <div class="mc-bar thin"><div class="mc-bar-fill" id="lnBar"></div></div>
+
+    <div class="panel quiz-panel">
+      <div class="quiz-label">きいて、えに あう ぶんを えらぼう</div>
+      <div class="slot big" id="lnSlot">❓</div>
+      <button class="sound-btn" id="btnLnReplay">🔊 もういちど ぜんぶ きく</button>
+    </div>
+
+    <div class="ln-choices" id="lnChoices"></div>
+    <div class="feedback hidden" id="lnFeedback"></div>
+
+    <div class="panel hidden" id="lnResult">
+      <div class="panel-head">🎧 リスニング けっか</div>
+      <div class="result-score"><span id="lnScore">0</span> / <span id="lnResultTotal">0</span> せいかい</div>
+      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
+      <button class="mc-btn wide primary" id="btnLnRetry">🎧 もういちど</button>
+      <button class="mc-btn wide" id="btnLnHome">🏠 ホームへ</button>
     </div>
   </section>
 

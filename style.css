@@ -1132,3 +1132,24 @@ button {
 .pack-coll { margin-bottom: 14px; }
 .pc-lb { font-size: 11px; color: #FFF; text-shadow: 2px 2px 0 #000; margin-bottom: 6px; }
 .pc-lb b { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--gold); }
+
+/* ---------- 🎧 リスニングれんしゅう(だい3ぶ形式) ---------- */
+.ln-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.ln-choice {
+  background: #6E6E6E;
+  padding: 22px 8px;
+  min-height: 78px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 3px 3px 0 #9C9C9C, inset -3px -3px 0 #3A3A3A, 0 0 0 3px #000;
+}
+.ln-choice:active { box-shadow: inset -3px -3px 0 #9C9C9C, inset 3px 3px 0 #3A3A3A, 0 0 0 3px #000; }
+.ln-choice:disabled { opacity: .55; }
+.ln-choice.ok { background: var(--grass); box-shadow: inset 3px 3px 0 #86D64C, inset -3px -3px 0 #2E5C12, 0 0 0 3px #FFF; }
+.ln-choice.ng { background: #9C3B2E; box-shadow: inset 3px 3px 0 #D26150, inset -3px -3px 0 #5E1F16, 0 0 0 3px #000; }
+.ln-choice.dim { opacity: .35; }
+.ln-num {
+  font-family: "Press Start 2P", monospace;
+  font-size: 26px;
+  color: #FFF;
+  text-shadow: 2px 2px 0 #000;
+}
