@@ -963,22 +963,6 @@ button {
   font-size: 15px;
   letter-spacing: 0;
 }
-.ex-mark {
-  display: inline-block;
-  background: var(--gold); color: #000;
-  padding: 1px 4px;
-  box-shadow: 0 0 0 2px #000;
-}
-.cloze-note {
-  font-size: 11px; line-height: 1.8;
-  color: var(--diamond);
-  background: rgba(0,0,0,.35);
-  padding: 10px;
-  margin: 10px 0;
-  box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #5A5A5A;
-}
-.cloze-note b { color: var(--gold); }
-
 /* ---------- 📝 大もん1 れんしゅう ---------- */
 .grammar-btn { justify-content: flex-start; gap: 12px; padding: 14px; text-align: left; }
 .grammar-btn .mc-btn-body { flex: 1; gap: 3px; }

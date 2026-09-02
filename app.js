@@ -596,10 +596,22 @@ function renderBoxes() {
 let L = { range: 1, words: [], i: 0, flipped: false };
 
 function startLearn(rangeId) {
-  const ws = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
-  if (ws.length === 0) {
+  const all = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
+  if (all.length === 0) {
     advancement("この はんいは ぜんぶ ボックスに あるよ!", "🎉", "コンプリート!");
     show("ranges");
+    return;
+  }
+  // is/am/at のような きのうごは、たんご1つだけ カードに 出しても
+  // おぼえようが ない(絵や 日本語訳が 1つに きまらないため)。
+  // なので カードには 出さず、大もん1と おなじ「ぶんの あなうめ」クイズ
+  // だけで 出題する(Ⓐ・Ⓑの きろくは そのまま つく)。
+  const ws = all.filter((w) => !isTypeHard(w));
+  if (ws.length === 0) {
+    // この はんいが ぜんぶ きのうごの ときは、カードを とばして
+    // いきなり クイズへ すすむ。
+    advancement("この はんいは ぶんの あなうめだけ!カードは とばすよ", "📝", "クイズへ ちょくこう");
+    startQuiz(rangeId, "A");
     return;
   }
   L = { range: rangeId, words: ws, i: 0, flipped: false };
@@ -631,20 +643,12 @@ function renderCard() {
   document.getElementById("cardEnBack").textContent = w.en;
   document.getElementById("cardEmoji").textContent = w.emoji;
   document.getElementById("cardJa").textContent = w.ja;
-  // きのうご(at / of / is など)は、たんごより「ぶんの どこに 入るか」が
-  // だいじ なので、例文の なかの その たんごを 目だたせる
-  const c = useCloze(w) ? clozeParts(w) : null;
-  const exEn = c
-    ? `${escapeHtml(c.before)}<span class="ex-mark">${escapeHtml(c.answer)}</span>${escapeHtml(c.after)}`
-    : escapeHtml(w.ex);
   document.getElementById("cardEx").innerHTML =
-    `<span class="card-ex-en" id="cardExEn">🔊 ${exEn}</span><br>${escapeHtml(w.exJa)}`;
+    `<span class="card-ex-en" id="cardExEn">🔊 ${escapeHtml(w.ex)}</span><br>${escapeHtml(w.exJa)}`;
   document.getElementById("cardExEn").addEventListener("click", (e) => {
     e.stopPropagation();
     playPairLocked(w.ex, w.exJa);
   });
-
-  document.getElementById("cardClozeNote").classList.toggle("hidden", !c);
 
   const vis = document.getElementById("cardVis");
   if (w.vis) { vis.innerHTML = visHTML(w.vis); vis.classList.remove("hidden"); }
