@@ -382,222 +382,12 @@ const WORD_LIST = [
   { en: "every", ja: "あらゆる,～ごとに,すべての", emoji: "💯", ex: "I study every day.", exJa: "わたしは まいにち べんきょうします。" },
   { en: "some", ja: "いくつか,いくらか,多少", kana: ["たしょう"], emoji: "🔢", ex: "I have some pens.", exJa: "わたしは ペンを いくつか もっています。" },
   { en: "many", ja: "多くの,たくさんの", kana: ["おおくの"], emoji: "🔢", ex: "I have many friends.", exJa: "わたしは ともだちが たくさん います。" },
-  { en: "all", ja: "すべての,全部,あらゆる", kana: ["ぜんぶ"], emoji: "💯", ex: "I know all the answers.", exJa: "わたしは こたえを ぜんぶ しっています。" },
-  { en: "any", ja: "いくらかの,少しも,どんな～でも", kana: ["すこしも"], emoji: "❓", ex: "Do you have any pens?", exJa: "ペンを もっていますか。" },
-  { en: "Mr.", ja: "～さん,～先生(男性)", kana: ["せんせい", "さん"], emoji: "🧑", ex: "This is Mr. Smith.", exJa: "こちらは スミスさんです。" },
-  { en: "Ms.", ja: "～さん,～先生(女性)", kana: ["せんせい", "さん"], emoji: "👩", ex: "This is Ms. Smith.", exJa: "こちらは スミスさんです。" },
-  { en: "chair", ja: "いす", emoji: "🪑", ex: "Sit on the chair.", exJa: "いすに すわって。" },
 
-  // ===== 321〜330 =====
-  { en: "magazine", ja: "雑誌", kana: ["ざっし"], emoji: "📰", ex: "I read a magazine.", exJa: "わたしは ざっしを よみます。" },
-  { en: "phone", ja: "電話", kana: ["でんわ"], emoji: "📞", ex: "This is my phone.", exJa: "これは わたしの でんわです。" },
-  { en: "bathroom", ja: "浴室,トイレ", kana: ["よくしつ"], emoji: "🚽", ex: "Where is the bathroom?", exJa: "トイレは どこですか。" },
-  { en: "hat", ja: "帽子(ふちのある)", kana: ["ぼうし"], emoji: "🎩", ex: "I have a new hat.", exJa: "わたしは あたらしい ぼうしを もっています。" },
-  { en: "cup", ja: "カップ,茶わん", kana: ["ちゃわん"], emoji: "☕", ex: "This is my cup.", exJa: "これは わたしの カップです。" },
-  { en: "kitchen", ja: "台所", kana: ["だいどころ"], emoji: "🍳", ex: "My mother is in the kitchen.", exJa: "おかあさんは だいどころに います。" },
-  { en: "desk", ja: "つくえ", emoji: "🪑", ex: "My desk is clean.", exJa: "わたしの つくえは きれいです。" },
-  { en: "basket", ja: "かご", emoji: "🧺", ex: "I have a basket.", exJa: "わたしは かごを もっています。" },
-  { en: "garden", ja: "庭,庭園", kana: ["にわ", "ていえん"], emoji: "🌷", ex: "I like this garden.", exJa: "わたしは この にわが すきです。" },
-  { en: "bedroom", ja: "寝室", kana: ["しんしつ"], emoji: "🛏️", ex: "This is my bedroom.", exJa: "これは わたしの しんしつです。" },
-
-  // ===== 331〜340 =====
-  { en: "newspaper", ja: "新聞", kana: ["しんぶん"], emoji: "📰", ex: "My father reads the newspaper.", exJa: "おとうさんは しんぶんを よみます。" },
-  { en: "shirt", ja: "ワイシャツ,シャツ", emoji: "👔", ex: "I like this shirt.", exJa: "わたしは この シャツが すきです。" },
-  { en: "DVD", ja: "DVD", emoji: "📀", ex: "I watch a DVD.", exJa: "わたしは DVDを みます。" },
-  { en: "floor", ja: "ゆか,階", kana: ["かい", "ゆか"], emoji: "🏢", ex: "My room is on the third floor.", exJa: "わたしの へやは 3かいです。" },
-  { en: "glove", ja: "手袋,グローブ", kana: ["てぶくろ"], emoji: "🧤", ex: "I have new gloves.", exJa: "わたしは あたらしい てぶくろを もっています。" },
-  { en: "living room", ja: "居間,リビングルーム", kana: ["いま"], emoji: "🛋️", ex: "We watch TV in the living room.", exJa: "わたしたちは リビングで テレビを みます。" },
-  { en: "shoe", ja: "靴", kana: ["くつ"], emoji: "👟", ex: "I have new shoes.", exJa: "わたしは あたらしい くつを もっています。" },
-  { en: "jacket", ja: "上着,ジャケット", kana: ["うわぎ"], emoji: "🧥", ex: "I like this jacket.", exJa: "わたしは この うわぎが すきです。" },
-  { en: "postcard", ja: "はがき,絵はがき", kana: ["えはがき"], emoji: "💌", ex: "I write a postcard.", exJa: "わたしは はがきを かきます。" },
-  { en: "shower", ja: "シャワー,にわか雨", kana: ["にわかあめ"], emoji: "🚿", ex: "I take a shower.", exJa: "わたしは シャワーを あびます。" },
-
-  // ===== 341〜350 =====
-  { en: "sofa", ja: "ソファー", emoji: "🛋️", ex: "I sit on the sofa.", exJa: "わたしは ソファーに すわります。" },
-  { en: "album", ja: "アルバム", emoji: "📸", ex: "This is my photo album.", exJa: "これは わたしの アルバムです。" },
-  { en: "card", ja: "カード,トランプ,はがき", emoji: "🃏", ex: "I play cards.", exJa: "わたしは トランプを します。" },
-  { en: "curtain", ja: "カーテン", emoji: "🪟", ex: "Close the curtain.", exJa: "カーテンを しめて。" },
-  { en: "diary", ja: "日記,日記帳", kana: ["にっき", "にっきちょう"], emoji: "📔", ex: "I write in my diary.", exJa: "わたしは にっきを かきます。" },
-  { en: "dining room", ja: "食堂,ダイニングルーム", kana: ["しょくどう"], emoji: "🍽️", ex: "We eat in the dining room.", exJa: "わたしたちは ダイニングで たべます。" },
-  { en: "radio", ja: "ラジオ", emoji: "📻", ex: "I listen to the radio.", exJa: "わたしは ラジオを ききます。" },
-  { en: "towel", ja: "タオル", emoji: "🧻", ex: "This is my towel.", exJa: "これは わたしの タオルです。" },
-  { en: "backpack", ja: "バックパック,リュック", emoji: "🎒", ex: "I have a new backpack.", exJa: "わたしは あたらしい リュックを もっています。" },
-  { en: "calendar", ja: "カレンダー", emoji: "📅", ex: "Look at the calendar.", exJa: "カレンダーを みて。" },
-
-  // ===== 351〜360 =====
-  { en: "coat", ja: "コート(衣服の)", kana: ["こーと"], emoji: "🧥", ex: "I wear a coat in winter.", exJa: "わたしは ふゆに コートを きます。" },
-  { en: "pocket", ja: "ポケット", emoji: "👖", ex: "I have a pen in my pocket.", exJa: "ポケットに ペンが あります。" },
-  { en: "skirt", ja: "スカート", emoji: "👗", ex: "I like this skirt.", exJa: "わたしは この スカートが すきです。" },
-  { en: "toy", ja: "おもちゃ", kana: ["おもちゃ"], emoji: "🧸", ex: "I like this toy.", exJa: "わたしは この おもちゃが すきです。" },
-  { en: "wall", ja: "壁,へい", kana: ["かべ"], emoji: "🧱", ex: "There is a picture on the wall.", exJa: "かべに えが あります。" },
-  { en: "minute", ja: "分,瞬間", kana: ["ふん", "しゅんかん"], emoji: "⏱️", ex: "Wait a minute.", exJa: "ちょっと まって。" },
-  { en: "pencil case", ja: "ふでばこ", emoji: "🖊️", ex: "This is my pencil case.", exJa: "これは わたしの ふでばこです。" },
-  { en: "lesson", ja: "授業,けいこ,(教科書の)課", kana: ["じゅぎょう", "か"], emoji: "📚", ex: "I have a piano lesson.", exJa: "わたしは ピアノの レッスンが あります。" },
-  { en: "page", ja: "(本の)ページ", kana: ["ぺーじ", "ページ"], emoji: "📄", ex: "Open your book to page ten.", exJa: "本ほんの 10ページを ひらいて。" },
-  { en: "pool", ja: "プール,水たまり", kana: ["みずたまり"], emoji: "🏊", ex: "I swim in the pool.", exJa: "わたしは プールで およぎます。" },
-
-  // ===== 361〜370 =====
-  { en: "cafeteria", ja: "カフェテリア", emoji: "🍴", ex: "We eat at the cafeteria.", exJa: "わたしたちは カフェテリアで たべます。" },
-  { en: "test", ja: "テスト,試験", kana: ["しけん", "テスト"], emoji: "📋", ex: "I have a test today.", exJa: "きょう テストが あります。" },
-  { en: "PE", ja: "体育,体育科", kana: ["たいいく"], emoji: "🏃", ex: "I like PE class.", exJa: "わたしは たいいくが すきです。" },
-  { en: "ruler", ja: "定規", kana: ["じょうぎ"], emoji: "📏", ex: "I use a ruler.", exJa: "わたしは じょうぎを つかいます。" },
-  { en: "blackboard", ja: "黒板", kana: ["こくばん"], emoji: "⬛", ex: "Look at the blackboard.", exJa: "こくばんを みて。" },
-  { en: "ground", ja: "地面,グラウンド,運動場", kana: ["じめん", "うんどうじょう", "グラウンド"], emoji: "🏟️", ex: "We play on the ground.", exJa: "わたしたちは グラウンドで あそびます。" },
-  { en: "history", ja: "歴史", kana: ["れきし"], emoji: "📜", ex: "I like history.", exJa: "わたしは れきしが すきです。" },
-  { en: "idea", ja: "考え,アイデア,見当", kana: ["かんがえ", "けんとう", "アイデア"], emoji: "💡", ex: "That's a good idea.", exJa: "それは いい かんがえですね。" },
-  { en: "children", ja: "子どもたち(childの複数形)", kana: ["こどもたち", "こども"], emoji: "🧒", ex: "Many children are here.", exJa: "たくさんの 子どもが ここに います。" },
-  { en: "doctor", ja: "医者", kana: ["いしゃ"], emoji: "🧑‍⚕️", ex: "My mother is a doctor.", exJa: "わたしの おかあさんは いしゃです。" },
-
-  // ===== 371〜380 =====
-  { en: "pilot", ja: "パイロット", emoji: "🧑‍✈️", ex: "I want to be a pilot.", exJa: "わたしは パイロットに なりたいです。" },
-  { en: "waiter", ja: "ウェイター,給仕", kana: ["きゅうじ"], emoji: "🧑‍🍳", ex: "He is a waiter.", exJa: "かれは ウェイターです。" },
-  { en: "cook", ja: "料理する,コック", kana: ["りょうりする", "りょうり"], emoji: "🍳", ex: "My father is a cook.", exJa: "わたしの おとうさんは りょうりにんです。" },
-  { en: "lady", ja: "ご婦人,女のかた", kana: ["ごふじん", "おんなのかた", "おんなのひと"], emoji: "👩", ex: "That lady is my teacher.", exJa: "あの ご婦人は わたしの 先生せんせいです。" },
-  { en: "police officer", ja: "警察官", kana: ["けいさつかん"], emoji: "👮", ex: "He is a police officer.", exJa: "かれは けいさつかんです。" },
-  { en: "dancer", ja: "ダンサー,踊る人", kana: ["おどるひと"], emoji: "💃", ex: "She is a great dancer.", exJa: "かのじょは すばらしい ダンサーです。" },
-  { en: "nurse", ja: "看護師,看護士", kana: ["かんごし"], emoji: "🧑‍⚕️", ex: "She is a nurse.", exJa: "かのじょは かんごしです。" },
-  { en: "pianist", ja: "ピアニスト", emoji: "🎹", ex: "He is a famous pianist.", exJa: "かれは ゆうめいな ピアニストです。" },
-  { en: "driver", ja: "運転手,運転者", kana: ["うんてんしゅ", "うんてんしゃ"], emoji: "🚗", ex: "My father is a bus driver.", exJa: "わたしの おとうさんは バスの うんてんしゅです。" },
-  { en: "firefighter", ja: "消防士", kana: ["しょうぼうし"], emoji: "🧑‍🚒", ex: "He is a firefighter.", exJa: "かれは しょうぼうしです。" },
-
-  // ===== 381〜390 =====
-  { en: "store", ja: "店,店をかまえる,蓄える", kana: ["みせ"], emoji: "🏪", ex: "I go to the store.", exJa: "わたしは みせへ いきます。" },
-  { en: "supermarket", ja: "スーパーマーケット", emoji: "🛒", ex: "I go to the supermarket.", exJa: "わたしは スーパーへ いきます。" },
-  { en: "office", ja: "事務所,会社,職場", kana: ["じむしょ", "かいしゃ", "しょくば"], emoji: "🏢", ex: "My father works at an office.", exJa: "おとうさんは かいしゃで はたらいています。" },
-  { en: "department store", ja: "デパート,百貨店", kana: ["ひゃっかてん"], emoji: "🏬", ex: "I go to the department store.", exJa: "わたしは デパートへ いきます。" },
-  { en: "ship", ja: "船(大型の)", kana: ["ふね"], emoji: "🚢", ex: "I see a ship.", exJa: "ふねが みえます。" },
-  { en: "ticket", ja: "切符,券,チケット", kana: ["きっぷ", "けん"], emoji: "🎫", ex: "I have a ticket.", exJa: "わたしは きっぷを もっています。" },
-  { en: "airport", ja: "空港,飛行場", kana: ["くうこう", "ひこうじょう"], emoji: "✈️", ex: "I go to the airport.", exJa: "わたしは くうこうへ いきます。" },
-  { en: "bookstore", ja: "書店", kana: ["しょてん"], emoji: "📚", ex: "I go to the bookstore.", exJa: "わたしは しょてんへ いきます。" },
-  { en: "bridge", ja: "橋", kana: ["はし"], emoji: "🌉", ex: "This bridge is long.", exJa: "この はしは ながいです。" },
-  { en: "building", ja: "建物,ビル", kana: ["たてもの"], emoji: "🏢", ex: "That building is tall.", exJa: "あの たてものは たかいです。" },
-
-  // ===== 391〜400 =====
-  { en: "tower", ja: "塔,タワー", kana: ["とう"], emoji: "🗼", ex: "I see a tower.", exJa: "タワーが みえます。" },
-  { en: "bank", ja: "銀行,土手", kana: ["ぎんこう", "どて"], emoji: "🏦", ex: "I go to the bank.", exJa: "わたしは ぎんこうへ いきます。" },
-  { en: "bus stop", ja: "バス停", kana: ["ばすてい"], emoji: "🚏", ex: "I wait at the bus stop.", exJa: "わたしは バスていで まちます。" },
-  { en: "gas station", ja: "ガソリンスタンド", emoji: "⛽", ex: "There is a gas station.", exJa: "ガソリンスタンドが あります。" },
-  { en: "hotel", ja: "ホテル", emoji: "🏨", ex: "We stay at a hotel.", exJa: "わたしたちは ホテルに とまります。" },
-  { en: "plane", ja: "飛行機", kana: ["ひこうき"], emoji: "✈️", ex: "I go by plane.", exJa: "わたしは ひこうきで いきます。" },
-  { en: "post office", ja: "郵便局", kana: ["ゆうびんきょく"], emoji: "🏤", ex: "I go to the post office.", exJa: "わたしは ゆうびんきょくへ いきます。" },
-  { en: "police station", ja: "警察署", kana: ["けいさつしょ"], emoji: "🚓", ex: "The police station is near here.", exJa: "けいさつしょは この ちかくです。" },
-  { en: "taxi", ja: "タクシー", emoji: "🚕", ex: "We take a taxi.", exJa: "タクシーに のります。" },
-  { en: "tea", ja: "お茶,紅茶", kana: ["おちゃ", "こうちゃ"], emoji: "🍵", ex: "I drink tea.", exJa: "わたしは おちゃを のみます。" },
-
-  // ===== 401〜410 =====
-  { en: "pizza", ja: "ピザ", emoji: "🍕", ex: "I like pizza.", exJa: "わたしは ピザが すきです。" },
-  { en: "plate", ja: "皿,プレート,料理", kana: ["さら", "りょうり"], emoji: "🍽️", ex: "Put it on the plate.", exJa: "おさらに のせて。" },
-  { en: "potato", ja: "じゃがいも", emoji: "🥔", ex: "I like potatoes.", exJa: "わたしは じゃがいもが すきです。" },
-  { en: "cookie", ja: "クッキー", emoji: "🍪", ex: "I eat a cookie.", exJa: "わたしは クッキーを たべます。" },
-  { en: "fruit", ja: "くだもの", emoji: "🍉", ex: "I like fruit.", exJa: "わたしは くだものが すきです。" },
-  { en: "spoon", ja: "スプーン", emoji: "🥄", ex: "I use a spoon.", exJa: "わたしは スプーンを つかいます。" },
-  { en: "bread", ja: "パン", emoji: "🍞", ex: "I eat bread.", exJa: "わたしは パンを たべます。" },
-  { en: "dish", ja: "皿,料理", kana: ["さら", "りょうり"], emoji: "🍽️", ex: "This dish is delicious.", exJa: "この りょうりは おいしいです。" },
-  { en: "grape", ja: "ブドウ", emoji: "🍇", ex: "I like grapes.", exJa: "わたしは ぶどうが すきです。" },
-  { en: "strawberry", ja: "イチゴ", emoji: "🍓", ex: "I like strawberries.", exJa: "わたしは いちごが すきです。" },
-
-  // ===== 411〜420 =====
-  { en: "banana", ja: "バナナ", emoji: "🍌", ex: "I eat a banana.", exJa: "わたしは バナナを たべます。" },
-  { en: "chocolate", ja: "チョコレート", emoji: "🍫", ex: "I like chocolate.", exJa: "わたしは チョコレートが すきです。" },
-  { en: "dessert", ja: "デザート(食後の)", kana: ["でざーと"], emoji: "🍰", ex: "I want a dessert.", exJa: "わたしは デザートが ほしいです。" },
-  { en: "hamburger", ja: "ハンバーガー,ハンバーグ", emoji: "🍔", ex: "I eat a hamburger.", exJa: "わたしは ハンバーガーを たべます。" },
-  { en: "jam", ja: "ジャム", emoji: "🍯", ex: "I like strawberry jam.", exJa: "わたしは いちごジャムが すきです。" },
-  { en: "lunchtime", ja: "昼食時間,ランチタイム", kana: ["ちゅうしょくじかん"], emoji: "🍱", ex: "It is lunchtime.", exJa: "ひるごはんの じかんです。" },
-  { en: "meat", ja: "肉", kana: ["にく", "おにく"], emoji: "🍖", ex: "I like meat.", exJa: "わたしは にくが すきです。" },
-  { en: "tomato", ja: "トマト", emoji: "🍅", ex: "I like tomatoes.", exJa: "わたしは トマトが すきです。" },
-  { en: "vegetable", ja: "野菜", kana: ["やさい"], emoji: "🥦", ex: "Eat your vegetables.", exJa: "やさいを たべなさい。" },
-  { en: "carrot", ja: "にんじん", emoji: "🥕", ex: "I like carrots.", exJa: "わたしは にんじんが すきです。" },
-
-  // ===== 421〜430 =====
-  { en: "chopstick", ja: "はし(食事用の)", kana: ["はし"], emoji: "🥢", ex: "I use chopsticks.", exJa: "わたしは はしを つかいます。" },
-  { en: "cucumber", ja: "きゅうり", emoji: "🥒", ex: "I like cucumbers.", exJa: "わたしは きゅうりが すきです。" },
-  { en: "fork", ja: "フォーク", emoji: "🍴", ex: "I use a fork.", exJa: "わたしは フォークを つかいます。" },
-  { en: "glass", ja: "グラス,コップ,めがね", kana: ["コップ", "グラス"], emoji: "🥛", ex: "I want a glass of water.", exJa: "みずを 1ぱい ほしいです。" },
-  { en: "onion", ja: "タマネギ", emoji: "🧅", ex: "I don't like onions.", exJa: "わたしは たまねぎが すきではありません。" },
-  { en: "soup", ja: "スープ", emoji: "🍲", ex: "The soup is hot.", exJa: "スープは あついです。" },
-  { en: "pie", ja: "パイ", emoji: "🥧", ex: "I like apple pie.", exJa: "わたしは アップルパイが すきです。" },
-  { en: "pumpkin", ja: "かぼちゃ", emoji: "🎃", ex: "I like pumpkin soup.", exJa: "わたしは かぼちゃスープが すきです。" },
-  { en: "salad", ja: "サラダ", emoji: "🥗", ex: "I eat salad.", exJa: "わたしは サラダを たべます。" },
-  { en: "grandmother", ja: "祖母", kana: ["そぼ"], emoji: "👵", ex: "My grandmother is kind.", exJa: "わたしの おばあさんは やさしいです。" },
-
-  // ===== 431〜440 =====
-  { en: "grandfather", ja: "祖父", kana: ["そふ"], emoji: "👴", ex: "My grandfather is 70.", exJa: "わたしの おじいさんは 70さいです。" },
-  { en: "racket", ja: "ラケット", emoji: "🎾", ex: "I have a new racket.", exJa: "わたしは あたらしい ラケットを もっています。" },
-  { en: "score", ja: "点数,得点,スコア,得点する", kana: ["てんすう", "とくてん", "スコア"], emoji: "🔢", ex: "What is the score?", exJa: "てんすうは いくつですか。" },
-  { en: "softball", ja: "ソフトボール", emoji: "⚾", ex: "I play softball.", exJa: "わたしは ソフトボールを します。" },
-  { en: "bicycle", ja: "自転車", kana: ["じてんしゃ"], emoji: "🚲", ex: "I ride a bicycle.", exJa: "わたしは じてんしゃに のります。" },
-  { en: "football", ja: "サッカー,ラグビー,アメフト", emoji: "🏈", ex: "I like football.", exJa: "わたしは アメフトが すきです。" },
-  { en: "badminton", ja: "バドミントン", emoji: "🏸", ex: "I play badminton.", exJa: "わたしは バドミントンを します。" },
-  { en: "flower", ja: "花", kana: ["はな"], emoji: "🌸", ex: "This flower is beautiful.", exJa: "この はなは うつくしいです。" },
-  { en: "snow", ja: "雪,雪が降る", kana: ["ゆき", "ゆきがふる"], emoji: "❄️", ex: "It is snowy today.", exJa: "きょうは ゆきです。" },
-  { en: "hamster", ja: "ハムスター", emoji: "🐹", ex: "I have a hamster.", exJa: "わたしは ハムスターを かっています。" },
-
-  // ===== 441〜450 =====
-  { en: "river", ja: "川", kana: ["かわ"], emoji: "🌊", ex: "This river is long.", exJa: "この かわは ながいです。" },
-  { en: "rose", ja: "バラ(の花)", kana: ["ばら"], emoji: "🌹", ex: "I like roses.", exJa: "わたしは バラが すきです。" },
-  { en: "sea", ja: "海", kana: ["うみ"], emoji: "🌊", ex: "I like the sea.", exJa: "わたしは うみが すきです。" },
-  { en: "sky", ja: "空", kana: ["そら"], emoji: "☁️", ex: "The sky is blue.", exJa: "そらは あおいです。" },
-  { en: "weather", ja: "天気,天候", kana: ["てんき", "てんこう"], emoji: "⛅", ex: "How is the weather today?", exJa: "きょうの てんきは どうですか。" },
-  { en: "beach", ja: "砂浜,浜辺", kana: ["すなはま", "はまべ"], emoji: "🏖️", ex: "I like the beach.", exJa: "わたしは はまべが すきです。" },
-  { en: "dolphin", ja: "イルカ", emoji: "🐬", ex: "I like dolphins.", exJa: "わたしは イルカが すきです。" },
-  { en: "elephant", ja: "ゾウ", emoji: "🐘", ex: "The elephant is big.", exJa: "ぞうは おおきいです。" },
-  { en: "sheep", ja: "ひつじ", emoji: "🐑", ex: "I see sheep.", exJa: "ひつじが みえます。" },
-  { en: "monkey", ja: "サル", emoji: "🐒", ex: "The monkey is funny.", exJa: "さるは おもしろいです。" },
-
-  // ===== 451〜460 =====
-  { en: "purple", ja: "紫の,紫色", kana: ["むらさき", "むらさきいろ"], emoji: "🟣", ex: "I like purple.", exJa: "わたしは むらさきが すきです。" },
-  { en: "concert", ja: "音楽会,演奏会,コンサート", kana: ["おんがくかい", "えんそうかい"], emoji: "🎤", ex: "I go to a concert.", exJa: "わたしは コンサートへ いきます。" },
-  { en: "flute", ja: "フルート", emoji: "🎶", ex: "I play the flute.", exJa: "わたしは フルートを ふきます。" },
-  { en: "party", ja: "パーティー,集団,政党", kana: ["ぱーてぃー", "しゅうだん", "せいとう"], emoji: "🎉", ex: "I have a birthday party.", exJa: "わたしは たんじょうびパーティーを します。" },
-  { en: "meter", ja: "メートル", emoji: "📏", ex: "This is one meter long.", exJa: "これは 1メートルの ながさです。" },
-  { en: "yen", ja: "円", kana: ["えん"], emoji: "💴", ex: "It is one hundred yen.", exJa: "100えんです。" },
-  { en: "kilogram", ja: "キログラム", emoji: "⚖️", ex: "It is two kilograms.", exJa: "2キログラムです。" },
-  { en: "centimeter", ja: "センチメートル", emoji: "📏", ex: "It is ten centimeters.", exJa: "10センチメートルです。" },
-  { en: "cent", ja: "セント", emoji: "💵", ex: "It is fifty cents.", exJa: "50セントです。" },
-  { en: "French", ja: "フランス人,フランス語,フランスの", kana: ["ふらんすじん", "ふらんすご", "ふらんすの"], emoji: "🇫🇷", ex: "I study French.", exJa: "わたしは フランスごを べんきょうします。" },
-
-  // ===== 461〜470 =====
-  { en: "Singapore", ja: "シンガポール", emoji: "🇸🇬", ex: "I want to go to Singapore.", exJa: "わたしは シンガポールへ いきたいです。" },
-  { en: "world", ja: "世界", kana: ["せかい"], emoji: "🌍", ex: "I want to see the world.", exJa: "わたしは せかいを みたいです。" },
-  { en: "foot", ja: "足,フィート,ふもと", kana: ["あし", "ふぃーと"], emoji: "🦶", ex: "My foot is big.", exJa: "わたしの あしは おおきいです。" },
-  { en: "ear", ja: "耳", kana: ["みみ"], emoji: "👂", ex: "The rabbit has long ears.", exJa: "うさぎは みみが ながいです。" },
-  { en: "shoulder", ja: "肩", kana: ["かた"], emoji: "🤷", ex: "My shoulder hurts.", exJa: "かたが いたいです。" },
-  { en: "buy", ja: "～を買う", kana: ["かう"], emoji: "🛍️", ex: "I buy a book.", exJa: "わたしは 本ほんを かいます。" },
-  { en: "cut", ja: "～を切る", kana: ["きる"], emoji: "✂️", ex: "I cut the paper.", exJa: "わたしは かみを きります。" },
-  { en: "sleep", ja: "眠る,眠り,睡眠", kana: ["ねむる", "ねむり", "すいみん"], emoji: "😴", ex: "I sleep at nine.", exJa: "わたしは 9じに ねます。" },
-  { en: "need", ja: "～を必要とする,必要", kana: ["ひつようとする", "ひつよう"], emoji: "🙏", ex: "I need a new pen.", exJa: "わたしは あたらしい ペンが ひつようです。" },
-  { en: "paint", ja: "ペンキをぬる,絵を描く,ペンキ,絵の具", kana: ["ぺんきをぬる", "えをかく", "えのぐ"], emoji: "🎨", ex: "I paint a picture.", exJa: "わたしは えを かきます。" },
-
-  // ===== 471〜480 =====
-  { en: "rain", ja: "雨が降る,雨", kana: ["あめがふる", "あめ"], emoji: "🌧️", ex: "It rains a lot in June.", exJa: "6がつは よく あめが ふります。" },
-  { en: "call", ja: "呼ぶ,～と…呼ぶ,電話をかける", kana: ["よぶ", "でんわをかける"], emoji: "📞", ex: "I call my friend.", exJa: "わたしは ともだちに でんわします。" },
-  { en: "camp", ja: "キャンプする,キャンプ", emoji: "⛺", ex: "We camp in the mountains.", exJa: "わたしたちは やまで キャンプします。" },
-  { en: "find", ja: "～を見つける,～だとわかる", kana: ["みつける", "わかる"], emoji: "🔍", ex: "I find my key.", exJa: "わたしは かぎを みつけます。" },
-  { en: "ski", ja: "スキーをする,スキーの板", kana: ["すきーをする", "すきーのいた"], emoji: "⛷️", ex: "I ski in winter.", exJa: "わたしは ふゆに スキーを します。" },
-  { en: "think", ja: "考える,思う", kana: ["かんがえる", "おもう"], emoji: "🤔", ex: "I think so.", exJa: "わたしも そう おもいます。" },
-  { en: "tall", ja: "背が高い,～の背の高さの", kana: ["せがたかい"], emoji: "🦒", ex: "The giraffe is tall.", exJa: "きりんは せが たかいです。" },
-  { en: "easy", ja: "やさしい,簡単な,気楽な", kana: ["かんたんな", "きらくな", "かんたん", "やさしい"], emoji: "😀", ex: "This test is easy.", exJa: "この テストは かんたんです。" },
-  { en: "happy", ja: "幸せな,うれしい", kana: ["しあわせな", "しあわせ", "うれしい"], emoji: "😊", ex: "I am happy.", exJa: "わたしは うれしいです。" },
-  { en: "pretty", ja: "かわいい,きれいな", kana: ["きれい"], emoji: "🌸", ex: "This flower is pretty.", exJa: "この はなは きれいです。" },
-
-  // ===== 481〜490 =====
-  { en: "sunny", ja: "晴れの,日当たりのよい,快活な", kana: ["はれの", "はれ"], emoji: "☀️", ex: "It is sunny today.", exJa: "きょうは はれです。" },
-  { en: "cloudy", ja: "曇った,くもりの", kana: ["くもった"], emoji: "☁️", ex: "It is cloudy today.", exJa: "きょうは くもりです。" },
-  { en: "rainy", ja: "雨の,雨降りの", kana: ["あめの", "あめふりの"], emoji: "🌧️", ex: "It is rainy today.", exJa: "きょうは あめです。" },
-  { en: "windy", ja: "風の強い,風の吹く", kana: ["かぜがつよい"], emoji: "🌬️", ex: "It is windy today.", exJa: "きょうは かぜが つよいです。" },
-  { en: "snowy", ja: "雪の降る,雪の多い", kana: ["ゆきのふる", "ゆきのおおい"], emoji: "❄️", ex: "It is snowy today.", exJa: "きょうは ゆきです。" },
-  { en: "young", ja: "若い", kana: ["わかい"], emoji: "👶", ex: "My father is young.", exJa: "わたしの ちちは わかいです。" },
-  { en: "large", ja: "大きい,広い", kana: ["おおきい", "ひろい"], emoji: "🐘", ex: "This room is large.", exJa: "この へやは ひろいです。" },
-  { en: "slow", ja: "遅い,ゆっくりと", kana: ["おそい"], emoji: "🐢", ex: "The turtle is slow.", exJa: "かめは おそいです。" },
-  { en: "fast", ja: "速く,速い", kana: ["はやく", "はやい"], emoji: "⚡", ex: "He runs fast.", exJa: "かれは はやく はしります。" },
-  { en: "busy", ja: "忙しい,混雑した", kana: ["いそがしい"], emoji: "🏃‍♀️", ex: "My mother is busy.", exJa: "おかあさんは いそがしいです。" },
-
-  // ===== 491〜500 =====
-  { en: "soft", ja: "やわらかい,おだやかな", emoji: "🧸", ex: "This bed is soft.", exJa: "この ベッドは やわらかいです。" },
-  { en: "sweet", ja: "甘い,甘いもの", kana: ["あまい", "あまいもの"], emoji: "🍬", ex: "This cake is sweet.", exJa: "この ケーキは あまいです。" },
-  { en: "warm", ja: "暖かい,温かい", kana: ["あたたかい"], emoji: "🧣", ex: "It is warm today.", exJa: "きょうは あたたかいです。" },
-  { en: "sleepy", ja: "眠い,眠そうな", kana: ["ねむい", "ねむそうな"], emoji: "😪", ex: "I am sleepy.", exJa: "わたしは ねむいです。" },
-  { en: "Italian", ja: "イタリア人の,イタリア語の", kana: ["いたりあじんの", "いたりあごの"], emoji: "🇮🇹", ex: "I like Italian food.", exJa: "わたしは イタリアりょうりが すきです。" },
+  /* 316〜495ばん(かぐ・たてもの・しょくぎょう・とくていの 食べもの・
+     天気の けいようし など 180ご)は、5きゅうの ごうかくには いらないので
+     データごと けした。ばんごうは パス単プリントに あわせて
+     496ばんから つづける。 */
+  // ===== 496〜505 =====
   { en: "together", ja: "いっしょに", emoji: "🤝", ex: "We play together.", exJa: "わたしたちは いっしょに あそびます。" },
   { en: "Mrs.", ja: "～夫人,～さん,～先生", kana: ["ふじん", "せんせい", "さん"], emoji: "👩", ex: "This is Mrs. Smith.", exJa: "こちらは スミスさんです。" },
   { en: "a.m.", ja: "午前", kana: ["ごぜん"], emoji: "🌅", ex: "It is seven a.m.", exJa: "ごぜん7じです。" },
@@ -1038,45 +828,45 @@ const VISUALS = {
   whose:     { svg: svgQuestion("🖐️"), label: "だれの ものかを たずねる" },
 
   // --- どのくらい あるか ---
-  all:       { svg: svgQuantity(6, false), label: "6こ ぜんぶ = すべて" },
   every:     { svg: svgQuantity(6, false), label: "6こ ぜんぶ = ひとつひとつ みんな" },
   many:      { svg: svgQuantity(4, false), label: "6こ中 4こ = おおい" },
   some:      { svg: svgQuantity(2, false), label: "6こ中 2こ = いくつか" },
-  any:       { svg: svgQuantity(0, true), label: "きめて いない、どれでも" },
 };
 
-/* ---- ばんごうを ふる ---- */
+/* ---- ばんごうを ふる ----
+   316〜495ばんの 180ごは データごと けしてあるが、のこりの たんごは
+   パス単プリントと おなじ ばんごうで よべないと こまる(手もとの
+   プリントと つきあわせられなく なる)。そこで けした ぶんだけ
+   とばして ばんごうを ふる。 */
+const SKIPPED_FROM_NO = 316;
+const SKIPPED_TO_NO = 495;
+const SKIPPED_COUNT = SKIPPED_TO_NO - SKIPPED_FROM_NO + 1;   // 180ご
+
 WORD_LIST.forEach((w, i) => {
   w.id = i;
-  w.no = i + 1;             // パス単の たんごばんごう
+  const seq = i + 1;
+  w.no = seq < SKIPPED_FROM_NO ? seq : seq + SKIPPED_COUNT;   // パス単の たんごばんごう
   if (VISUALS[w.en]) w.vis = VISUALS[w.en];
 });
 
 /* =========================================================
    A: れんしゅう はんい(パス単プリントの じゅんばんに あわせて
-   15ごずつに くぎる。ぜんぶで 10はんい)
+   15ごずつに くぎる。ぜんぶで 28はんい)
    ========================================================= */
-/* ごうかくライン(必須)/ ボーナス(よゆうが あれば)の わけかた。
-   パス単は「でるじゅん」だけど、代名詞・疑問詞・数字のような
-   ぶんぽうの きほんが うしろの ほうに かたまっているので、
-   316〜495ばん(かぐ・たてもの・しょくぎょう・とくていの
-   食べ物・天気の けいようし など)を ボーナスあつかいにする。 */
-const BONUS_RANGE_IDS = new Set([22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]);
-
+/* けした 180ごの きれめは ちょうど はんいの さかいめ(21はんいの
+   おわり)に あたるので、1つの はんいの なかで ばんごうが とぶことは
+   ない。はんいの from/to は じっさいの たんごの ばんごうから とる。 */
 const RANGES = [];
 for (let r = 0; r * 15 < WORD_LIST.length; r++) {
-  const from = r * 15 + 1;
-  const to = Math.min((r + 1) * 15, WORD_LIST.length);
-  const id = r + 1;
-  RANGES.push({ id, from, to, title: `${from}〜${to}ばん`, bonus: BONUS_RANGE_IDS.has(id) });
+  const chunk = WORD_LIST.slice(r * 15, (r + 1) * 15);
+  const from = chunk[0].no;
+  const to = chunk[chunk.length - 1].no;
+  RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
 }
 function wordsInRange(rangeId) {
   const r = RANGES[rangeId - 1];
   return WORD_LIST.filter((w) => w.no >= r.from && w.no <= r.to);
 }
-const CORE_WORD_IDS = new Set(
-  RANGES.filter((r) => !r.bonus).flatMap((r) => wordsInRange(r.id).map((w) => w.id))
-);
 
 /* =========================================================
    B: ようびボックス(げつ〜にち の 7こ)
@@ -1281,7 +1071,7 @@ function cleanToken(t) { return /^[A-Za-z0-9']+$/.test(t); }
 /* ごじゅん れんしゅうに つかえる 文(3〜8ごで、きごうが きれいな もの) */
 function wordOrderPool() {
   return WORD_LIST.filter((w) => {
-    if (!(CORE_WORD_IDS.has(w.id) && w.ex)) return false;
+    if (!w.ex) return false;
     const { tokens } = tokenizeEx(w.ex);
     return tokens.length >= 3 && tokens.length <= 8 && tokens.every(cleanToken);
   });
@@ -1342,7 +1132,6 @@ const JA_ALT = {
   much: ["たくさん", "おおい"],
   some: ["いくつか", "すこし", "いくらか", "なんこか"],
   every: ["まいにち", "すべて", "すべての", "ぜんぶ", "あらゆる"],
-  all: ["ぜんぶ", "すべて", "みんな"],
   one: ["ひとつ", "1つ", "いち"],
   // ぎもんし
   what: ["なに", "なん"],

@@ -5,7 +5,8 @@
    ========================================================= */
 
 const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
-const KEY = "eigo_craft_v3";
+const KEY = "eigo_craft_v4";
+const KEY_V3 = "eigo_craft_v3";           // 316〜495ばんを けす まえの きろく
 const MASTER_COUNT = 3;                    // これだけ せいかいすると Ⓑへ そつぎょう
 
 /* ---------- ほぞん ---------- */
@@ -24,9 +25,39 @@ function freshDay(t) {
   return { d, ranges: [], words: [], grad: [], bWords: [], q: 0 };
 }
 
+/* v3 → v4 の ひっこし。
+   316〜495ばんの 180ごを データごと けしたので、たんごの id が ずれる。
+   v3では id = ばんごう - 1 だったので、ばんごうを たよりに あたらしい
+   id へ つけかえる。けした たんごの きろくは すてる。
+   これを やらないと、496ばん いこうの「おぼえた」きろくが ぜんぶ
+   べつの たんごに ついてしまう。 */
+let migratedFromV3 = false;
+function migrateV3(d) {
+  const noToId = new Map(WORD_LIST.map((w) => [w.no, w.id]));
+  const remap = (obj) => {
+    const out = {};
+    Object.keys(obj || {}).forEach((k) => {
+      const newId = noToId.get(Number(k) + 1);
+      if (newId !== undefined) out[newId] = obj[k];
+    });
+    return out;
+  };
+  d.mastery = remap(d.mastery);
+  d.box = remap(d.box);
+  // はんいの ばんごうも ずれるので、はんい がらみは まっさらに もどす
+  d.lastRange = 1;
+  d.today = null;
+  return d;
+}
+
 function load() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) { d = null; }
+  if (!d) {
+    let old = null;
+    try { old = JSON.parse(localStorage.getItem(KEY_V3)); } catch (e) { old = null; }
+    if (old) { d = migrateV3(old); migratedFromV3 = true; }
+  }
   if (!d) d = {};
   return {
     blocks: d.blocks || 0,
@@ -48,6 +79,11 @@ function load() {
 
 let P = load();
 function save() { localStorage.setItem(KEY, JSON.stringify(P)); }
+/* ひっこした ちょくごに 1かい ほぞんして v4を つくる。
+   こうしないと なにか こたえるまで v4が できず、まいかい v3から
+   ひっこしなおす ことに なる。v3は もしもの ときの ひかえとして
+   けさずに のこしておく。 */
+if (migratedFromV3) save();
 
 const TOTAL = WORD_LIST.length;
 
@@ -110,10 +146,9 @@ function recentDays(n) {
 /* 1日に なんご やれば まにあうか */
 function dailyGoal() {
   const days = daysLeft();
-  const coreBoxed = WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && P.box[w.id] !== undefined).length;
-  const coreRemain = CORE_WORD_IDS.size - coreBoxed;
-  if (coreRemain <= 0) return 0;
-  return Math.max(1, Math.ceil(coreRemain / Math.max(1, days)));
+  const remain = TOTAL - boxedCount();
+  if (remain <= 0) return 0;
+  return Math.max(1, Math.ceil(remain / Math.max(1, days)));
 }
 
 function bumpStreak() {
@@ -367,20 +402,15 @@ function renderHome() {
   const days = daysLeft();
   document.getElementById("daysLeft").textContent = days;
 
-  const boxed = boxedCount();
-  const coreBoxed = WORD_LIST.filter((w) => CORE_WORD_IDS.has(w.id) && P.box[w.id] !== undefined).length;
-  const coreRemain = CORE_WORD_IDS.size - coreBoxed;
-  const bonusRemain = TOTAL - CORE_WORD_IDS.size - (boxed - coreBoxed);
+  const remain = TOTAL - boxedCount();
   const pace = document.getElementById("paceMessage");
-  if (coreRemain <= 0) {
-    pace.textContent = bonusRemain <= 0
-      ? "🎉 ぜんぶ ボックスに はいったよ!かんぺき!"
-      : `🎯 ごうかくラインは クリア!のこり ➕ボーナス ${bonusRemain}ご、よゆうが あれば どうぞ。`;
+  if (remain <= 0) {
+    pace.textContent = "🎉 ぜんぶ ボックスに はいったよ!かんぺき!";
   } else if (days <= 0) {
     pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
   } else {
-    const perDay = Math.max(1, Math.ceil(coreRemain / days));
-    pace.textContent = `🎯ごうかくラインまで のこり ${coreRemain}ご。1日に ${perDay}ごで まにあうよ!`;
+    const perDay = Math.max(1, Math.ceil(remain / days));
+    pace.textContent = `🎯ごうかくラインまで のこり ${remain}ご。1日に ${perDay}ごで まにあうよ!`;
   }
 
   renderToday();
@@ -396,15 +426,13 @@ function renderHome() {
 }
 
 /* ---------- 📅 きょう やったぶん ---------- */
-/* まだ おわっていない ごうかくラインの はんい。
+/* まだ おわっていない はんい。
    きょう さわった はんいが あれば そこ、なければ つぎに やるべき はんい。 */
 function nextRange() {
-  const unfinished = RANGES.filter((r) => {
+  const pool = RANGES.filter((r) => {
     const ws = wordsInRange(r.id);
     return ws.some((w) => P.box[w.id] === undefined);
   });
-  const core = unfinished.filter((r) => !r.bonus);
-  const pool = core.length ? core : unfinished;
   if (!pool.length) return null;
   const touchedToday = pool.filter((r) => P.today.ranges.includes(r.id));
   if (touchedToday.length) return touchedToday[touchedToday.length - 1];
@@ -429,7 +457,7 @@ function renderToday() {
     document.getElementById("continueTitle").textContent =
       touched ? `つづきから ${nr.title}` : `つぎは ${nr.title}`;
     document.getElementById("continueSub").textContent =
-      `${nr.bonus ? "➕ボーナス" : "🎯ごうかく"} ・ ${boxed}/${ws.length}ご ボックスへ`;
+      `${boxed}/${ws.length}ご ボックスへ`;
     btn.onclick = () => { sfxClick(); renderWordlist(nr.id); };
   }
 }
@@ -448,16 +476,7 @@ function renderRanges() {
   const wrap = document.getElementById("rangeGrid");
   wrap.innerHTML = "";
   const nextId = nr ? nr.id : null;
-  const sorted = RANGES.slice().sort((a, b) => (a.bonus === b.bonus ? a.id - b.id : a.bonus ? 1 : -1));
-  let dividerShown = false;
-  sorted.forEach((r) => {
-    if (r.bonus && !dividerShown) {
-      dividerShown = true;
-      const div = document.createElement("div");
-      div.className = "range-divider";
-      div.textContent = "── ここから ➕ボーナス(よゆうが あれば) ──";
-      wrap.appendChild(div);
-    }
+  RANGES.forEach((r) => {
     const ws = wordsInRange(r.id);
     const done = ws.filter((w) => P.box[w.id] !== undefined).length;
     const points = ws.reduce((sum, w) => sum + (P.box[w.id] !== undefined ? MASTER_COUNT : P.mastery[w.id] || 0), 0);
@@ -470,14 +489,13 @@ function renderRanges() {
     const isNext = r.id === nextId;
     const el = document.createElement("div");
     el.className =
-      "range-card" + (finished ? " done" : "") + (r.bonus ? " bonus" : "") + (untouched ? " untouched" : "") +
+      "range-card" + (finished ? " done" : "") + (untouched ? " untouched" : "") +
       (doneToday ? " today" : "") + (isNext ? " next" : "");
     const mark = doneToday && isNext ? '<div class="range-mark today">📅 きょう やった ・ つづきは ここ</div>'
       : doneToday ? '<div class="range-mark today">📅 きょう やった</div>'
       : isNext ? '<div class="range-mark next">👉 つぎは ここ</div>' : "";
     el.innerHTML = `
       ${mark}
-      <div class="range-tag">${r.bonus ? "➕ ボーナス" : "🎯 ごうかく"}</div>
       <div class="range-status">${status}</div>
       <div class="range-title">${r.title}</div>
       <div class="range-sub">${ws[0].en} 〜 ${ws[ws.length - 1].en}</div>
