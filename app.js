@@ -5,8 +5,9 @@
    ========================================================= */
 
 const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
-const KEY = "eigo_craft_v4";
-const KEY_V3 = "eigo_craft_v3";           // 316〜495ばんを けす まえの きろく
+const KEY = "eigo_craft_v5";
+const KEY_V4 = "eigo_craft_v4";           // id が はいれつの ばんめ だった ころ(420ご)
+const KEY_V3 = "eigo_craft_v3";           // たんごを けす まえ(600ご)
 const MASTER_COUNT = 3;                    // これだけ せいかいすると Ⓑへ そつぎょう
 
 /* ---------- ほぞん ---------- */
@@ -25,26 +26,35 @@ function freshDay(t) {
   return { d, ranges: [], words: [], grad: [], bWords: [], q: 0 };
 }
 
-/* v3 → v4 の ひっこし。
-   316〜495ばんの 180ごを データごと けしたので、たんごの id が ずれる。
-   v3では id = ばんごう - 1 だったので、ばんごうを たよりに あたらしい
-   id へ つけかえる。けした たんごの きろくは すてる。
-   これを やらないと、496ばん いこうの「おぼえた」きろくが ぜんぶ
-   べつの たんごに ついてしまう。 */
-let migratedFromV3 = false;
-function migrateV3(d) {
-  const noToId = new Map(WORD_LIST.map((w) => [w.no, w.id]));
+/* ふるい きろくの ひっこし。
+
+   v5から id は ばんごう(no)そのものなので、これから たんごを
+   足したり けしたり しても id は ずれない。だが v3・v4では
+   id が「はいれつの なんばんめか」だったので、そのままでは
+   「おぼえた」きろくが べつの たんごに ついてしまう。
+   そこで ふるい id を いったん ばんごうに もどしてから、
+   いまの id へ つけかえる。
+
+   v3: 600ご ぜんぶ あった ころ。ばんごう = id + 1
+   v4: 316〜495ばんを けした あと。0〜314 → 1〜315ばん、
+       315〜419 → 496〜600ばん
+   どちらも いまは 存在しない たんごの きろくは すてる。 */
+const V3_ID_TO_NO = (id) => id + 1;
+const V4_ID_TO_NO = (id) => (id <= 314 ? id + 1 : id + 181);
+
+let migratedFrom = null;
+function migrateOld(d, idToNo) {
   const remap = (obj) => {
     const out = {};
     Object.keys(obj || {}).forEach((k) => {
-      const newId = noToId.get(Number(k) + 1);
-      if (newId !== undefined) out[newId] = obj[k];
+      const w = WORD_BY_ID.get(idToNo(Number(k)));
+      if (w) out[w.id] = obj[k];
     });
     return out;
   };
   d.mastery = remap(d.mastery);
   d.box = remap(d.box);
-  // はんいの ばんごうも ずれるので、はんい がらみは まっさらに もどす
+  // はんいの くぎりかたも かわるので、はんい がらみは まっさらに もどす
   d.lastRange = 1;
   d.today = null;
   return d;
@@ -53,10 +63,16 @@ function migrateV3(d) {
 function load() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) { d = null; }
+  // あたらしい ほうから じゅんに さがす
   if (!d) {
-    let old = null;
-    try { old = JSON.parse(localStorage.getItem(KEY_V3)); } catch (e) { old = null; }
-    if (old) { d = migrateV3(old); migratedFromV3 = true; }
+    [[KEY_V4, V4_ID_TO_NO], [KEY_V3, V3_ID_TO_NO]].some(([key, idToNo]) => {
+      let old = null;
+      try { old = JSON.parse(localStorage.getItem(key)); } catch (e) { old = null; }
+      if (!old) return false;
+      d = migrateOld(old, idToNo);
+      migratedFrom = key;
+      return true;
+    });
   }
   if (!d) d = {};
   return {
@@ -79,11 +95,11 @@ function load() {
 
 let P = load();
 function save() { localStorage.setItem(KEY, JSON.stringify(P)); }
-/* ひっこした ちょくごに 1かい ほぞんして v4を つくる。
-   こうしないと なにか こたえるまで v4が できず、まいかい v3から
-   ひっこしなおす ことに なる。v3は もしもの ときの ひかえとして
-   けさずに のこしておく。 */
-if (migratedFromV3) save();
+/* ひっこした ちょくごに 1かい ほぞんして v5を つくる。
+   こうしないと なにか こたえるまで v5が できず、まいかい
+   ひっこしなおす ことに なる。ふるい きろくは もしもの ときの
+   ひかえとして けさずに のこしておく。 */
+if (migratedFrom) save();
 
 const TOTAL = WORD_LIST.length;
 
@@ -614,7 +630,7 @@ function renderBoxes() {
 let L = { range: 1, words: [], i: 0, flipped: false };
 
 function startLearn(rangeId) {
-  const all = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
+  const all = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id));
   if (all.length === 0) {
     advancement("この はんいは ぜんぶ ボックスに あるよ!", "🎉", "コンプリート!");
     show("ranges");
@@ -844,7 +860,7 @@ function bumpPackGauge(beforeTier) {
 }
 
 function startQuiz(rangeId, mode) {
-  const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_LIST[id]);
+  const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id));
   const words = shuffle(pool);
   Q = {
     mode, rangeId, words, i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false,

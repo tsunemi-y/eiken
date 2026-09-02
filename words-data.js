@@ -383,8 +383,13 @@ const WORD_LIST = [
   { en: "some", ja: "いくつか,いくらか,多少", kana: ["たしょう"], emoji: "🔢", ex: "I have some pens.", exJa: "わたしは ペンを いくつか もっています。" },
   { en: "many", ja: "多くの,たくさんの", kana: ["おおくの"], emoji: "🔢", ex: "I have many friends.", exJa: "わたしは ともだちが たくさん います。" },
 
-  /* 316〜495ばん(かぐ・たてもの・しょくぎょう・とくていの 食べもの・
-     天気の けいようし など 180ご)は、5きゅうの ごうかくには いらないので
+  { en: "all", ja: "すべての,全部,あらゆる", kana: ["ぜんぶ"], emoji: "💯", ex: "I know all the answers.", exJa: "わたしは こたえを ぜんぶ しっています。" },
+  { en: "any", ja: "いくらかの,少しも,どんな～でも", kana: ["すこしも"], emoji: "❓", ex: "Do you have any pens?", exJa: "ペンを もっていますか。" },
+  { en: "Mr.", ja: "～さん,～先生(男性)", kana: ["せんせい", "さん"], emoji: "🧑", ex: "This is Mr. Smith.", exJa: "こちらは スミスさんです。" },
+  { en: "Ms.", ja: "～さん,～先生(女性)", kana: ["せんせい", "さん"], emoji: "👩", ex: "This is Ms. Smith.", exJa: "こちらは スミスさんです。" },
+
+  /* 320〜495ばん(かぐ・たてもの・しょくぎょう・とくていの 食べもの・
+     天気の けいようし など 176ご)は、5きゅうの ごうかくには いらないので
      データごと けした。ばんごうは パス単プリントに あわせて
      496ばんから つづける。 */
   // ===== 496〜505 =====
@@ -828,40 +833,68 @@ const VISUALS = {
   whose:     { svg: svgQuestion("🖐️"), label: "だれの ものかを たずねる" },
 
   // --- どのくらい あるか ---
+  all:       { svg: svgQuantity(6, false), label: "6こ ぜんぶ = すべて" },
   every:     { svg: svgQuantity(6, false), label: "6こ ぜんぶ = ひとつひとつ みんな" },
   many:      { svg: svgQuantity(4, false), label: "6こ中 4こ = おおい" },
   some:      { svg: svgQuantity(2, false), label: "6こ中 2こ = いくつか" },
+  any:       { svg: svgQuantity(0, true), label: "きめて いない、どれでも" },
 };
 
 /* ---- ばんごうを ふる ----
-   316〜495ばんの 180ごは データごと けしてあるが、のこりの たんごは
+   320〜495ばんの 176ごは データごと けしてあるが、のこりの たんごは
    パス単プリントと おなじ ばんごうで よべないと こまる(手もとの
    プリントと つきあわせられなく なる)。そこで けした ぶんだけ
-   とばして ばんごうを ふる。 */
-const SKIPPED_FROM_NO = 316;
+   とばして ばんごうを ふる。
+
+   id は「はいれつの なんばんめか」では なく ばんごう(no)そのものを
+   つかう。はいれつの ばんめを id にすると、たんごを 1つ 足したり
+   けしたり する たびに ぜんぶの id が ずれて、ほぞんしてある
+   「おぼえた」きろくが べつの たんごに ついて しまう。
+   no は プリントの ばんごうなので これから さきも かわらない。 */
+const SKIPPED_FROM_NO = 320;
 const SKIPPED_TO_NO = 495;
-const SKIPPED_COUNT = SKIPPED_TO_NO - SKIPPED_FROM_NO + 1;   // 180ご
+const SKIPPED_COUNT = SKIPPED_TO_NO - SKIPPED_FROM_NO + 1;   // 176ご
 
 WORD_LIST.forEach((w, i) => {
-  w.id = i;
   const seq = i + 1;
   w.no = seq < SKIPPED_FROM_NO ? seq : seq + SKIPPED_COUNT;   // パス単の たんごばんごう
+  w.id = w.no;
   if (VISUALS[w.en]) w.vis = VISUALS[w.en];
 });
+const WORD_BY_ID = new Map(WORD_LIST.map((w) => [w.id, w]));
 
 /* =========================================================
    A: れんしゅう はんい(パス単プリントの じゅんばんに あわせて
-   15ごずつに くぎる。ぜんぶで 28はんい)
+   15ごずつに くぎる)
    ========================================================= */
-/* けした 180ごの きれめは ちょうど はんいの さかいめ(21はんいの
-   おわり)に あたるので、1つの はんいの なかで ばんごうが とぶことは
-   ない。はんいの from/to は じっさいの たんごの ばんごうから とる。 */
+/* ばんごうが つながっている かたまり(1〜319 と 496〜600)ごとに
+   15ごずつ くぎる。かたまりを またいで くぎると
+   「316〜510ばん」のような 見出しに なって わけが わからなく なる。
+   あまりが 15ごに とどかない ときは 1つ まえの はんいに くっつける
+   (4ごだけの はんいを つくっても やる気が でないため)。 */
 const RANGES = [];
-for (let r = 0; r * 15 < WORD_LIST.length; r++) {
-  const chunk = WORD_LIST.slice(r * 15, (r + 1) * 15);
-  const from = chunk[0].no;
-  const to = chunk[chunk.length - 1].no;
-  RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
+{
+  const blocks = [];
+  WORD_LIST.forEach((w) => {
+    const last = blocks[blocks.length - 1];
+    if (last && w.no === last[last.length - 1].no + 1) last.push(w);
+    else blocks.push([w]);
+  });
+  blocks.forEach((block) => {
+    for (let i = 0; i < block.length; i += 15) {
+      const chunk = block.slice(i, i + 15);
+      // さいごの あまりが 15ごに みたない ときは まえの はんいへ
+      if (chunk.length < 15 && RANGES.length && i > 0) {
+        const prev = RANGES[RANGES.length - 1];
+        prev.to = chunk[chunk.length - 1].no;
+        prev.title = `${prev.from}〜${prev.to}ばん`;
+        continue;
+      }
+      const from = chunk[0].no;
+      const to = chunk[chunk.length - 1].no;
+      RANGES.push({ id: RANGES.length + 1, from, to, title: `${from}〜${to}ばん` });
+    }
+  });
 }
 function wordsInRange(rangeId) {
   const r = RANGES[rangeId - 1];
@@ -1132,6 +1165,7 @@ const JA_ALT = {
   much: ["たくさん", "おおい"],
   some: ["いくつか", "すこし", "いくらか", "なんこか"],
   every: ["まいにち", "すべて", "すべての", "ぜんぶ", "あらゆる"],
+  all: ["ぜんぶ", "すべて", "みんな"],
   one: ["ひとつ", "1つ", "いち"],
   // ぎもんし
   what: ["なに", "なん"],
