@@ -84,7 +84,7 @@ function load() {
     mastery: d.mastery || {},   // wordId -> 0..2 (Aでの れんぞく せいかいすう)
     box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
     lastRange: d.lastRange || 1,
-    answerMode: d.answerMode === "type" ? "type" : "choice", // こたえかた
+    answerMode: ["know", "choice", "type"].includes(d.answerMode) ? d.answerMode : "choice",
     packs: d.packs !== undefined ? d.packs : (d.bossDefeated || 0),   // あけた パックの かず
     today: freshDay(d.today),            // きょう やったぶんの きろく
     history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
@@ -431,6 +431,8 @@ function renderHome() {
 
   renderToday();
 
+  renderAnsMode();
+
   const got = collectedCount();
   document.getElementById("itemsSub").textContent = got === 0
     ? "パックで ひいた アイテムを 見る"
@@ -607,6 +609,28 @@ document.getElementById("btnWordlistQuiz").addEventListener("click", () => {
   P.lastRange = currentWordlistRange;
   save();
   startQuiz(currentWordlistRange, "A");   // カードを とばして いきなり ボスバトル
+});
+
+/* ---------- こたえかたの きりかえ ---------- */
+const ANS_NOTES = {
+  know:   "子どもが こえで こたえて、おやが ⭕❌ を つける。いちばん はやい",
+  choice: "4つから えらぶ。ひとりでも できる",
+  type:   "にほんごを キーボードで かく。いちばん あたまを つかう",
+};
+function renderAnsMode() {
+  const m = answerMode();
+  document.querySelectorAll("#ansSeg .ans-btn").forEach((b) => {
+    b.classList.toggle("on", b.dataset.mode === m);
+  });
+  document.getElementById("ansNote").textContent = ANS_NOTES[m];
+}
+document.querySelectorAll("#ansSeg .ans-btn").forEach((b) => {
+  b.addEventListener("click", () => {
+    sfxClick();
+    P.answerMode = b.dataset.mode;
+    save();
+    renderAnsMode();
+  });
 });
 
 /* ---------- 🎒 もちもの ずかん ----------
@@ -1785,10 +1809,14 @@ function buildChoices(w) {
   return shuffle([w, ...wrongs]);
 }
 
-/* こたえかた選択の ボタンは けしたが、まえに にゅうりょくモードを
-   えらんでいた たんまつが そのまま ロックされないよう、ここで
-   つねに false に する(4たくモード いっぽんに なる) */
-const isTypeMode = () => false;
+/* Ⓐ・Ⓑの こたえかたは 3つから えらぶ。
+   know   … 子どもが こえで こたえて、おやが ⭕❌ を つける
+   choice … 4たくから えらぶ
+   type   … にほんごを キーボードで かく */
+const ANSWER_MODES = ["know", "choice", "type"];
+const answerMode = () => (ANSWER_MODES.includes(P.answerMode) ? P.answerMode : "choice");
+const isTypeMode = () => answerMode() === "type";
+const isKnowMode = () => answerMode() === "know";
 /* その もんだいを にゅうりょくで こたえさせるか。
    ぜんちし・be動詞などは かけないので 4たくに おとす。 */
 const useTypeInput = (w) => isTypeMode() && !isTypeHard(w) && !useCloze(w);
@@ -1887,11 +1915,17 @@ function renderQuiz() {
   document.getElementById("comboNum").textContent = Q.combo;
 
   const cloze = useCloze(w);
+  const knowMode = isKnowMode();
   const typeMode = useTypeInput(w);
   const choicesWrap = document.getElementById("choices");
   const typeWrap = document.getElementById("quizTypeWrap");
-  choicesWrap.classList.toggle("hidden", typeMode);
+  choicesWrap.classList.toggle("hidden", typeMode || knowMode);
   typeWrap.classList.toggle("hidden", !typeMode);
+  // こえで こたえる モード: こたえは かくしておいて、見てから ⭕❌
+  document.getElementById("quizKnowWrap").classList.toggle("hidden", !knowMode);
+  document.getElementById("knowAnswer").classList.add("hidden");
+  document.getElementById("knowBtns").classList.add("hidden");
+  document.getElementById("btnKnowReveal").classList.remove("hidden");
   // あなうめのときは 「えいご→いみ」の 見ためを かくす
   document.getElementById("quizCloze").classList.toggle("hidden", !cloze);
   document.getElementById("quizSlot").classList.toggle("hidden", cloze);
@@ -1905,18 +1939,27 @@ function renderQuiz() {
 
   if (cloze) {
     // あなうめ: ぶんの ( ) に 入る たんごを えらぶ(えいけん5きゅう 大問1 と おなじ)
-    document.getElementById("quizLabel").textContent = "( ) に 入るのは どれ?";
+    document.getElementById("quizLabel").textContent =
+      knowMode ? "( ) に 入る たんごを こえで いおう" : "( ) に 入るのは どれ?";
     renderClozeSentence(w, "clozeEn", "clozeJa", true);
-    choicesWrap.innerHTML = "";
-    clozeChoices(w, shuffle).forEach((en) => {
-      const b = document.createElement("button");
-      b.className = "choice choice-en";
-      b.textContent = en;
-      if (en.toLowerCase() === w.en.toLowerCase()) b.dataset.correct = "1";
-      b.addEventListener("click", () => answer(b, en.toLowerCase() === w.en.toLowerCase(), w));
-      choicesWrap.appendChild(b);
-    });
+    if (!knowMode) {
+      choicesWrap.innerHTML = "";
+      clozeChoices(w, shuffle).forEach((en) => {
+        const b = document.createElement("button");
+        b.className = "choice choice-en";
+        b.textContent = en;
+        if (en.toLowerCase() === w.en.toLowerCase()) b.dataset.correct = "1";
+        b.addEventListener("click", () => answer(b, en.toLowerCase() === w.en.toLowerCase(), w));
+        choicesWrap.appendChild(b);
+      });
+    }
     speakCloze(w);
+  } else if (knowMode) {
+    // こえで こたえる: えいごを 見せて(えは かくして)、いみを 口で いう
+    document.getElementById("quizLabel").textContent = "この たんごの いみを こえで いおう";
+    document.getElementById("quizSlot").textContent = "❓";
+    document.getElementById("quizEn").textContent = w.en;
+    speak(w.en);
   } else if (typeMode) {
     // にゅうりょくモード: はつおんを きいて にほんごを かく(えは ヒントに なるので かくす)
     document.getElementById("quizLabel").textContent = "たんごを きいて、にほんごで かこう";
@@ -1944,6 +1987,35 @@ function renderQuiz() {
     speak(w.en);
   }
 }
+
+/* こえで こたえる モード。
+   こたえを 先に 見せてしまうと 子どもが 見て しまうので、
+   「こたえを 見る」を おすまで かくしておく。見せてから
+   おやが ⭕❌ を つける。 */
+document.getElementById("btnKnowReveal").addEventListener("click", () => {
+  if (!Q || Q.locked) return;
+  sfxClick();
+  const w = Q.words[Q.i];
+  const box = document.getElementById("knowAnswer");
+  if (useCloze(w)) {
+    renderClozeSentence(w, "clozeEn", "clozeJa", false);   // あなに こたえを 入れる
+    box.innerHTML = `<div class="know-ja">${escapeHtml(w.en)} = ${escapeHtml(w.ja)}</div>`;
+  } else {
+    document.getElementById("quizSlot").textContent = w.emoji;
+    box.innerHTML = `<div class="know-ja">${escapeHtml(w.ja)}</div>`;
+  }
+  box.classList.remove("hidden");
+  document.getElementById("btnKnowReveal").classList.add("hidden");
+  document.getElementById("knowBtns").classList.remove("hidden");
+});
+document.getElementById("btnKnowOk").addEventListener("click", (e) => {
+  if (!Q || Q.locked) return;
+  answer(e.currentTarget, true, Q.words[Q.i]);
+});
+document.getElementById("btnKnowNg").addEventListener("click", (e) => {
+  if (!Q || Q.locked) return;
+  answer(e.currentTarget, false, Q.words[Q.i]);
+});
 
 function submitQuizTyped() {
   if (!Q || Q.locked) return;
@@ -1996,13 +2068,14 @@ function answer(btn, ok, correct) {
   if (Q.locked) return;
   Q.locked = true;
 
-  if (!useTypeInput(correct)) {
+  if (!useTypeInput(correct) && !isKnowMode()) {
     document.querySelectorAll("#choices .choice").forEach((b) => {
       if (b.dataset.correct === "1") b.classList.add("ok");
       else b.classList.add("dim");
     });
     if (!ok) btn.classList.add("ng");
   }
+  if (isKnowMode()) document.getElementById("knowBtns").classList.add("hidden");
 
   document.getElementById("quizSlot").textContent = correct.emoji;
 

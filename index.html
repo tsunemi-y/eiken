@@ -59,6 +59,16 @@
       </button>
     </div>
 
+    <div class="panel ans-mode">
+      <div class="ans-mode-lb">Ⓐ・Ⓑの こたえかた</div>
+      <div class="ans-seg" id="ansSeg">
+        <button class="ans-btn" data-mode="know"><span class="ans-ic">🗣️</span>こえで</button>
+        <button class="ans-btn" data-mode="choice"><span class="ans-ic">🔘</span>4たく</button>
+        <button class="ans-btn" data-mode="type"><span class="ans-ic">⌨️</span>かく</button>
+      </div>
+      <div class="ans-note" id="ansNote"></div>
+    </div>
+
     <button class="mc-btn wide" id="btnItems">
       <span class="mc-btn-icon">🎒</span>
       <span class="mc-btn-body">
@@ -353,6 +363,17 @@
     </div>
 
     <div class="type-fallback hidden" id="typeFallback">⌨️ この たんごは かきにくいので 4たくで こたえよう</div>
+
+    <!-- こえで こたえる モード: こたえを 見てから おやが ⭕❌ を つける -->
+    <div class="know-wrap hidden" id="quizKnowWrap">
+      <div class="know-answer hidden" id="knowAnswer"></div>
+      <button class="mc-btn wide primary" id="btnKnowReveal">👀 こたえを 見る</button>
+      <div class="know-btns hidden" id="knowBtns">
+        <button class="mc-btn know-ng" id="btnKnowNg">❌ わかってない</button>
+        <button class="mc-btn know-ok" id="btnKnowOk">⭕ わかった</button>
+      </div>
+    </div>
+
     <div class="choices" id="choices"></div>
     <div class="typing-input-wrap hidden" id="quizTypeWrap">
       <div class="quiz-hint hidden" id="quizHint"></div>

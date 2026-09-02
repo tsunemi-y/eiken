@@ -278,6 +278,51 @@ button {
 .box-today-tag { display: block; font-size: 9px; color: var(--gold); }
 .box-count { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--diamond); }
 
+/* ---------- こたえかたの きりかえ(3つ) ---------- */
+.ans-mode { padding: 10px 12px 11px; }
+.ans-mode-lb { font-size: 11px; color: var(--text-dim); margin-bottom: 7px; }
+.ans-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.ans-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: #4A4A4A;
+  padding: 8px 2px 7px;
+  font-size: 11px;
+  box-shadow: inset 2px 2px 0 #6E6E6E, inset -2px -2px 0 #222, 0 0 0 2px #000;
+}
+.ans-btn:active { box-shadow: inset -2px -2px 0 #6E6E6E, inset 2px 2px 0 #222, 0 0 0 2px #000; }
+.ans-btn.on {
+  background: var(--grass);
+  box-shadow: inset 2px 2px 0 #86D64C, inset -2px -2px 0 #2E5C12, 0 0 0 2px #FFF;
+}
+.ans-ic { font-size: 17px; }
+.ans-note { font-size: 10px; color: var(--diamond); line-height: 1.5; margin-top: 7px; }
+
+/* ---------- 🗣️ こえで こたえる モード ---------- */
+.know-wrap { margin-top: 4px; }
+.know-answer {
+  background: var(--panel);
+  padding: 14px 12px;
+  margin-bottom: 10px;
+  text-align: center;
+  box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--gold);
+}
+.know-ja { font-size: 17px; color: var(--gold); line-height: 1.6; text-shadow: 2px 2px 0 #000; }
+.know-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.know-btns .mc-btn { padding: 16px 6px; font-size: 14px; }
+.know-ok {
+  background: var(--grass);
+  box-shadow: inset 3px 3px 0 #86D64C, inset -3px -3px 0 #2E5C12, 0 0 0 3px #000;
+}
+.know-ok:active { box-shadow: inset -3px -3px 0 #86D64C, inset 3px 3px 0 #2E5C12, 0 0 0 3px #000; }
+.know-ng {
+  background: #9C3B2E;
+  box-shadow: inset 3px 3px 0 #D26150, inset -3px -3px 0 #5E1F16, 0 0 0 3px #000;
+}
+.know-ng:active { box-shadow: inset -3px -3px 0 #D26150, inset 3px 3px 0 #5E1F16, 0 0 0 3px #000; }
+
 /* ---------- 🎒 もちもの ずかん ---------- */
 .item-sum { padding: 12px; }
 .item-sum-lb { font-size: 12px; margin-bottom: 8px; }
