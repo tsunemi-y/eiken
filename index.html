@@ -59,6 +59,13 @@
       </button>
     </div>
 
+    <button class="mc-btn wide" id="btnItems">
+      <span class="mc-btn-icon">🎒</span>
+      <span class="mc-btn-body">
+        <span class="mc-btn-title">もちもの ずかん</span>
+        <span class="mc-btn-sub" id="itemsSub">パックで ひいた アイテムを 見る</span>
+      </span>
+    </button>
 
     <button class="mc-btn wide grammar-btn" id="btnGrammar">
       <span class="mc-btn-icon">📝</span>
@@ -128,6 +135,20 @@
     <h2 class="scr-title">Ⓑ ようびボックス</h2>
     <p class="scr-desc">そつぎょうした たんごが、おぼえた ようびの はこに はいるよ。<br>まちがえると Ⓐに もどるから きをつけて!</p>
     <div class="box-grid" id="boxGrid"></div>
+  </section>
+
+  <!-- ===== 🎒 もちもの ずかん(パックで ひいた アイテム) ===== -->
+  <section class="screen hidden" id="screen-items">
+    <button class="back-btn" data-back="home">◀ もどる</button>
+    <h2 class="scr-title">🎒 もちもの ずかん</h2>
+    <p class="scr-desc">Ⓐの クイズで もらった パックから 出た アイテムだよ。<br>まだ 出てない アイテムは ❔ で かくれてる!</p>
+
+    <div class="panel item-sum">
+      <div class="item-sum-lb">コレクション <b id="itemGot">0</b> / <span id="itemTotal">100</span> しゅるい</div>
+      <div class="mc-bar"><div class="mc-bar-fill" id="itemBar"></div></div>
+    </div>
+
+    <div id="itemTiers"></div>
   </section>
 
   <!-- ===== ごじゅんれんしゅう(ほんばん だい3もん形式) ===== -->

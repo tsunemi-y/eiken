@@ -373,7 +373,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "wrong", "grammar", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "items", "learn", "quiz", "result", "wrong", "grammar", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -383,7 +383,7 @@ function show(name) {
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
-  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes }[name] || (() => {}))();
+  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes, items: renderItems }[name] || (() => {}))();
 }
 
 /* ---------- HUD ---------- */
@@ -430,6 +430,11 @@ function renderHome() {
   }
 
   renderToday();
+
+  const got = collectedCount();
+  document.getElementById("itemsSub").textContent = got === 0
+    ? "パックで ひいた アイテムを 見る"
+    : `${got} / ${ITEM_TOTAL} しゅるい あつめた`;
 
   const wd = new Date().getDay();
   const todayInfo = WEEKDAYS.find((w) => w.day === wd);
@@ -603,6 +608,44 @@ document.getElementById("btnWordlistQuiz").addEventListener("click", () => {
   save();
   startQuiz(currentWordlistRange, "A");   // カードを とばして いきなり ボスバトル
 });
+
+/* ---------- 🎒 もちもの ずかん ----------
+   パックで ひいた アイテムを レアリティごとに ならべて 見せる。
+   まだ 出ていない ものは ❔ で かくして、なにが のこっているかを
+   わかるようにする(ずかんを うめたく なる しかけ)。 */
+function collectedCount() { return ALL_ITEMS.filter((it) => P.items[it.id]).length; }
+
+function renderItems() {
+  const got = collectedCount();
+  document.getElementById("itemGot").textContent = got;
+  document.getElementById("itemTotal").textContent = ITEM_TOTAL;
+  document.getElementById("itemBar").style.width = (got / ITEM_TOTAL) * 100 + "%";
+
+  const wrap = document.getElementById("itemTiers");
+  wrap.innerHTML = "";
+  DROP_TIERS.forEach((t) => {
+    const mine = t.items.filter((it) => P.items[it.id]).length;
+    const sec = document.createElement("div");
+    sec.className = "item-tier";
+    sec.style.setProperty("--tc", t.color);
+    const cells = t.items.map((it) => {
+      const n = P.items[it.id] || 0;
+      if (!n) return `<div class="item-cell"><div class="item-ic">❔</div><div class="item-n">???</div></div>`;
+      return `<div class="item-cell got"><div class="item-ic">${it.ic}</div>` +
+             `<div class="item-n">${it.n}</div>` +
+             (n > 1 ? `<div class="item-dup">×${n}</div>` : "") + `</div>`;
+    }).join("");
+    sec.innerHTML =
+      `<div class="item-tier-head">` +
+        `<span class="item-tier-name">${t.name}<span class="item-tier-sub">${t.label}</span></span>` +
+        `<span class="item-tier-count">${mine}/${t.items.length}</span>` +
+      `</div>` +
+      `<div class="item-grid">${cells}</div>`;
+    wrap.appendChild(sec);
+  });
+}
+
+document.getElementById("btnItems").addEventListener("click", () => { sfxClick(); show("items"); });
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
