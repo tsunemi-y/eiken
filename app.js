@@ -2373,50 +2373,44 @@ function openPackNow(pack, fx) {
   }, fx.charge);
 }
 
+/* 1パック 1まいなので、ちいさい タイルを ならべるのでは なく
+   トレーディングカード 1まいとして 大きく 見せる。 */
 function revealItems(pack, fx) {
   const wrap = document.getElementById("packItems");
-  wrap.innerHTML = "";
+  const it = pack.items[0];
+  const have = P.items[it.id] || 1;
+  const no = ALL_ITEMS.findIndex((x) => x.id === it.id) + 1;
 
-  pack.items.forEach((it, i) => {
-    const el = document.createElement("div");
-    el.className = "pack-item";
-    el.style.setProperty("--ic", pack.tier.color);
-    el.style.animationDelay = i * fx.stagger + "ms";
-    const have = P.items[it.id] || 1;
-    el.innerHTML = `
-      <div class="pack-item-ic">${it.ic}</div>
-      <div class="pack-item-n">${it.n}</div>
-      ${it.isNew ? '<div class="pack-item-tag">NEW!</div>' : ""}
-      ${have > 1 ? `<div class="pack-item-dup">×${have}</div>` : ""}
-    `;
-    wrap.appendChild(el);
-    setTimeout(() => {
-      sfxGraduate();
-      if (it.isNew) orbs(4, it.ic);
-    }, i * fx.stagger);
-  });
+  wrap.innerHTML = `
+    <div class="pull-card">
+      <div class="pull-card-head">
+        <span class="pull-rarity">${pack.tier.name}</span>
+        <span class="pull-no">No.${String(no).padStart(3, "0")}</span>
+      </div>
+      <div class="pull-card-art"><span class="pull-ic">${it.ic}</span></div>
+      <div class="pull-card-name">${it.n}</div>
+      ${it.isNew ? '<div class="pull-new">NEW!</div>' : `<div class="pull-dup">もってる かず ×${have}</div>`}
+    </div>
+  `;
+  sfxGraduate();
+  if (it.isNew) orbs(6, it.ic);
 
   setTimeout(() => {
     // レイを おとして アイテムの なまえを よみやすくする
     document.getElementById("packOverlay").classList.add("settled");
     // ずかんが どこまで うまったか を その場で 見せる
-    const got = ALL_ITEMS.filter((it) => P.items[it.id]).length;
+    const got = collectedCount();
     const coll = document.getElementById("packColl");
     coll.innerHTML =
       `<div class="pc-lb">コレクション <b>${got}</b> / ${ITEM_TOTAL} しゅるい</div>` +
       `<div class="mc-bar thin"><div class="mc-bar-fill" style="width:${(got / ITEM_TOTAL) * 100}%"></div></div>`;
     coll.classList.remove("hidden");
     document.getElementById("btnPackClose").classList.remove("hidden");
-    const gotNew = pack.items.filter((it) => it.isNew).length;
-    if (gotNew > 0) {
-      advancement(
-        `${pack.tier.name} ×${pack.items.length}(はじめて ${gotNew}こ)`,
-        pack.items[0].ic,
-        "アイテムを てにいれた!"
-      );
+    if (it.isNew) {
+      advancement(`${pack.tier.name} ・ ${it.n}`, it.ic, "はじめての アイテム!");
     }
     packBusy = false;
-  }, pack.items.length * fx.stagger + 400);
+  }, 700);
 }
 
 document.getElementById("btnPackClose").addEventListener("click", () => {
