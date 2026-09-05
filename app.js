@@ -272,6 +272,12 @@ if (window.speechSynthesis) {
   // まえの ページの よみあげが のこって つまっている ことが あるので ながす
   try { window.speechSynthesis.cancel(); } catch (e) { /* きにしない */ }
 }
+/* よみあげの はやさ。えいごは おぼえる たいしょうなので ゆっくり、
+   にほんごの やくは「いみの かくにん」だけなので はやめに する
+   (ゆっくり よむと 子どもが まちきれなくて わずらわしいため)。 */
+const RATE_EN = 0.85;
+const RATE_JA = 1.35;
+
 function makeUtterance(text, langPrefix, rate) {
   const u = new SpeechSynthesisUtterance(text);
   const v = pickVoice(langPrefix);
@@ -280,7 +286,7 @@ function makeUtterance(text, langPrefix, rate) {
   u.pitch = 1.0;
   return u;
 }
-function speak(text, rate = 0.85) {
+function speak(text, rate = RATE_EN) {
   const synth = wakeSynth();
   if (!synth) return;
   synth.cancel();
@@ -290,8 +296,8 @@ function speak(text, rate = 0.85) {
 /* だいたいの よみあげ時間。
    Web Speech は たんまつに よっては onend が こない ことが あるので、
    「よみおわるまで すすめない」を つくる ときの ほけんに つかう。 */
-function estimateSpeakMs(text) {
-  return Math.max(1200, String(text).length * 130);
+function estimateSpeakMs(text, rate = 1) {
+  return Math.max(1200, (String(text).length * 130) / rate);
 }
 
 /* えいご→にほんご を つづけて よむ。
@@ -308,8 +314,8 @@ function speakPair(en, ja, onDone) {
   const synth = wakeSynth();
   if (!synth) { finish(); return; }
   synth.cancel();
-  const uEn = makeUtterance(en, "en", 0.85);
-  const uJa = makeUtterance(ja, "ja", 0.95);
+  const uEn = makeUtterance(en, "en", RATE_EN);
+  const uJa = makeUtterance(ja, "ja", RATE_JA);
 
   // えいごが おわってから にほんごを つくると、こえの じゅんびに 時間が
   // かかって あいだが あいてしまう。さきに 2つとも ならべておくと、
@@ -324,7 +330,7 @@ function speakPair(en, ja, onDone) {
   // ならべても にほんごが はじまらない たんまつ が あるので、その ときだけ よびだす
   uEn.onend = () => setTimeout(() => {
     if (!jaStarted && !synth.speaking && !synth.pending) {
-      const retry = makeUtterance(ja, "ja", 0.95);
+      const retry = makeUtterance(ja, "ja", RATE_JA);
       retry.onend = finish;
       retry.onerror = finish;
       synth.speak(retry);
@@ -332,7 +338,7 @@ function speakPair(en, ja, onDone) {
   }, 300);
 
   // ほけん。onend が こない たんまつでも かならず ここで とく
-  guard = setTimeout(finish, estimateSpeakMs(en) + estimateSpeakMs(ja) + 1500);
+  guard = setTimeout(finish, estimateSpeakMs(en, RATE_EN) + estimateSpeakMs(ja, RATE_JA) + 1200);
 }
 
 /* ---------- エフェクト ---------- */
@@ -604,12 +610,6 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
   save();
   startLearn(currentWordlistRange);
 });
-document.getElementById("btnWordlistQuiz").addEventListener("click", () => {
-  sfxClick();
-  P.lastRange = currentWordlistRange;
-  save();
-  startQuiz(currentWordlistRange, "A");   // カードを とばして いきなり ボスバトル
-});
 
 /* ---------- こたえかたの きりかえ ---------- */
 const ANS_NOTES = {
@@ -761,6 +761,10 @@ function renderCard() {
 
   const last = L.i === L.words.length - 1;
   document.getElementById("btnNext").textContent = last ? "さいしょへ" : "つぎ ▶";
+  // クイズへ すすむ ボタンは さいごの カードまで 出さない。
+  // 「つぎ」の すぐ下に ずっと 出ていると、めくって いる とちゅうで
+  // まちがって おして しまい、おぼえる まえに クイズが はじまって しまう。
+  document.getElementById("btnGoQuiz").classList.toggle("hidden", !last);
 
   speak(w.en);
 }
@@ -1699,7 +1703,7 @@ function speakGrammar(it, revealed) {
       setTimeout(next, 620);
       return;
     }
-    const u = makeUtterance(step, "en", 0.85);
+    const u = makeUtterance(step, "en", RATE_EN);
     u.onend = () => setTimeout(next, 300);
     synth.speak(u);
   };
@@ -1868,7 +1872,7 @@ function speakCloze(w, full = false) {
       setTimeout(next, 620);
       return;
     }
-    const u = makeUtterance(step.text, "en", 0.85);
+    const u = makeUtterance(step.text, "en", RATE_EN);
     u.onend = () => setTimeout(next, 140);
     synth.speak(u);
   };
@@ -2253,10 +2257,14 @@ function finish() {
 
 document.getElementById("btnBackRanges").addEventListener("click", () => { sfxClick(); show("ranges"); });
 document.getElementById("btnBackBoxes").addEventListener("click", () => { sfxClick(); show("boxes"); });
+/* 「もういちど」は クイズを もういちど やる。
+   1つの はんいは 1日に 2〜3かい まわすので、そのたびに カードを
+   15まい めくりなおすのは しんどい。カードから やりたい ときは
+   はんいいちらんから 入りなおす。 */
 document.getElementById("btnRetry").addEventListener("click", () => {
   sfxClick();
   if (Q.mode === "B") startBoxQuiz(Q.day);
-  else startLearn(Q.rangeId);
+  else startQuiz(Q.rangeId, "A");
 });
 document.getElementById("btnResultHome").addEventListener("click", () => { sfxClick(); show("home"); });
 document.getElementById("btnReviewWrong").addEventListener("click", () => { sfxClick(); renderWrong(); });
