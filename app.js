@@ -208,12 +208,22 @@ const sfxGraduate = () => { [660, 880, 1100, 1320].forEach((f, i) => setTimeout(
    さいゆうせんで えらび、それが なければ ローカルの きこえを つかう。
 ------------------------------- */
 let voices = [];
-function voiceScore(v, langPrefix) {
+/* preferLocal=true の ときは、たんまつの なかに 入っている こえ
+   (localService)を つよく えらぶ。
+   ネットワークごえは きれいだが、しゃべる まえに とりに いくので
+   出だしが おくれる。えいごの あとの 日本語やくが「まが あく」のは
+   これが げんいん。やくは いみの かくにん なので、きれいさより
+   すぐ 出る ことを ゆうせんする。 */
+function voiceScore(v, langPrefix, preferLocal) {
   let s = 0;
   if (new RegExp("^" + langPrefix, "i").test(v.lang)) s += 10; else return -1;
   if (langPrefix === "en" && v.lang.toLowerCase() === "en-us") s += 20;
   if (/google/i.test(v.name)) s += 50;
-  if (v.localService === false) s += 15;
+  if (preferLocal) {
+    if (v.localService) s += 60;      // すぐ しゃべれる こえを さいゆうせん
+  } else if (v.localService === false) {
+    s += 15;                          // えいごは きれいさ ゆうせん
+  }
   if (langPrefix === "en" && /us english/i.test(v.name)) s += 10;
   if (/compact|espeak|pico/i.test(v.name)) s -= 30;
   return s;
@@ -228,8 +238,13 @@ function voiceScore(v, langPrefix) {
    ならべかえる よりも ずっと かるい。 */
 const voicePick = {};   // langPrefix -> voiceURI
 
+/* 日本語の やくは「まを あけない」ことを ゆうせんする */
+const prefersLocal = (langPrefix) => langPrefix === "ja";
+
 function bestVoice(list, langPrefix) {
-  const candidates = list.map((v) => ({ v, s: voiceScore(v, langPrefix) })).filter((x) => x.s >= 0);
+  const candidates = list
+    .map((v) => ({ v, s: voiceScore(v, langPrefix, prefersLocal(langPrefix)) }))
+    .filter((x) => x.s >= 0);
   candidates.sort((a, b) => b.s - a.s);
   return candidates.length ? candidates[0].v : null;
 }
@@ -335,7 +350,7 @@ function speakPair(en, ja, onDone) {
       retry.onerror = finish;
       synth.speak(retry);
     }
-  }, 300);
+  }, 120);
 
   // ほけん。onend が こない たんまつでも かならず ここで とく
   guard = setTimeout(finish, estimateSpeakMs(en, RATE_EN) + estimateSpeakMs(ja, RATE_JA) + 1200);
