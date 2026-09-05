@@ -494,42 +494,51 @@ function renderToday() {
 /* ---------- Ⓐ はんいえらび ---------- */
 function renderRanges() {
   rollDay();
-  // がめんの うえに 「きょう どこまで やったか」を 出す
+  // うえの おびは「きょう どれだけ やったか」だけ。
+  // 「つぎは どこ」は カードの しるしで わかるので ここでは くりかえさない。
   const sum = document.getElementById("rangeToday");
-  const nr = nextRange();
   sum.innerHTML = P.today.ranges.length === 0
-    ? `📅 きょうは まだ Ⓐを やってないよ${nr ? ` ・ つぎは <b>${nr.title}</b>` : ""}`
-    : `📅 きょうは <b>${P.today.ranges.length}はんい</b> / <b>${P.today.words.length}ご</b> れんしゅうした` +
-      `${nr ? ` ・ つづきは <b>${nr.title}</b>` : ""}`;
+    ? "📅 きょうは まだ Ⓐを やってないよ"
+    : `📅 きょう やったのは <b>${P.today.ranges.length}はんい</b> ・ <b>${P.today.words.length}ご</b>`;
 
+  const nr = nextRange();
+  const nextId = nr ? nr.id : null;
   const wrap = document.getElementById("rangeGrid");
   wrap.innerHTML = "";
-  const nextId = nr ? nr.id : null;
+
   RANGES.forEach((r) => {
     const ws = wordsInRange(r.id);
     const done = ws.filter((w) => P.box[w.id] !== undefined).length;
-    const points = ws.reduce((sum, w) => sum + (P.box[w.id] !== undefined ? MASTER_COUNT : P.mastery[w.id] || 0), 0);
-    const maxPoints = ws.length * MASTER_COUNT;
-    const pct = (points / maxPoints) * 100;
+    const points = ws.reduce((sum2, w) => sum2 + (P.box[w.id] !== undefined ? MASTER_COUNT : P.mastery[w.id] || 0), 0);
+    const pct = (points / (ws.length * MASTER_COUNT)) * 100;
     const untouched = points === 0;
     const finished = done === ws.length;
-    const status = finished ? "✅ かんりょう" : untouched ? "🆕 みはじめ" : "✏️ とちゅう";
     const doneToday = P.today.ranges.includes(r.id);
     const isNext = r.id === nextId;
+
     const el = document.createElement("div");
-    el.className =
-      "range-card" + (finished ? " done" : "") + (untouched ? " untouched" : "") +
+    el.className = "range-card" +
+      (finished ? " done" : "") + (untouched ? " untouched" : "") +
       (doneToday ? " today" : "") + (isNext ? " next" : "");
-    const mark = doneToday && isNext ? '<div class="range-mark today">📅 きょう やった ・ つづきは ここ</div>'
-      : doneToday ? '<div class="range-mark today">📅 きょう やった</div>'
-      : isNext ? '<div class="range-mark next">👉 つぎは ここ</div>' : "";
+
+    /* しるしは 2つの じくに わける。まぜると どれが なにか わからなく なる。
+       ・わくの いろ = 「つぎ どこを やるか」(みずいろ 1まいだけ)
+       ・📅きょう の チップ = 「きょう さわったか」(何まいでも つく)
+       すすみぐあいは バー(せいかいカウントの つみあげ)と
+       📦のかず(Ⓑへ そつぎょうした ご数)の 2つだけ。
+       バーは 1もん あたるたび のびるので うごきが 見えるが、
+       📦は そつぎょうしないと ふえないので、かならずしも 一致しない。
+       たんに「0/15」だと どちらの ことか わからないので 📦を つける。 */
     el.innerHTML = `
-      ${mark}
-      <div class="range-status">${status}</div>
-      <div class="range-title">${r.title}</div>
-      <div class="range-sub">${ws[0].en} 〜 ${ws[ws.length - 1].en}</div>
-      <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
-      <div class="range-foot">${done}/${ws.length}ご ボックスへ</div>
+      ${isNext ? `<div class="range-badge">👉 ${doneToday ? "つづきは ここ" : "つぎは ここ"}</div>` : ""}
+      <div class="range-line">
+        <span class="range-title">${r.title}</span>
+        <span class="range-marks">${doneToday ? '<span class="rm-today">📅きょう</span>' : ""}${finished ? '<span class="rm-done">✅</span>' : ""}</span>
+      </div>
+      <div class="range-prog">
+        <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
+        <span class="range-count">📦${done}/${ws.length}</span>
+      </div>
     `;
     el.addEventListener("click", () => {
       sfxClick();

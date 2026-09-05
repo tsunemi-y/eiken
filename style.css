@@ -257,11 +257,29 @@ button {
 }
 .range-card.done { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--emerald); }
 .range-card.untouched { opacity: .6; }
-.range-status { position: absolute; top: 10px; right: 10px; font-size: 10px; font-weight: bold; color: var(--text-dim); }
+.range-line { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 9px; }
 .range-title { font-size: 14px; }
-.range-sub { font-size: 10px; color: var(--text-dim); margin: 4px 0 8px; word-break: break-all; }
-.range-card .mc-bar { height: 10px; }
-.range-foot { font-size: 11px; color: var(--text-dim); text-align: right; margin-top: 6px; }
+.range-marks { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+/* 「きょう さわった」しるし。わくの いろとは べつの じくなので
+   どの カードにも つく(かんりょう ずみでも つく) */
+.rm-today {
+  font-size: 9px;
+  color: #000;
+  background: var(--gold);
+  padding: 3px 5px;
+  box-shadow: 0 0 0 2px #000;
+  white-space: nowrap;
+}
+.rm-done { font-size: 13px; line-height: 1; }
+.range-prog { display: flex; align-items: center; gap: 7px; }
+.range-card .mc-bar { height: 12px; flex: 1; }
+.range-count {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.range-card.done .range-count { color: var(--emerald); }
 
 /* ---------- Ⓑ ようびボックス ---------- */
 .box-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -992,22 +1010,20 @@ button {
 }
 .range-today-bar b { color: var(--gold); }
 .range-card { position: relative; }
-/* きょう やった はんいは きん、つぎに やる はんいは ダイヤいろ の わく */
-.range-card.next { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--diamond); }
-.range-card.today { box-shadow: inset 3px 3px 0 var(--panel-lt), inset -3px -3px 0 var(--panel-dk), 0 0 0 3px var(--gold); }
-/* しるしは カードの いちばん うえに よこいっぱいで 出す(かさならない) */
-.range-mark {
-  margin: -4px -4px 8px;
-  padding: 5px 6px;
-  font-size: 10px; text-align: center;
+/* わくの いろは「つぎ どこを やるか」だけに つかう。
+   きょう さわったかは 📅きょう の チップで べつに 見せる。 */
+.range-card.next {
+  background: #12303A;
+  box-shadow: inset 3px 3px 0 #2A5A68, inset -3px -3px 0 #0A1E26, 0 0 0 3px var(--diamond);
+}
+.range-badge {
+  margin: -4px -4px 9px;
+  padding: 6px 6px;
+  font-size: 11px; text-align: center;
   color: #000;
+  background: var(--diamond);
   box-shadow: 0 0 0 2px #000;
 }
-.range-mark.today { background: var(--gold); }
-.range-mark.next { background: var(--diamond); }
-/* しるしが あるときは「みはじめ / とちゅう」を その したに ずらす */
-.range-card.today .range-status,
-.range-card.next .range-status { top: 42px; }
 
 /* つづきから ボタン(アイコン + 2ぎょう) */
 .continue-btn { justify-content: flex-start; gap: 12px; padding: 14px; text-align: left; }
