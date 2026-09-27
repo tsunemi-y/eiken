@@ -365,7 +365,7 @@ function renderToday() {
     document.getElementById("continueTitle").textContent =
       touched ? `つづきから ${nr.title}` : `つぎは ${nr.title}`;
     document.getElementById("continueSub").textContent = `${done}/${ws.length}ご おぼえた`;
-    btn.onclick = () => { sfxClick(); renderWordlist(nr.id); };
+    btn.onclick = () => { sfxClick(); renderWordlist(nr.id, true); };
   }
 }
 
@@ -412,7 +412,7 @@ function renderRanges() {
     `;
     el.addEventListener("click", () => {
       sfxClick();
-      renderWordlist(r.id);
+      renderWordlist(r.id, true);
     });
     wrap.appendChild(el);
   });
@@ -420,16 +420,22 @@ function renderRanges() {
 
 /* ---------- たんごいちらん ---------- */
 let currentWordlistRange = 1;
+// 一覧の ならびも シャッフルする(曜日・月などが 番号じゅんに つづくと よそうで こたえられるため)。
+// 「覚えた」を おすたびに ならびが かわると さがしにくいので、ひらいた ときに 1かいだけ まぜて つかいまわす
+let wordlistOrder = { range: null, ids: [] };
 
-function renderWordlist(rangeId) {
+function renderWordlist(rangeId, reshuffle = false) {
   currentWordlistRange = rangeId;
+  if (reshuffle || wordlistOrder.range !== rangeId) {
+    wordlistOrder = { range: rangeId, ids: shuffle(wordsInRange(rangeId).map((w) => w.id)) };
+  }
   const r = RANGES[rangeId - 1];
   document.getElementById("wordlistTitle").textContent = `📋 ${r.title}`;
 
   const wrap = document.getElementById("wordList");
   wrap.innerHTML = "";
   let anyLeft = false;
-  wordsInRange(rangeId).forEach((w) => {
+  wordlistOrder.ids.map((id) => WORD_BY_ID.get(id)).forEach((w) => {
     const learned = !!P.learned[w.id];
     if (!learned) anyLeft = true;
     const el = document.createElement("div");
@@ -651,7 +657,7 @@ document.getElementById("btnLearned").addEventListener("click", (e) => {
   L.words.splice(L.i, 1);
   if (L.words.length === 0) {
     advancement("この はんいは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
-    renderWordlist(L.range);
+    renderWordlist(L.range, true);
     return;
   }
   if (L.i >= L.words.length) L.i = 0;
