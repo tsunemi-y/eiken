@@ -653,5 +653,17 @@ document.getElementById("btnHome").addEventListener("click", () => show("home"))
 document.getElementById("btnStart").addEventListener("click", () => { sfxClick(); show("ranges"); });
 document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(b.dataset.back)));
 
+/* きろくの リセット。「おぼえた」の きろくが ぜんぶ きえるので、
+   まちがって おしても もとに もどせないように 2かい たしかめる。 */
+document.getElementById("btnResetAll").addEventListener("click", () => {
+  if (!confirm(`いま「おぼえた」に なっている ${learnedCount()}ごの きろくを ぜんぶ けします。もとに もどせません。`)) return;
+  if (!confirm("ほんとうに よろしいですか?")) return;
+  P.learned = {};
+  P.today = freshDay(null);
+  save();
+  sfxClick();
+  show("home");
+});
+
 /* ---------- スタート ---------- */
 show("home");

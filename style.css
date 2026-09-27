@@ -127,6 +127,17 @@ input { font-family: inherit; }
   border-radius: 999px; text-align: center;
 }
 
+/* きろくの リセット。まちがって おさないように 目立たせない */
+.reset-link {
+  display: block;
+  width: 100%;
+  margin-top: 28px;
+  padding: 8px;
+  font-size: 12px; text-align: center;
+  color: var(--ink-3);
+}
+.reset-link:active { color: var(--ng); }
+
 /* ---------- パネル ---------- */
 .panel {
   background: var(--surface);
