@@ -861,6 +861,60 @@ WORD_LIST.forEach((w, i) => {
   w.id = w.no;
   if (VISUALS[w.en]) w.vis = VISUALS[w.en];
 });
+/* ---- しけんに でる 重要な 語だけに しぼる(155ご) ----
+   本番まで 7日しか ないので、424ごを ぜんぶ やるのは むり。
+   5きゅうは いちばん やさしい 級で「ほぼ ぜんぶ よく でる」ため、
+   どこを けずっても なにかは うしなう。そこで リーディングが
+   できない もんだいに あわせて、「文を よむのに いる ほねぐみ」を
+   さいゆうせんで のこした:
+     代名詞・疑問詞・be動詞・基本動詞・前置詞/接続詞・頻度の副詞・
+     数字・曜日・月・よく でる 熟語
+   名詞と 形容詞は 学校・家族・食事・時間など 5きゅうの
+   きほんの ばめんに でる ものだけ。
+   おなじ 語が 2かい ある もの(one / you / his / her / it)は
+   1つだけ、目的格(him / us / them)や 所有代名詞(mine など)、
+   4ばんめ いこうの 序数、a / the / of は はずした。
+
+   データじたいは けさずに ここで しぼるだけ なので、
+   ばんごうを たせば かんたんに もどせる。id は ばんごう なので、
+   しぼっても ほぞんずみの きろくは ずれない。 */
+const CORE_NOS = new Set([
+  // 代名詞
+  540, 541, 542, 544, 545, 548, 549, 552, 553, 556, 559, 560, 563, 564, 567, 568,
+  // 疑問詞
+  303, 304, 305, 306, 307, 308, 309, 310,
+  // be動詞・can・do
+  183, 184, 185, 186, 302,
+  // 基本動詞
+  187, 188, 189, 190, 191, 192, 196, 197, 198, 199, 200, 201, 202, 206, 208, 211, 213, 214,
+  // 前置詞・接続詞
+  282, 283, 284, 285, 286, 289, 290, 292, 293, 298, 299, 300,
+  // 副詞
+  260, 262, 265, 266, 272, 275, 276,
+  // 形容詞
+  236, 237, 238, 242, 243, 251, 252, 253, 254,
+  // 数字(1〜12・20・first)
+  499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 518, 528,
+  // 曜日・月
+  125, 126, 127, 128, 129, 130, 131,
+  133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144,
+  // 熟語
+  574, 577, 581, 591, 592, 593, 594, 600,
+  // 名詞(時間・学校・家族・家・食事・動物・スポーツ・季節・人)
+  24, 25, 26, 27, 30, 31, 35, 37,
+  38, 40, 42, 43, 45, 46, 60, 2,
+  101, 97, 98, 99, 100,
+  1, 4, 68,
+  82, 83, 84, 87,
+  116, 118,
+  107, 109, 110,
+  161, 162, 163, 164,
+  61, 62,
+]);
+// const の まま なかみだけ しぼる(ほかの ファイルは WORD_LIST を そのまま つかう)
+for (let i = WORD_LIST.length - 1; i >= 0; i--) {
+  if (!CORE_NOS.has(WORD_LIST[i].no)) WORD_LIST.splice(i, 1);
+}
 const WORD_BY_ID = new Map(WORD_LIST.map((w) => [w.id, w]));
 
 /* =========================================================
@@ -872,29 +926,24 @@ const WORD_BY_ID = new Map(WORD_LIST.map((w) => [w.id, w]));
    「316〜510ばん」のような 見出しに なって わけが わからなく なる。
    あまりが 15ごに とどかない ときは 1つ まえの はんいに くっつける
    (4ごだけの はんいを つくっても やる気が でないため)。 */
+/* しぼった 語は ばんごうが とびとびなので、「ばんごうが
+   つながっている かたまりごと」に くぎると 1〜5ごの ちいさい
+   はんいが たくさん できてしまう。そこで ならびじゅんの まま
+   ほぼ 15ごずつ、はんいの おおきさが そろうように くばる。 */
 const RANGES = [];
 {
-  const blocks = [];
-  WORD_LIST.forEach((w) => {
-    const last = blocks[blocks.length - 1];
-    if (last && w.no === last[last.length - 1].no + 1) last.push(w);
-    else blocks.push([w]);
-  });
-  blocks.forEach((block) => {
-    for (let i = 0; i < block.length; i += 15) {
-      const chunk = block.slice(i, i + 15);
-      // さいごの あまりが 15ごに みたない ときは まえの はんいへ
-      if (chunk.length < 15 && RANGES.length && i > 0) {
-        const prev = RANGES[RANGES.length - 1];
-        prev.to = chunk[chunk.length - 1].no;
-        prev.title = `${prev.from}〜${prev.to}ばん`;
-        continue;
-      }
-      const from = chunk[0].no;
-      const to = chunk[chunk.length - 1].no;
-      RANGES.push({ id: RANGES.length + 1, from, to, title: `${from}〜${to}ばん` });
-    }
-  });
+  const n = Math.max(1, Math.round(WORD_LIST.length / 15));
+  const base = Math.floor(WORD_LIST.length / n);
+  const extra = WORD_LIST.length % n;      // この かずの はんいだけ 1ご おおい
+  let at = 0;
+  for (let r = 0; r < n; r++) {
+    const size = base + (r < extra ? 1 : 0);
+    const chunk = WORD_LIST.slice(at, at + size);
+    at += size;
+    const from = chunk[0].no;
+    const to = chunk[chunk.length - 1].no;
+    RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
+  }
 }
 function wordsInRange(rangeId) {
   const r = RANGES[rangeId - 1];

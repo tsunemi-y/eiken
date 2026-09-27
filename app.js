@@ -99,7 +99,10 @@ function wordsStillLearning(ids) { return ids.filter((id) => P.box[id] === undef
 function wordsInBox(day) {
   return WORD_LIST.filter((w) => P.box[w.id] === day);
 }
-function boxedCount() { return Object.keys(P.box).length; }
+/* しぼる まえに おぼえた 語の きろくも P.box に のこっているので、
+   キーの かずを そのまま かぞえると「300 / 155ご」のように なる。
+   いまの 単語リストに ある 語だけを かぞえる。 */
+function boxedCount() { return WORD_LIST.filter((w) => P.box[w.id] !== undefined).length; }
 
 /* しけんまで あと なん日 */
 function daysLeft() {
