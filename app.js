@@ -375,7 +375,7 @@ function renderRanges() {
   const sum = document.getElementById("rangeToday");
   sum.innerHTML = P.today.ranges.length === 0
     ? "📅 きょうは まだ やってないよ"
-    : `📅 きょう ひらいたのは <b>${P.today.ranges.length}はんい</b>`;
+    : `📅 きょう ひらいたのは <b>${P.today.ranges.length}ゾーン</b>`;
 
   const nr = nextRange();
   const nextId = nr ? nr.id : null;
@@ -493,8 +493,8 @@ const useCloze = (w) => isTypeHard(w) && !!clozeParts(w);
 
 /* パス単の じゅんばんの まま カードを めくると、「father の つぎは
    かならず mother」のように となりあう 語の ならびで おぼえて しまい、
-   たんごを 見ずに あてられて しまう。カードの じゅんばんだけ
-   まぜる(はんいの わけかた・ばんごうの ひょうじは かえない)。 */
+   たんごを 見ずに あてられて しまう。カードと 一覧の じゅんばんは
+   ひらく たびに まぜる(ゾーンの なかみ・ばんごうの ひょうじは かえない)。 */
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -507,7 +507,7 @@ function shuffle(arr) {
 function startLearn(rangeId) {
   const ws = shuffle(wordsNotLearned(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id)));
   if (ws.length === 0) {
-    advancement("この はんいは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
+    advancement("この ゾーンは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
     show("ranges");
     return;
   }
@@ -656,7 +656,7 @@ document.getElementById("btnLearned").addEventListener("click", (e) => {
   markLearned(w.id);
   L.words.splice(L.i, 1);
   if (L.words.length === 0) {
-    advancement("この はんいは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
+    advancement("この ゾーンは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
     renderWordlist(L.range, true);
     return;
   }

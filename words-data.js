@@ -918,36 +918,28 @@ for (let i = WORD_LIST.length - 1; i >= 0; i--) {
 const WORD_BY_ID = new Map(WORD_LIST.map((w) => [w.id, w]));
 
 /* =========================================================
-   A: れんしゅう はんい(パス単プリントの じゅんばんに あわせて
-   15ごずつに くぎる)
+   れんしゅう ゾーン(10こ)
    ========================================================= */
-/* ばんごうが つながっている かたまり(1〜319 と 496〜600)ごとに
-   15ごずつ くぎる。かたまりを またいで くぎると
-   「316〜510ばん」のような 見出しに なって わけが わからなく なる。
-   あまりが 15ごに とどかない ときは 1つ まえの はんいに くっつける
-   (4ごだけの はんいを つくっても やる気が でないため)。 */
-/* しぼった 語は ばんごうが とびとびなので、「ばんごうが
-   つながっている かたまりごと」に くぎると 1〜5ごの ちいさい
-   はんいが たくさん できてしまう。そこで ならびじゅんの まま
-   ほぼ 15ごずつ、はんいの おおきさが そろうように くばる。 */
+/* パス単は 曜日・月・かぞく・すうじ のように おなじ なかまが
+   つづけて ならんでいる。ばんごうじゅんに 15ごずつ くぎると
+   1つの はんいに Sunday〜Saturday が ぜんぶ はいり、「曜日の つぎは
+   曜日」と よそうで こたえられて しまう。
+   そこで ばんごうじゅんに ならべた 語を、ゾーン1→2→…→10→1→… と
+   トランプを くばるように 1まいずつ くばる。となりあう 10ごは
+   かならず ちがう ゾーンに はいるので、曜日(7ご)は 7つの
+   ちがう ゾーンに、月(12ご)も 10ゾーン ぜんぶに ちらばる。
+   くばりかたは いつも おなじなので、ゾーンの なかみは ひらく
+   たびに かわらない(ならびじゅんは がめん がわで まぜる)。 */
+const ZONE_COUNT = 10;
 const RANGES = [];
-{
-  const n = Math.max(1, Math.round(WORD_LIST.length / 15));
-  const base = Math.floor(WORD_LIST.length / n);
-  const extra = WORD_LIST.length % n;      // この かずの はんいだけ 1ご おおい
-  let at = 0;
-  for (let r = 0; r < n; r++) {
-    const size = base + (r < extra ? 1 : 0);
-    const chunk = WORD_LIST.slice(at, at + size);
-    at += size;
-    const from = chunk[0].no;
-    const to = chunk[chunk.length - 1].no;
-    RANGES.push({ id: r + 1, from, to, title: `${from}〜${to}ばん` });
-  }
+for (let z = 0; z < ZONE_COUNT; z++) {
+  RANGES.push({ id: z + 1, title: `ゾーン${z + 1}`, ids: [] });
 }
+[...WORD_LIST].sort((x, y) => x.no - y.no).forEach((w, i) => {
+  RANGES[i % ZONE_COUNT].ids.push(w.id);
+});
 function wordsInRange(rangeId) {
-  const r = RANGES[rangeId - 1];
-  return WORD_LIST.filter((w) => w.no >= r.from && w.no <= r.to);
+  return RANGES[rangeId - 1].ids.map((id) => WORD_BY_ID.get(id));
 }
 
 /* =========================================================
