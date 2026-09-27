@@ -31,61 +31,39 @@
       <span class="tile-arrow">→</span>
     </button>
 
-    <div class="mode-grid">
-      <button class="mode-card" id="btnRead">
-        <span class="mode-ic">📖</span>
-        <span class="mode-title">リーディング</span>
-        <span class="mode-sub">英語を 読んで<br>いみを えらぶ</span>
-      </button>
-      <button class="mode-card" id="btnListen">
-        <span class="mode-ic">🎧</span>
-        <span class="mode-title">リスニング</span>
-        <span class="mode-sub">英語を きいて<br>いみを えらぶ</span>
-      </button>
-    </div>
-
-    <button class="tile" id="btnB">
+    <button class="tile" id="btnStart">
       <span class="tile-main">
-        <span class="tile-title">Ⓑ ふくしゅう</span>
-        <span class="tile-sub" id="todayBoxLabel">きょうの ボックス</span>
+        <span class="tile-title">📖🎧 たんごを おぼえる</span>
+        <span class="tile-sub">英語を 見て、🔊で 発音も きける。おぼえたら ボタンを おす</span>
       </span>
-      <span class="badge hidden" id="boxNotif">0</span>
       <span class="tile-arrow">→</span>
     </button>
   </section>
 
-  <!-- ===== Ⓐ はんいえらび ===== -->
+  <!-- ===== はんいえらび ===== -->
   <section class="screen hidden" id="screen-ranges">
     <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="scr-title" id="rangesTitle">📖 リーディング</h2>
-    <p class="scr-desc" id="rangesDesc"></p>
+    <h2 class="scr-title">たんごを えらぶ</h2>
+    <p class="scr-desc">英語を 見て(🔊で 発音も きける)、おぼえたら「✅ おぼえた」を おそう。</p>
     <div class="today-bar" id="rangeToday"></div>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
 
-  <!-- ===== Ⓐ たんごいちらん ===== -->
+  <!-- ===== たんごいちらん ===== -->
   <section class="screen hidden" id="screen-wordlist">
     <button class="back-btn" id="btnWordlistBack">← もどる</button>
     <h2 class="scr-title" id="wordlistTitle">たんごいちらん</h2>
-    <p class="scr-desc">●●● が 3つで Ⓑへ すすみます。もう しっている 語は「しってる」で とばせます。</p>
+    <p class="scr-desc">「✅ おぼえた」を おした 語だけが おぼえた ことに なります。もう しっている 語は「覚えた」で すぐに とばせます。</p>
     <div class="word-list" id="wordList"></div>
-    <button class="tile tile-quiet" id="btnWordlistSkipAll"><span class="tile-main"><span class="tile-title">ぜんぶ しってる → まとめてⒷへ</span></span></button>
-    <button class="tile tile-primary" id="btnWordlistStart"><span class="tile-main"><span class="tile-title">カードで おぼえる → クイズ</span></span><span class="tile-arrow">→</span></button>
-  </section>
-
-  <!-- ===== Ⓑ ようびボックス ===== -->
-  <section class="screen hidden" id="screen-boxes">
-    <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="scr-title">Ⓑ ようびボックス</h2>
-    <p class="scr-desc">おぼえた 語が、こたえた ようびの ボックスに 入ります。まちがえるとⒶに もどります。</p>
-    <div class="box-grid" id="boxGrid"></div>
+    <button class="tile tile-quiet" id="btnWordlistSkipAll"><span class="tile-main"><span class="tile-title">ぜんぶ おぼえた → まとめて おぼえたに</span></span></button>
+    <button class="tile tile-primary" id="btnWordlistStart"><span class="tile-main"><span class="tile-title">カードで おぼえる</span></span><span class="tile-arrow">→</span></button>
   </section>
 
   <!-- ===== おぼえる(カード) ===== -->
   <section class="screen hidden" id="screen-learn">
     <button class="back-btn" data-back="home">← やめる</button>
     <div class="row-head">
-      <span class="chip" id="learnZoneTag">Ⓐ</span>
+      <span class="chip" id="learnZoneTag"></span>
       <span class="pos" id="learnPos">1 / 10</span>
     </div>
 
@@ -94,7 +72,7 @@
         <div class="card-no" id="cardNo">No.1</div>
         <div class="slot" id="cardSlotQ">?</div>
         <div class="card-en" id="cardEn">house</div>
-        <button class="sound-btn" id="btnSpeak">もう いちど きく</button>
+        <button class="sound-btn" id="btnSpeak">🔊 はつおんを きく</button>
         <div class="card-hint">タップして こたえを みる</div>
       </div>
       <div class="card-face hidden" id="cardBack">
@@ -103,7 +81,7 @@
         <div class="card-ja" id="cardJa">いえ</div>
         <div class="vis hidden" id="cardVis"></div>
         <div class="card-ex" id="cardEx"></div>
-        <button class="sound-btn" id="btnSpeak2">きく</button>
+        <button class="sound-btn" id="btnSpeak2">🔊 たんごだけ きく</button>
       </div>
     </div>
 
@@ -111,56 +89,9 @@
 
     <div class="nav-row">
       <button class="tile tile-quiet tile-nav" id="btnPrev"><span class="tile-main"><span class="tile-title">← まえ</span></span></button>
-      <button class="tile tile-primary tile-nav" id="btnNext"><span class="tile-main"><span class="tile-title">つぎ →</span></span></button>
+      <button class="tile tile-quiet tile-nav" id="btnNext"><span class="tile-main"><span class="tile-title">つぎ →</span></span></button>
     </div>
-    <button class="tile tile-accent hidden" id="btnGoQuiz"><span class="tile-main"><span class="tile-title">クイズに すすむ</span></span><span class="tile-arrow">→</span></button>
-  </section>
-
-  <!-- ===== クイズ(Ⓐ・Ⓑ) ===== -->
-  <section class="screen hidden" id="screen-quiz">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip" id="masteryTag"></span>
-      <span class="pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="quizBar"></div></div>
-
-    <div class="panel center">
-      <div class="q-label" id="quizLabel">この たんごの いみは?</div>
-      <div class="slot" id="quizSlot">?</div>
-      <div class="q-en" id="quizEn">house</div>
-      <div class="cloze hidden" id="quizCloze">
-        <div class="cloze-en" id="clozeEn"></div>
-        <div class="cloze-ja" id="clozeJa"></div>
-      </div>
-      <button class="sound-btn" id="btnQuizSpeak">きく</button>
-      <div class="dots" id="dots"></div>
-    </div>
-
-    <div class="choices" id="choices"></div>
-
-    <div class="feedback hidden" id="feedback"></div>
-  </section>
-
-  <!-- ===== けっか ===== -->
-  <section class="screen hidden" id="screen-result">
-    <div class="panel center result">
-      <div class="result-title" id="resultTitle"></div>
-      <div class="result-score"><span id="resultScore">0</span> <span class="slash">/</span> <span id="resultTotal">10</span></div>
-      <div class="result-msg" id="resultMsg"></div>
-    </div>
-    <button class="tile tile-primary hidden" id="btnBackRanges"><span class="tile-main"><span class="tile-title">Ⓐ はんいいちらんへ</span></span></button>
-    <button class="tile tile-primary hidden" id="btnBackBoxes"><span class="tile-main"><span class="tile-title">Ⓑ ボックスいちらんへ</span></span></button>
-    <button class="tile" id="btnRetry"><span class="tile-main"><span class="tile-title">もう いちど クイズ</span></span></button>
-    <button class="tile" id="btnReviewWrong"><span class="tile-main"><span class="tile-title">まちがえた 語を みる</span></span></button>
-    <button class="tile tile-quiet" id="btnResultHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-  </section>
-
-  <!-- ===== まちがえた語 ===== -->
-  <section class="screen hidden" id="screen-wrong">
-    <button class="back-btn" id="btnWrongBack">← もどる</button>
-    <h2 class="scr-title">まちがえた 語</h2>
-    <div class="wrong-list" id="wrongList"></div>
+    <button class="tile tile-ok" id="btnLearned"><span class="tile-main"><span class="tile-title">✅ これは おぼえた</span></span></button>
   </section>
 
 </div>

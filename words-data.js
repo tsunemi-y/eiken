@@ -965,37 +965,6 @@ const WEEKDAYS = [
 ];
 
 /* =========================================================
-   ランク(マイクラの ブロックが すすんでいく)
-   300ごを 15だんかいに わけて、ほった かずで ランクが あがる。
-   ========================================================= */
-const TIERS = [
-  { name: "くさはら",       icon: "🟩", color: "#5EA827" },
-  { name: "もりのなか",     icon: "🌳", color: "#3E7A19" },
-  { name: "すなはま",       icon: "🟨", color: "#D9C38A" },
-  { name: "いしのどうくつ", icon: "⬜", color: "#9A9A9A" },
-  { name: "せきたんこう",   icon: "⬛", color: "#4A4A4A" },
-  { name: "どうこうせき",   icon: "🟧", color: "#C87137" },
-  { name: "てつこうせき",   icon: "🤍", color: "#D8AF93" },
-  { name: "きんこうせき",   icon: "🟨", color: "#FCEE4B" },
-  { name: "レッドストーン", icon: "🟥", color: "#E03434" },
-  { name: "ラピスラズリ",   icon: "🟦", color: "#2D5FCE" },
-  { name: "エメラルド",     icon: "💚", color: "#17DD62" },
-  { name: "ダイヤモンド",   icon: "💎", color: "#4AEDD9" },
-  { name: "ネザー",         icon: "🔥", color: "#B02E26" },
-  { name: "エンド",         icon: "🟪", color: "#8C5FCF" },
-  { name: "エンダードラゴン", icon: "🐉", color: "#22162B" },
-];
-
-function tierInfo(count, total) {
-  const perTier = total / TIERS.length;
-  const idx = Math.min(TIERS.length - 1, Math.floor(count / perTier));
-  const tier = TIERS[idx];
-  const nextNeed = Math.ceil((idx + 1) * perTier);
-  const inTierPct = idx === TIERS.length - 1 ? 100 : Math.min(100, ((count - idx * perTier) / perTier) * 100);
-  return { idx, tier, nextTier: TIERS[idx + 1] || null, nextNeed, pct: inTierPct };
-}
-
-/* =========================================================
    にゅうりょくモードで「きいて 日本語を かく」のが むずかしい たんご
 
    ぜんちし・せつぞくし・be動詞・かんし など、
@@ -1022,60 +991,6 @@ const TYPE_HARD_EN = new Set([
 ]);
 function isTypeHard(w) { return TYPE_HARD_EN.has(w.en); }
 
-/* =========================================================
-   ぶんの あなうめ(えいけん5きゅう 大問1 と おなじ かたち)
-
-   at / of / is / am のような きのうごは、たんご 1つだけ 見せても
-   おぼえられない(「of = の」と おぼえても つかえない)。
-   じっさいの 5きゅう 大問1も「短文の語句空所補充」なので、
-   ぶんの なかの あなを うめる かたちで 出題する。
-
-   ちらしの こたえ(まちがいの せんたくし)は、
-   「文ぽうてきに ぜったい 入らない」ものを 1語ずつ てで えらんである。
-   (ランダムに えらぶと「どちらでも 正しい」ぶんが できてしまうため)
-   ========================================================= */
-const CLOZE_DISTRACTORS = {
-  // be動詞・じょどうし
-  am:     ["are", "is", "do"],
-  are:    ["am", "is", "do"],
-  is:     ["am", "are", "do"],
-  do:     ["am", "is", "are"],
-  not:    ["no", "don't", "isn't"],
-  // じょし みたいな ふくし
-  too:    ["very", "so", "and"],
-  just:   ["very", "too", "so"],
-  only:   ["very", "too", "and"],
-  around: ["at", "of", "and"],
-  also:   ["am", "very", "and"],
-  // ぜんちし
-  in:     ["on", "under", "near"],
-  to:     ["at", "of", "for"],
-  at:     ["to", "from", "of"],
-  on:     ["of", "to", "and"],
-  for:    ["of", "in", "at"],
-  of:     ["in", "at", "to"],
-  by:     ["in", "of", "at"],
-  with:   ["of", "at", "to"],
-  from:   ["to", "at", "of"],
-  under:  ["on", "in", "near"],
-  after:  ["before", "in", "of"],
-  before: ["after", "in", "of"],
-  about:  ["to", "at", "by"],
-  near:   ["to", "of", "from"],
-  // かんし
-  the:    ["a", "an", "of"],
-  a:      ["an", "is", "in"],
-  // せつぞくし
-  and:    ["or", "but", "so"],
-  or:     ["and", "but", "so"],
-  but:    ["and", "or", "so"],
-  so:     ["and", "or", "but"],
-  // すうりょう・しじ
-  every:  ["some", "any", "one"],
-  some:   ["a", "an", "every"],
-  its:    ["it", "is", "of"],
-};
-
 /* 例文を「まえ / あな / あと」に わける。
    その たんごが 例文に 出てこない ときは null。 */
 function clozeParts(w) {
@@ -1095,36 +1010,4 @@ function clozeParts(w) {
 /* あなうめの せんたくし(ただしい 1つ + まちがい 3つ)。
    てで きめた ちらしが あれば それ、なければ
    ちかい ばんごうの たんごから えらぶ。 */
-function clozeChoices(w, shuffleFn) {
-  const fixed = CLOZE_DISTRACTORS[w.en];
-  let wrongs;
-  if (fixed) {
-    wrongs = fixed.slice(0, 3);
-  } else {
-    // じゅくご(go home など)には じゅくごを、たんごには たんごを あてる。
-    // かたちが そろっていないと どれが こたえか 見ただけで わかってしまう。
-    const isPhrase = /\s/.test(w.en);
-    const same = (x) => /\s/.test(x.en) === isPhrase;
-    // WORD_LIST には つづりが おなじ みだしが 2つある ものが あるので
-    // en で じゅうふくを のぞく(her が 2こ ならぶのを ふせぐ)
-    const seen = new Set([w.en.toLowerCase()]);
-    const uniq = (list) => list.filter((x) => {
-      const k = x.en.toLowerCase();
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    const near = uniq(WORD_LIST.filter((x) => same(x) && Math.abs(x.no - w.no) <= 30));
-    let pool = near;
-    if (pool.length < 3) {
-      pool = pool.concat(uniq(WORD_LIST.filter((x) => same(x))));
-    }
-    if (pool.length < 3) {
-      pool = pool.concat(uniq(WORD_LIST.slice()));
-    }
-    wrongs = shuffleFn(pool).slice(0, 3).map((x) => x.en);
-  }
-  return shuffleFn([w.en, ...wrongs]);
-}
-
 

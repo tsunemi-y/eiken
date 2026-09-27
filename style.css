@@ -107,7 +107,12 @@ input { font-family: inherit; }
 .tile-primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(61,90,254,.28); }
 .tile-primary .tile-sub, .tile-primary .tile-arrow { color: rgba(255,255,255,.8); }
 .tile-quiet  { background: transparent; box-shadow: none; }
-.tile-accent { background: var(--accent-bg); border-color: #C9D2FF; color: var(--accent-d); }
+.tile-ok {
+  background: var(--ok); border-color: var(--ok); color: #fff;
+  box-shadow: 0 2px 8px rgba(18,161,80,.28);
+  justify-content: center; margin-top: 4px;
+}
+.tile-ok .tile-title { text-align: center; }
 
 .nav-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
 .tile-nav { justify-content: center; margin-bottom: 0; }
@@ -121,23 +126,6 @@ input { font-family: inherit; }
   color: #fff; background: var(--ng);
   border-radius: 999px; text-align: center;
 }
-
-/* ---------- ホームの よむ / きく ---------- */
-.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 14px; }
-.mode-card {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 20px 16px 18px;
-  text-align: left;
-  box-shadow: var(--shadow);
-  transition: transform .12s ease, box-shadow .12s ease;
-}
-.mode-card:active { transform: scale(.98); box-shadow: none; }
-.mode-ic { font-size: 30px; line-height: 1; margin-bottom: 6px; }
-.mode-title { font-size: 17px; font-weight: 700; }
-.mode-sub { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
 
 /* ---------- パネル ---------- */
 .panel {
@@ -203,23 +191,6 @@ input { font-family: inherit; }
 .range-count { font-family: var(--en); font-size: 11px; font-weight: 600; color: var(--ink-3); flex-shrink: 0; }
 .range-card.done .range-count { color: var(--ok); }
 
-/* ---------- Ⓑ ボックス ---------- */
-.box-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.box-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 16px 6px; text-align: center;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-}
-.box-card.today { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg), var(--shadow); }
-.box-card.empty { opacity: .45; }
-.box-ic { font-size: 22px; }
-.box-label { font-size: 12px; margin: 6px 0 4px; }
-.box-today-tag { display: block; font-size: 10px; color: var(--accent); font-weight: 600; }
-.box-count { font-family: var(--en); font-size: 15px; font-weight: 700; color: var(--ink); }
-
 /* ---------- たんごいちらん ---------- */
 .word-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .word-row {
@@ -229,24 +200,17 @@ input { font-family: inherit; }
   border-radius: var(--r-s);
   padding: 11px 14px;
 }
-.word-row.boxed { opacity: .6; }
+.word-row.learned { opacity: .6; }
 .word-ic { font-size: 20px; flex-shrink: 0; }
 .word-body { flex: 1; min-width: 0; }
 .word-en { font-family: var(--en); font-size: 15px; font-weight: 600; }
 .word-ja { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
-.word-dots { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
 .word-boxed-tag { font-size: 11px; color: var(--ok); white-space: nowrap; flex-shrink: 0; }
 .skip-btn {
   flex-shrink: 0; font-size: 11px; font-weight: 600;
   color: var(--ok); background: var(--ok-bg);
   border-radius: 999px; padding: 5px 11px; white-space: nowrap;
 }
-
-/* ---------- ドット ---------- */
-.dots { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
-.dot.on { background: var(--accent); }
-.dot.small { width: 6px; height: 6px; }
 
 /* ---------- カード(おぼえる) ---------- */
 .card {
@@ -312,36 +276,6 @@ input { font-family: inherit; }
   border-radius: var(--r-s); padding: 10px; margin: 12px 0; text-align: center;
 }
 
-/* ---------- クイズ ---------- */
-.q-label { font-size: 13px; color: var(--ink-2); margin-bottom: 14px; }
-.q-en {
-  font-family: var(--en);
-  font-size: 32px; font-weight: 700; letter-spacing: -.01em;
-  line-height: 1.25; margin-bottom: 4px; word-break: break-word;
-}
-
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.choice {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 16px 12px;
-  font-size: 15px; line-height: 1.55;
-  min-height: 62px;
-  box-shadow: var(--shadow);
-  transition: transform .12s ease;
-}
-.choice:active { transform: scale(.98); }
-.choice.choice-en { font-family: var(--en); font-weight: 600; }
-.choice.ok  { background: var(--ok-bg); border-color: var(--ok); color: #0B6B36; font-weight: 600; }
-.choice.ng  { background: var(--ng-bg); border-color: var(--ng); color: #9B1231; }
-.choice.dim { opacity: .4; }
-
-.feedback { text-align: center; font-size: 16px; font-weight: 600; margin-top: 16px; }
-.feedback.ok { color: var(--ok); }
-.feedback.ng { color: var(--ng); }
-.feedback .fb-ja { display: block; font-size: 14px; font-weight: 400; color: var(--ink-2); margin-top: 8px; line-height: 1.7; }
-
 /* ---------- あなうめ(リーディングの かなめ) ---------- */
 .cloze { margin: 2px 0 4px; }
 .cloze-en {
@@ -359,27 +293,6 @@ input { font-family: inherit; }
   background: var(--ok-bg); color: #0B6B36; font-weight: 700;
   border-radius: 6px; padding: 0 7px;
 }
-.cloze-ja { font-size: 13px; color: var(--ink-2); margin-top: 14px; line-height: 1.8; }
-
-/* ---------- けっか ---------- */
-.result { padding: 28px 20px; }
-.result-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
-.result-score { font-family: var(--en); font-size: 38px; font-weight: 700; line-height: 1.2; }
-.result-score .slash { color: var(--ink-3); font-weight: 400; margin: 0 4px; }
-.result-score #resultTotal, .result-score [id$="ResultTotal"] { color: var(--ink-3); }
-.result-msg { font-size: 13px; color: var(--ink-2); line-height: 1.9; margin-top: 12px; white-space: pre-line; }
-#gMsg { white-space: pre-line; }
-
-/* ---------- まちがえた語 ---------- */
-.wrong-list { display: flex; flex-direction: column; gap: 10px; }
-.wrong-item {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--r); padding: 14px 16px;
-}
-.wrong-ic { font-size: 24px; }
-.wrong-en { font-family: var(--en); font-size: 16px; font-weight: 600; }
-.wrong-ja { font-size: 13px; color: var(--ink-2); margin-top: 3px; }
 
 /* ---------- トースト ---------- */
 .toast {
@@ -398,6 +311,6 @@ input { font-family: inherit; }
 .toast-name { font-size: 14px; font-weight: 600; margin-top: 2px; }
 
 @media (max-width: 360px) {
-  .card-en, .q-en { font-size: 27px; }
+  .card-en { font-size: 27px; }
   .cloze-en { font-size: 17px; }
 }
