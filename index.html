@@ -31,69 +31,25 @@
       <span class="tile-arrow">→</span>
     </button>
 
-    <h2 class="sec-head">単語</h2>
-    <div class="tile-row">
-      <button class="tile tile-half" id="btnA">
-        <span class="tile-main">
-          <span class="tile-title">Ⓐ おぼえる</span>
-          <span class="tile-sub">はんいを えらぶ</span>
-        </span>
+    <div class="mode-grid">
+      <button class="mode-card" id="btnRead">
+        <span class="mode-ic">📖</span>
+        <span class="mode-title">リーディング</span>
+        <span class="mode-sub">英語を 読んで<br>いみを えらぶ</span>
       </button>
-      <button class="tile tile-half" id="btnB">
-        <span class="tile-main">
-          <span class="tile-title">Ⓑ ふくしゅう</span>
-          <span class="tile-sub" id="todayBoxLabel">きょうの ボックス</span>
-        </span>
-        <span class="badge hidden" id="boxNotif">0</span>
+      <button class="mode-card" id="btnListen">
+        <span class="mode-ic">🎧</span>
+        <span class="mode-title">リスニング</span>
+        <span class="mode-sub">英語を きいて<br>いみを えらぶ</span>
       </button>
     </div>
 
-    <div class="seg-block">
-      <div class="seg-label">こたえかた</div>
-      <div class="seg" id="ansSeg">
-        <button class="seg-btn" data-mode="know">こえで</button>
-        <button class="seg-btn" data-mode="choice">4たく</button>
-        <button class="seg-btn" data-mode="type">かく</button>
-      </div>
-      <div class="seg-note" id="ansNote"></div>
-    </div>
-
-    <h2 class="sec-head">リーディング</h2>
-    <button class="tile" id="btnGrammar">
+    <button class="tile" id="btnB">
       <span class="tile-main">
-        <span class="tile-title">大もん1 ・ 語句の あなうめ</span>
-        <span class="tile-sub">文を 読んで ( ) に 入る 語を えらぶ ・ 15問</span>
+        <span class="tile-title">Ⓑ ふくしゅう</span>
+        <span class="tile-sub" id="todayBoxLabel">きょうの ボックス</span>
       </span>
-      <span class="tile-arrow">→</span>
-    </button>
-    <button class="tile" id="btnDaimon2Mode">
-      <span class="tile-main">
-        <span class="tile-title">大もん2 ・ 会話の あなうめ</span>
-        <span class="tile-sub">会話を 読んで うけこたえを えらぶ ・ 10問</span>
-      </span>
-      <span class="tile-arrow">→</span>
-    </button>
-    <button class="tile" id="btnWordOrderMode">
-      <span class="tile-main">
-        <span class="tile-title">大もん3 ・ 語句の ならべかえ</span>
-        <span class="tile-sub">日本語に あうように 語を ならべる ・ 10問</span>
-      </span>
-      <span class="tile-arrow">→</span>
-    </button>
-
-    <h2 class="sec-head">リスニング</h2>
-    <button class="tile" id="btnListen1Mode">
-      <span class="tile-main">
-        <span class="tile-title">第1部 ・ 会話の うけこたえ</span>
-        <span class="tile-sub">聞いて、あう こたえを えらぶ ・ 10問</span>
-      </span>
-      <span class="tile-arrow">→</span>
-    </button>
-    <button class="tile" id="btnListen2Mode">
-      <span class="tile-main">
-        <span class="tile-title">第2部 ・ 会話の ないよう</span>
-        <span class="tile-sub">会話を 聞いて しつもんに こたえる ・ 10問</span>
-      </span>
+      <span class="badge hidden" id="boxNotif">0</span>
       <span class="tile-arrow">→</span>
     </button>
   </section>
@@ -101,7 +57,8 @@
   <!-- ===== Ⓐ はんいえらび ===== -->
   <section class="screen hidden" id="screen-ranges">
     <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="scr-title">Ⓐ はんいを えらぶ</h2>
+    <h2 class="scr-title" id="rangesTitle">📖 リーディング</h2>
+    <p class="scr-desc" id="rangesDesc"></p>
     <div class="today-bar" id="rangeToday"></div>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
@@ -180,28 +137,8 @@
       <div class="dots" id="dots"></div>
     </div>
 
-    <div class="note hidden" id="typeFallback">この たんごは かきにくいので 4たくで こたえます</div>
-
-    <div class="know-wrap hidden" id="quizKnowWrap">
-      <div class="know-answer hidden" id="knowAnswer"></div>
-      <button class="tile tile-primary" id="btnKnowReveal"><span class="tile-main"><span class="tile-title">こたえを 見る</span></span></button>
-      <div class="know-btns hidden" id="knowBtns">
-        <button class="tile tile-ng" id="btnKnowNg"><span class="tile-main"><span class="tile-title">わかってない</span></span></button>
-        <button class="tile tile-ok" id="btnKnowOk"><span class="tile-main"><span class="tile-title">わかった</span></span></button>
-      </div>
-    </div>
-
     <div class="choices" id="choices"></div>
 
-    <div class="type-wrap hidden" id="quizTypeWrap">
-      <div class="hint hidden" id="quizHint"></div>
-      <input type="text" id="quizInput" class="text-input" autocapitalize="off" autocomplete="off"
-        autocorrect="off" spellcheck="false" placeholder="にほんごで こたえる">
-      <div class="nav-row">
-        <button class="tile tile-quiet tile-nav" id="btnQuizHint"><span class="tile-main"><span class="tile-title">ヒント</span></span></button>
-        <button class="tile tile-primary tile-nav" id="btnQuizSubmit"><span class="tile-main"><span class="tile-title">こたえる</span></span></button>
-      </div>
-    </div>
     <div class="feedback hidden" id="feedback"></div>
   </section>
 
@@ -226,141 +163,6 @@
     <div class="wrong-list" id="wrongList"></div>
   </section>
 
-  <!-- ===== 大もん1 ===== -->
-  <section class="screen hidden" id="screen-grammar">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip">大もん1 ・ 語句の あなうめ</span>
-      <span class="pos"><span id="gPos">1</span>/<span id="gTotal">15</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="gBar"></div></div>
-
-    <div class="panel">
-      <div class="q-label">( ) に 入るのは どれ?</div>
-      <div class="cloze"><div class="cloze-en" id="gEn"></div></div>
-    </div>
-
-    <div class="choices" id="gChoices"></div>
-    <div class="feedback hidden" id="gFeedback"></div>
-
-    <div class="panel center hidden" id="gResult">
-      <div class="result-title">大もん1 けっか</div>
-      <div class="result-score"><span id="gScore">0</span> <span class="slash">/</span> <span id="gResultTotal">0</span></div>
-      <div class="result-msg" id="gMsg"></div>
-      <button class="tile tile-primary" id="btnGRetry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
-      <button class="tile tile-quiet" id="btnGHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-    </div>
-  </section>
-
-  <!-- ===== 大もん2 ===== -->
-  <section class="screen hidden" id="screen-daimon2">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip">大もん2 ・ 会話の あなうめ</span>
-      <span class="pos"><span id="d2Pos">1</span>/<span id="d2Total">10</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="d2Bar"></div></div>
-
-    <div class="panel">
-      <div class="q-label">( ) に 入る うけこたえは どれ?</div>
-      <div class="dialogue" id="d2Dialogue"></div>
-      <button class="sound-btn" id="btnD2Speak">かいわを きく</button>
-    </div>
-
-    <div class="choices" id="d2Choices"></div>
-    <div class="feedback hidden" id="d2Feedback"></div>
-
-    <div class="panel center hidden" id="d2Result">
-      <div class="result-title">大もん2 けっか</div>
-      <div class="result-score"><span id="d2Score">0</span> <span class="slash">/</span> <span id="d2ResultTotal">0</span></div>
-      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
-      <button class="tile tile-primary" id="btnD2Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
-      <button class="tile tile-quiet" id="btnD2Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-    </div>
-  </section>
-
-  <!-- ===== 大もん3(ごじゅん) ===== -->
-  <section class="screen hidden" id="screen-wordorder">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip">大もん3 ・ 語句の ならべかえ</span>
-      <span class="pos"><span id="woPos">1</span>/<span id="woTotal">10</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="woBar"></div></div>
-
-    <div class="panel center">
-      <div class="q-label">この いみに なるように ならべよう</div>
-      <div class="wo-ja" id="woJa"></div>
-      <div class="wo-build" id="woBuild"></div>
-      <div class="wo-bank" id="woBank"></div>
-      <button class="sound-btn" id="btnWoReset">やりなおす</button>
-    </div>
-
-    <div class="feedback hidden" id="woFeedback"></div>
-
-    <div class="panel center hidden" id="woResult">
-      <div class="result-title">大もん3 けっか</div>
-      <div class="result-score"><span id="woScore">0</span> <span class="slash">/</span> <span id="woResultTotal">0</span></div>
-      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
-      <button class="tile tile-primary" id="btnWoRetry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
-      <button class="tile tile-quiet" id="btnWoHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-    </div>
-  </section>
-
-  <!-- ===== リスニング 第1部 ===== -->
-  <section class="screen hidden" id="screen-listen1">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip">リスニング 第1部</span>
-      <span class="pos"><span id="l1Pos">1</span>/<span id="l1Total">10</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="l1Bar"></div></div>
-
-    <div class="panel center listen-panel">
-      <div class="q-label">きいて、あう うけこたえを えらぼう</div>
-      <div class="listen-ic">🎧</div>
-      <button class="sound-btn" id="btnL1Replay">もう いちど ぜんぶ きく</button>
-    </div>
-
-    <div class="ln-choices" id="l1Choices"></div>
-    <div class="feedback hidden" id="l1Feedback"></div>
-
-    <div class="panel center hidden" id="l1Result">
-      <div class="result-title">第1部 けっか</div>
-      <div class="result-score"><span id="l1Score">0</span> <span class="slash">/</span> <span id="l1ResultTotal">0</span></div>
-      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
-      <button class="tile tile-primary" id="btnL1Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
-      <button class="tile tile-quiet" id="btnL1Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-    </div>
-  </section>
-
-  <!-- ===== リスニング 第2部 ===== -->
-  <section class="screen hidden" id="screen-listen2">
-    <button class="back-btn" data-back="home">← やめる</button>
-    <div class="row-head">
-      <span class="chip">リスニング 第2部</span>
-      <span class="pos"><span id="l2Pos">1</span>/<span id="l2Total">10</span></span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="l2Bar"></div></div>
-
-    <div class="panel center listen-panel">
-      <div class="q-label">かいわと しつもんを きいて こたえよう</div>
-      <div class="listen-ic">🎧</div>
-      <button class="sound-btn" id="btnL2Replay">もう いちど ぜんぶ きく</button>
-    </div>
-
-    <div class="choices" id="l2Choices"></div>
-    <div class="feedback hidden" id="l2Feedback"></div>
-
-    <div class="panel center hidden" id="l2Result">
-      <div class="result-title">第2部 けっか</div>
-      <div class="result-score"><span id="l2Score">0</span> <span class="slash">/</span> <span id="l2ResultTotal">0</span></div>
-      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
-      <button class="tile tile-primary" id="btnL2Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
-      <button class="tile tile-quiet" id="btnL2Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
-    </div>
-  </section>
-
 </div>
 
 <div class="toast hidden" id="adv">
@@ -369,7 +171,6 @@
 </div>
 
 <script src="words-data.js"></script>
-<script src="dialogue-data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

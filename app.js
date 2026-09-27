@@ -79,7 +79,7 @@ function load() {
     mastery: d.mastery || {},   // wordId -> 0..2 (Aでの れんぞく せいかいすう)
     box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
     lastRange: d.lastRange || 1,
-    answerMode: ["know", "choice", "type"].includes(d.answerMode) ? d.answerMode : "choice",
+    practice: d.practice === "listen" ? "listen" : "read",   // よむ / きく
     today: freshDay(d.today),            // きょう やったぶんの きろく
     history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
   };
@@ -354,13 +354,11 @@ function advancement(name, icon = "✓", head = "") {
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "wrong", "grammar", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "wrong"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
   if (name !== "learn") { speakGen++; setLearnLock(false); }
-  if (name !== "listen1" && L1) { L1.gen++; }
-  if (name !== "listen2" && L2) { L2.gen++; }
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -388,7 +386,6 @@ function renderHome() {
 
   renderToday();
 
-  renderAnsMode();
 
   const wd = new Date().getDay();
   const todayInfo = WEEKDAYS.find((w) => w.day === wd);
@@ -440,6 +437,11 @@ function renderToday() {
 /* ---------- Ⓐ はんいえらび ---------- */
 function renderRanges() {
   rollDay();
+  document.getElementById("rangesTitle").textContent =
+    isListen() ? "🎧 リスニング" : "📖 リーディング";
+  document.getElementById("rangesDesc").textContent = isListen()
+    ? "英語を きいて、いみを えらぶ。こたえるまで 文字は 出ません。"
+    : "英語を 読んで、いみを えらぶ。";
   // うえの おびは「きょう どれだけ やったか」だけ。
   // 「つぎは どこ」は カードの しるしで わかるので ここでは くりかえさない。
   const sum = document.getElementById("rangeToday");
@@ -565,27 +567,6 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
   startLearn(currentWordlistRange);
 });
 
-/* ---------- こたえかたの きりかえ ---------- */
-const ANS_NOTES = {
-  know:   "子どもが こえで こたえて、おやが ⭕❌ を つける。いちばん はやい",
-  choice: "4つから えらぶ。ひとりでも できる",
-  type:   "にほんごを キーボードで かく。いちばん あたまを つかう",
-};
-function renderAnsMode() {
-  const m = answerMode();
-  document.querySelectorAll("#ansSeg .seg-btn").forEach((b) => {
-    b.classList.toggle("on", b.dataset.mode === m);
-  });
-  document.getElementById("ansNote").textContent = ANS_NOTES[m];
-}
-document.querySelectorAll("#ansSeg .seg-btn").forEach((b) => {
-  b.addEventListener("click", () => {
-    sfxClick();
-    P.answerMode = b.dataset.mode;
-    save();
-    renderAnsMode();
-  });
-});
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
@@ -676,7 +657,7 @@ function renderCard() {
   document.getElementById("learnPos").textContent = `${L.i + 1} / ${L.words.length}`;
 
   const last = L.i === L.words.length - 1;
-  document.getElementById("btnNext").textContent = last ? "さいしょへ" : "つぎ ▶";
+  document.querySelector("#btnNext .tile-title").textContent = last ? "さいしょへ" : "つぎ →";
   // クイズへ すすむ ボタンは さいごの カードまで 出さない。
   // 「つぎ」の すぐ下に ずっと 出ていると、めくって いる とちゅうで
   // まちがって おして しまい、おぼえる まえに クイズが はじまって しまう。
@@ -783,805 +764,6 @@ function startBoxQuiz(day) {
   renderQuiz();
 }
 
-/* ---------- にほんごの こたえあわせ ----------
-   カタカナ→ひらがな、ぜんかく→はんかく、スペース・くとうてん・
-   「～」を むしして くらべる。「,」「/」で わかれた どの こたえでも OK。
-   かっこ ( ) [ ] の 中は あっても なくても OK。
-   かんじの こたえには words-data.js の kana(よみ)も つかう。
------------------------------------------------- */
-function toHiragana(s) {
-  return s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
-}
-function normalizeJa(s) {
-  return toHiragana(String(s))
-    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
-    .toLowerCase()
-    .replace(/[\s　]/g, "")
-    .replace(/[～〜~ー－ｰ〜。、，・…!！?？]/g, "")
-    .trim();
-}
-
-/* もっと ゆるく くらべる ための キー。
-   ・だくてん / はんだくてん を とる  (ぼん = ほん)
-   ・ちいさい かな を おおきく する  (しゃ = しや)
-   ・おくりがな っぽい おしりの ことばを とる
-     (「する」「な」「の」「い」「もの」「こと」「ぼん」など) */
-const TAIL_WORDS = [
-  "すること", "するひと", "する", "される", "した", "して",
-  "のもの", "もの", "こと", "ひと", "とき",
-  "ぼん", "ほん", "ようび", "です", "ます",
-  "な", "の", "い",
-];
-const bigKana = (s) => s.replace(/[ぁぃぅぇぉっゃゅょゎ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 1));
-const noMarks = (s) => s.normalize("NFD").replace(/[゙゚]/g, "").normalize("NFC");
-const TAILS = TAIL_WORDS.map(bigKana);
-
-function looseKey(s) {
-  let k = bigKana(normalizeJa(s));
-  k = k.replace(/^を/, "");   // 「を」は ことばの あたまには こないので とっても あんぜん
-  for (let n = 0; n < 3; n++) {
-    const before = k;
-    for (const t of TAILS) {
-      if (k.length > t.length + 1 && k.endsWith(t)) { k = k.slice(0, -t.length); break; }
-    }
-    if (k === before) break;
-  }
-  return k;
-}
-
-/* だくてんの つけわすれ は 1もじ ぶんだけ ゆるす。
-   (まんがほん = まんがぼん は OK。でも ペット と ベッド は べつもの) */
-function dakutenClose(a, b) {
-  if (a.length !== b.length || noMarks(a) !== noMarks(b)) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) diff++;
-  return diff <= 1;
-}
-
-function levenshtein(a, b) {
-  const m = a.length, n = b.length;
-  if (Math.abs(m - n) > 2) return 99;
-  let prev = Array.from({ length: n + 1 }, (_, j) => j);
-  for (let i = 1; i <= m; i++) {
-    const cur = [i];
-    for (let j = 1; j <= n; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    prev = cur;
-  }
-  return prev[n];
-}
-
-function jaAnswerSet(w) {
-  const out = new Set();
-  const add = (v) => { const n = normalizeJa(v); if (n) out.add(n); };
-  String(w.ja).split(/[,、/／]/).forEach((part) => {
-    const p = part.trim();
-    if (!p) return;
-    add(p);
-    add(p.replace(/[（(\[][^）)\]]*[）)\]]/g, ""));  // かっこの 中を とる
-    add(p.replace(/[（()）\[\]]/g, ""));             // かっこだけ とる
-  });
-  (w.kana || []).forEach(add);
-  (JA_ALT[w.en] || []).forEach(add);   // 子どもの いいかえ も せいかいに する
-  return out;
-}
-
-/* ゆるい こたえあわせ。
-   こどもが うつ ことを かんがえて、つぎの どれかに あてはまれば せいかい。
-     1. そのまま おなじ
-     2. だくてん・ちいさいかな・おくりがな の ちがいだけ
-     3. こたえの あたまの ぶぶんを うった (まんが → まんがぼん)
-     4. こたえを ふくむ ながい こたえを うった (をかう → かう)
-     5. 1もじ ていどの うちまちがい */
-function isJaCorrect(typed, w) {
-  const t = normalizeJa(typed);
-  if (!t) return false;
-  const answers = [...jaAnswerSet(w)];
-  if (answers.includes(t)) return true;
-
-  const tk = looseKey(typed);
-  if (!tk) return false;
-
-  for (const a of answers) {
-    const ak = looseKey(a);
-    if (!ak) continue;
-    if (tk === ak) return true;                                   // 2
-    if (dakutenClose(tk, ak)) return true;                        // 2b
-    const short = tk.length <= ak.length ? tk : ak;
-    const long = tk.length <= ak.length ? ak : tk;
-    // 「うえ / うえへ」「ここ / ここに」のように 2もじの こたえも おおい ので
-    // 2もじから みとめる。そのかわり ながさの わりあいを きびしくする。
-    const minRatio = short.length >= 3 ? 0.5 : 0.6;
-    if (short.length >= 2 && long.startsWith(short) &&
-        short.length / long.length >= minRatio) return true;      // 3
-    if (short.length >= 3 && long.includes(short) &&
-        short.length / long.length >= 0.6) return true;           // 4
-    const maxLen = Math.max(tk.length, ak.length);
-    if (maxLen >= 4 && levenshtein(tk, ak) <= 1) return true;     // 5
-    if (maxLen >= 7 && levenshtein(tk, ak) <= 2) return true;
-  }
-  return false;
-}
-
-/* =========================================================
-   🧩 ごじゅんれんしゅう(大もん3「語句整序」の ちからだめし)
-
-   本番は 4つの あたえられた ごを ならべかえる もんだいだけど、
-   ここでは 文まるごとを タイルに して、日本語の いみを 見ながら
-   タップで じゅんばんに くみたてる れんしゅうに している
-   (単語力が いらない ぶん、文の くみたて そのものに しゅうちゅう できる)。
-
-   Ⓐ・Ⓑの きろくは かえない、ごじゅんかんかく だけの れんしゅう。
-   ========================================================= */
-const WORDORDER_BATCH_SIZE = 10;
-let WO = null;
-
-function buildWordOrderQuestions(n) {
-  const pool = wordOrderPool();
-  const targets = shuffle(pool).slice(0, n);
-  return targets.map((w) => {
-    const { tokens, end } = tokenizeEx(w.ex);
-    let bank;
-    do { bank = shuffle(tokens); } while (tokens.length > 1 && bank.join(" ") === tokens.join(" "));
-    return { w, tokens, end, bank };
-  });
-}
-
-function startWordOrder() {
-  const qs = buildWordOrderQuestions(WORDORDER_BATCH_SIZE);
-  if (qs.length === 0) return;
-  WO = { qs, i: 0, correct: 0, locked: false, placed: [], bank: [] };
-  document.getElementById("woTotal").textContent = qs.length;
-  document.getElementById("woResult").classList.add("hidden");
-  show("wordorder");
-  renderWordOrder();
-}
-
-function renderWordOrder() {
-  const q = WO.qs[WO.i];
-  WO.locked = false;
-  WO.placed = [];
-  WO.bank = q.bank.map((t, idx) => ({ t, idx, used: false }));
-  document.getElementById("woPos").textContent = WO.i + 1;
-  document.getElementById("woBar").style.width = (WO.i / WO.qs.length) * 100 + "%";
-  document.getElementById("woJa").textContent = q.w.exJa || q.w.ja;
-  document.getElementById("woFeedback").classList.add("hidden");
-  renderWoTiles();
-}
-
-/* いま くみたてている文(build)と のこりの タイル(bank)を かきなおす */
-function renderWoTiles() {
-  const q = WO.qs[WO.i];
-  const build = document.getElementById("woBuild");
-  const bank = document.getElementById("woBank");
-
-  build.innerHTML = "";
-  for (let j = 0; j < q.tokens.length; j++) {
-    const item = WO.placed[j];
-    const slot = document.createElement("button");
-    slot.className = "wo-slot" + (item ? " filled" : "");
-    slot.textContent = item ? item.t : "";
-    if (item) {
-      slot.addEventListener("click", () => {
-        if (WO.locked) return;
-        sfxClick();
-        WO.bank.find((b) => b.idx === item.idx).used = false;
-        WO.placed.splice(j, 1);
-        renderWoTiles();
-      });
-    }
-    build.appendChild(slot);
-  }
-  const endEl = document.createElement("span");
-  endEl.className = "wo-end";
-  endEl.textContent = q.end;
-  build.appendChild(endEl);
-
-  bank.innerHTML = "";
-  WO.bank.forEach((b) => {
-    if (b.used) return;
-    const tile = document.createElement("button");
-    tile.className = "wo-tile";
-    tile.textContent = b.t;
-    tile.addEventListener("click", () => {
-      if (WO.locked || WO.placed.length >= q.tokens.length) return;
-      sfxClick();
-      b.used = true;
-      WO.placed.push(b);
-      renderWoTiles();
-      if (WO.placed.length === q.tokens.length) checkWordOrder();
-    });
-    bank.appendChild(tile);
-  });
-}
-
-function checkWordOrder() {
-  if (!WO || WO.locked) return;
-  WO.locked = true;
-  const q = WO.qs[WO.i];
-  const built = WO.placed.map((b) => b.t);
-  const ok = built.every((t, j) => t.toLowerCase() === q.tokens[j].toLowerCase());
-
-  // 1文字ずつ あっているか(あっていない ばしょは あかく する)
-  const slots = document.querySelectorAll("#woBuild .wo-slot");
-  slots.forEach((slot, j) => {
-    slot.classList.add(built[j] && built[j].toLowerCase() === q.tokens[j].toLowerCase() ? "ok" : "ng");
-  });
-
-  const fb = document.getElementById("woFeedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  const fullEn = q.tokens.join(" ") + q.end;
-
-  if (ok) {
-    WO.correct++;
-    save();
-    sfxOk();
-    fb.classList.add("ok");
-    fb.innerHTML = `せいかい<span class="fb-ja">${fullEn}</span>`;
-  } else {
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは「${fullEn}」だよ</span>`;
-  }
-  speakPair(q.w.ex, q.w.exJa);
-
-  setTimeout(() => {
-    WO.i++;
-    if (WO.i >= WO.qs.length) {
-      document.getElementById("woBar").style.width = "100%";
-      finishWordOrder();
-    } else {
-      renderWordOrder();
-    }
-  }, ok ? 2400 : 3000);
-}
-
-document.getElementById("btnWoReset").addEventListener("click", () => {
-  if (!WO || WO.locked) return;
-  sfxClick();
-  WO.placed = [];
-  WO.bank.forEach((b) => { b.used = false; });
-  renderWoTiles();
-});
-
-function finishWordOrder() {
-  document.getElementById("woScore").textContent = WO.correct;
-  document.getElementById("woResultTotal").textContent = WO.qs.length;
-  document.getElementById("woResult").classList.remove("hidden");
-  if (WO.correct === WO.qs.length) {
-    sfxChest();
-    advancement("ごじゅん ぜんもん せいかい!", "🧩", "すごい!");
-  }
-}
-
-document.getElementById("btnWordOrderMode").addEventListener("click", () => { sfxClick(); startWordOrder(); });
-document.getElementById("btnWoRetry").addEventListener("click", () => { sfxClick(); startWordOrder(); });
-document.getElementById("btnWoHome").addEventListener("click", () => { sfxClick(); show("home"); });
-
-/* =========================================================
-   💬 大もん2 れんしゅう(会話文の文空所補充)
-
-   Aの はつげんに つづく Bの こたえの ( ) を、4つの えいごの
-   せんたくしから えらぶ。ほんばんと おなじ「よむ」もんだいなので、
-   もじを かくさず 出す(🔊は はつおんの かくにん よう)。
-
-   Ⓐ・Ⓑの きろくは かえない。
-   ========================================================= */
-const DAIMON2_BATCH_SIZE = 10;
-let D2 = null;
-
-function startDaimon2() {
-  const items = shuffle(DAIMON2_POOL).slice(0, DAIMON2_BATCH_SIZE);
-  if (items.length === 0) return;
-  D2 = { items, i: 0, correct: 0, locked: false };
-  document.getElementById("d2Total").textContent = items.length;
-  document.getElementById("d2Result").classList.add("hidden");
-  show("daimon2");
-  renderDaimon2();
-}
-
-function d2FullB(it, useCorrect) {
-  const head = useCorrect ? it.correct : "(　　　　　　　　　　)";
-  return it.after ? `${head} ${it.after}` : head;
-}
-
-function renderDaimon2() {
-  const it = D2.items[D2.i];
-  D2.locked = false;
-  document.getElementById("d2Pos").textContent = D2.i + 1;
-  document.getElementById("d2Bar").style.width = (D2.i / D2.items.length) * 100 + "%";
-  document.getElementById("d2Feedback").classList.add("hidden");
-
-  document.getElementById("d2Dialogue").innerHTML =
-    `<div class="d2-line"><b>A</b>: ${escapeHtml(it.a)}</div>` +
-    `<div class="d2-line"><b>B</b>: <span class="cloze-blank">${escapeHtml(d2FullB(it, false))}</span></div>`;
-
-  const wrap = document.getElementById("d2Choices");
-  wrap.innerHTML = "";
-  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
-    const b = document.createElement("button");
-    b.className = "choice choice-en";
-    b.textContent = text;
-    if (text === it.correct) b.dataset.correct = "1";
-    b.addEventListener("click", () => answerDaimon2(b, text === it.correct, it));
-    wrap.appendChild(b);
-  });
-
-  speak(it.a);
-}
-document.getElementById("btnD2Speak").addEventListener("click", () => {
-  if (!D2) return;
-  const it = D2.items[D2.i];
-  speak(D2.locked ? `${it.a} ${d2FullB(it, true)}` : it.a);
-});
-
-function answerDaimon2(btn, ok, it) {
-  if (!D2 || D2.locked) return;
-  D2.locked = true;
-
-  document.querySelectorAll("#d2Choices .choice").forEach((b) => {
-    if (b.dataset.correct === "1") b.classList.add("ok");
-    else b.classList.add("dim");
-  });
-  if (!ok) btn.classList.add("ng");
-
-  document.getElementById("d2Dialogue").innerHTML =
-    `<div class="d2-line"><b>A</b>: ${escapeHtml(it.a)}</div>` +
-    `<div class="d2-line"><b>B</b>: <span class="cloze-fill">${escapeHtml(d2FullB(it, true))}</span></div>`;
-
-  const fb = document.getElementById("d2Feedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  if (ok) {
-    D2.correct++;
-    save();
-    sfxOk();
-    fb.classList.add("ok");
-    fb.innerHTML = `せいかい<span class="fb-ja">${it.correctJa}</span>`;
-  } else {
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 おしい!<span class="fb-ja">せいかいは「${escapeHtml(it.correct)}」<br>${it.correctJa}</span>`;
-  }
-  speak(`${it.a} ${d2FullB(it, true)}`);
-
-  setTimeout(() => {
-    D2.i++;
-    if (D2.i >= D2.items.length) {
-      document.getElementById("d2Bar").style.width = "100%";
-      finishDaimon2();
-    } else {
-      renderDaimon2();
-    }
-  }, ok ? 2200 : 2800);
-}
-
-function finishDaimon2() {
-  document.getElementById("d2Score").textContent = D2.correct;
-  document.getElementById("d2ResultTotal").textContent = D2.items.length;
-  document.getElementById("d2Result").classList.remove("hidden");
-  if (D2.correct === D2.items.length) {
-    sfxChest();
-    advancement("大もん2 ぜんもん せいかい!", "💬", "すごい!");
-  }
-}
-
-document.getElementById("btnDaimon2Mode").addEventListener("click", () => { sfxClick(); startDaimon2(); });
-document.getElementById("btnD2Retry").addEventListener("click", () => { sfxClick(); startDaimon2(); });
-document.getElementById("btnD2Home").addEventListener("click", () => { sfxClick(); show("home"); });
-
-/* =========================================================
-   🎧 リスニング だい1ぶ れんしゅう(会話の応答文選択)
-
-   1つの はつげんを きいて、いちばん あう うけこたえを 3つから
-   えらぶ。もじは 出さない(きくだけで こたえる)。
-   ========================================================= */
-const LISTEN1_BATCH_SIZE = 10;
-let L1 = null;
-
-function startListen1() {
-  const items = shuffle(LISTEN1_POOL).slice(0, LISTEN1_BATCH_SIZE);
-  if (items.length === 0) return;
-  L1 = { items, i: 0, correct: 0, locked: false, gen: 0, opts: null };
-  document.getElementById("l1Total").textContent = items.length;
-  document.getElementById("l1Result").classList.add("hidden");
-  show("listen1");
-  renderListen1();
-}
-
-function setL1Lock(on) {
-  document.querySelectorAll("#l1Choices .ln-choice").forEach((b) => { b.disabled = on; });
-}
-
-/* まず はつげんを よみ、そのあと ①②③の うけこたえを ながす */
-function playListen1Seq() {
-  if (!L1) return;
-  const gen = ++L1.gen;
-  const it = L1.items[L1.i];
-  setL1Lock(true);
-
-  let t = 0;
-  setTimeout(() => { if (L1 && L1.gen === gen) speak(it.prompt, 0.85); }, t);
-  t += estimateSpeakMs(it.prompt) + 700;
-
-  L1.opts.forEach((opt) => {
-    setTimeout(() => { if (L1 && L1.gen === gen) beep(880, 0.1, "sine", 0.05); }, t);
-    t += 260;
-    setTimeout(() => { if (L1 && L1.gen === gen) speak(opt.text, 0.85); }, t);
-    t += estimateSpeakMs(opt.text) + 500;
-  });
-  setTimeout(() => { if (L1 && L1.gen === gen) setL1Lock(false); }, t);
-}
-document.getElementById("btnL1Replay").addEventListener("click", () => { sfxClick(); if (L1) playListen1Seq(); });
-
-function renderListen1() {
-  const it = L1.items[L1.i];
-  L1.locked = false;
-  L1.opts = shuffle([{ text: it.correct, ok: true }, ...it.wrongs.map((w) => ({ text: w, ok: false }))]);
-  document.getElementById("l1Pos").textContent = L1.i + 1;
-  document.getElementById("l1Bar").style.width = (L1.i / L1.items.length) * 100 + "%";
-  document.getElementById("l1Feedback").classList.add("hidden");
-
-  const wrap = document.getElementById("l1Choices");
-  wrap.innerHTML = "";
-  L1.opts.forEach((opt, idx) => {
-    const b = document.createElement("button");
-    b.className = "ln-choice";
-    b.innerHTML = `<span class="ln-num">${idx + 1}</span>`;
-    if (opt.ok) b.dataset.correct = "1";
-    b.addEventListener("click", () => answerListen1(b, opt, it));
-    wrap.appendChild(b);
-  });
-
-  playListen1Seq();
-}
-
-function answerListen1(btn, opt, it) {
-  if (!L1 || L1.locked) return;
-  L1.locked = true;
-  L1.gen++;
-  setL1Lock(true);
-
-  document.querySelectorAll("#l1Choices .ln-choice").forEach((b) => {
-    if (b.dataset.correct === "1") b.classList.add("ok");
-    else b.classList.add("dim");
-  });
-  if (!opt.ok) btn.classList.add("ng");
-
-  const fb = document.getElementById("l1Feedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  if (opt.ok) {
-    L1.correct++;
-    save();
-    sfxOk();
-    fb.classList.add("ok");
-    fb.innerHTML = `せいかい<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>${it.correct} = ${it.correctJa}</span>`;
-  } else {
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>せいかいは「${escapeHtml(it.correct)}」<br>${it.correctJa}</span>`;
-  }
-  speakPair(`${it.prompt} ${it.correct}`, `${it.promptJa} ${it.correctJa}`);
-
-  setTimeout(() => {
-    L1.i++;
-    if (L1.i >= L1.items.length) {
-      document.getElementById("l1Bar").style.width = "100%";
-      finishListen1();
-    } else {
-      renderListen1();
-    }
-  }, opt.ok ? 2600 : 3200);
-}
-
-function finishListen1() {
-  document.getElementById("l1Score").textContent = L1.correct;
-  document.getElementById("l1ResultTotal").textContent = L1.items.length;
-  document.getElementById("l1Result").classList.remove("hidden");
-  if (L1.correct === L1.items.length) {
-    sfxChest();
-    advancement("リスニング1部 ぜんもん せいかい!", "🎧", "すごい!");
-  }
-}
-
-document.getElementById("btnListen1Mode").addEventListener("click", () => { sfxClick(); startListen1(); });
-document.getElementById("btnL1Retry").addEventListener("click", () => { sfxClick(); startListen1(); });
-document.getElementById("btnL1Home").addEventListener("click", () => { sfxClick(); show("home"); });
-
-/* =========================================================
-   🎧 リスニング だい2ぶ れんしゅう(会話の内容一致選択)
-
-   2ぎょうの 会話と しつもんを きいて、ないように あう こたえを
-   4つの もじの せんたくしから えらぶ(せんたくしだけは 見える、
-   会話・しつもんの もじは 出さない)。
-   ========================================================= */
-const LISTEN2_BATCH_SIZE = 10;
-let L2 = null;
-
-function startListen2() {
-  const items = shuffle(LISTEN2_POOL).slice(0, LISTEN2_BATCH_SIZE);
-  if (items.length === 0) return;
-  L2 = { items, i: 0, correct: 0, locked: false, gen: 0 };
-  document.getElementById("l2Total").textContent = items.length;
-  document.getElementById("l2Result").classList.add("hidden");
-  show("listen2");
-  renderListen2();
-}
-
-function setL2ChoicesLock(on) {
-  document.querySelectorAll("#l2Choices .choice").forEach((b) => { b.disabled = on; });
-}
-
-/* A → B → しつもん の じゅんに よむ */
-function playListen2Seq() {
-  if (!L2) return;
-  const gen = ++L2.gen;
-  const it = L2.items[L2.i];
-  setL2ChoicesLock(true);
-
-  let t = 0;
-  [it.a, it.b, it.q].forEach((line, idx) => {
-    setTimeout(() => { if (L2 && L2.gen === gen) speak(line, 0.85); }, t);
-    t += estimateSpeakMs(line) + (idx === 1 ? 700 : 500);
-  });
-  setTimeout(() => { if (L2 && L2.gen === gen) setL2ChoicesLock(false); }, t);
-}
-document.getElementById("btnL2Replay").addEventListener("click", () => { sfxClick(); if (L2) playListen2Seq(); });
-
-function renderListen2() {
-  const it = L2.items[L2.i];
-  L2.locked = false;
-  document.getElementById("l2Pos").textContent = L2.i + 1;
-  document.getElementById("l2Bar").style.width = (L2.i / L2.items.length) * 100 + "%";
-  document.getElementById("l2Feedback").classList.add("hidden");
-
-  const wrap = document.getElementById("l2Choices");
-  wrap.innerHTML = "";
-  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
-    const b = document.createElement("button");
-    b.className = "choice choice-en";
-    b.textContent = text;
-    if (text === it.correct) b.dataset.correct = "1";
-    b.addEventListener("click", () => answerListen2(b, text === it.correct, it));
-    wrap.appendChild(b);
-  });
-
-  playListen2Seq();
-}
-
-function answerListen2(btn, ok, it) {
-  if (!L2 || L2.locked) return;
-  L2.locked = true;
-  L2.gen++;
-  setL2ChoicesLock(true);
-
-  document.querySelectorAll("#l2Choices .choice").forEach((b) => {
-    if (b.dataset.correct === "1") b.classList.add("ok");
-    else b.classList.add("dim");
-  });
-  if (!ok) btn.classList.add("ng");
-
-  const fb = document.getElementById("l2Feedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  const dialogueJa = `A: ${it.a}<br>B: ${it.b}<br>Q: ${it.q} = ${it.qJa}`;
-  if (ok) {
-    L2.correct++;
-    save();
-    sfxOk();
-    fb.classList.add("ok");
-    fb.innerHTML = `せいかい<span class="fb-ja">${dialogueJa}</span>`;
-  } else {
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">せいかいは「${escapeHtml(it.correct)}」<br>${dialogueJa}</span>`;
-  }
-  speak(`${it.a} ${it.b} ${it.q}`);
-
-  setTimeout(() => {
-    L2.i++;
-    if (L2.i >= L2.items.length) {
-      document.getElementById("l2Bar").style.width = "100%";
-      finishListen2();
-    } else {
-      renderListen2();
-    }
-  }, ok ? 3200 : 3800);
-}
-
-function finishListen2() {
-  document.getElementById("l2Score").textContent = L2.correct;
-  document.getElementById("l2ResultTotal").textContent = L2.items.length;
-  document.getElementById("l2Result").classList.remove("hidden");
-  if (L2.correct === L2.items.length) {
-    sfxChest();
-    advancement("リスニング2部 ぜんもん せいかい!", "🎧", "すごい!");
-  }
-}
-
-document.getElementById("btnListen2Mode").addEventListener("click", () => { sfxClick(); startListen2(); });
-document.getElementById("btnL2Retry").addEventListener("click", () => { sfxClick(); startListen2(); });
-document.getElementById("btnL2Home").addEventListener("click", () => { sfxClick(); show("home"); });
-
-
-/* =========================================================
-   📝 大もん1 れんしゅう(ぶんの あなうめ)
-
-   えいけん5きゅうの 大もん1は「短文の語句空所補充」。会話や たん文の
-   なかの ( ) に 入る ことばを 4つから えらぶ もんだいで、たんごの
-   いみを しっているだけでは とけず、文の いみが わからないと こたえが
-   きまらない。dialogue-data.js の DAIMON1_POOL(オリジナルの もんだい
-   31もん)から 出題する。
-
-   ・やさしい … にほんごの やくを 見せる(いみが わかった うえで えらぶ)
-   ・ほんばん … にほんごを かくす(ほんとうの しけんと おなじ)
-   まちがえても Ⓐ・Ⓑの きろくは かわらない。なんども やれる れんしゅう。
-   ========================================================= */
-const GRAMMAR_BATCH_SIZE = 15;
-let G = null;
-
-function startGrammar() {
-  const pool = DAIMON1_POOL;
-  if (pool.length === 0) return;
-  const items = shuffle(pool).slice(0, Math.min(GRAMMAR_BATCH_SIZE, pool.length));
-  G = { items, i: 0, correct: 0, wrong: [], locked: false };
-  document.getElementById("gTotal").textContent = items.length;
-  document.getElementById("gResult").classList.add("hidden");
-  show("grammar");
-  renderGrammar();
-}
-
-/* pre/blank/post を 1つの 文しょうに くみたてる。
-   revealed=false なら あなの ところを ( ) の まま、
-   revealed=true なら せいかいを うめて 見せる。 */
-function grammarLines(it, revealed) {
-  const blankText = revealed
-    ? `<span class="cloze-fill">${escapeHtml(it.correct)}</span>`
-    : `<span class="cloze-blank">(　　　　　)</span>`;
-  const after = it.after && /^[.,!?]/.test(it.after) ? it.after : ` ${it.after}`;
-  const blankLine =
-    (it.blankSpeaker ? `<b>${it.blankSpeaker}</b>: ` : "") +
-    `${escapeHtml(it.before)} ${blankText}${escapeHtml(after)}`;
-  const lines = [
-    ...it.pre.map((l) => `<b>${l.speaker}</b>: ${escapeHtml(l.text)}`),
-    blankLine,
-    ...it.post.map((l) => `<b>${l.speaker}</b>: ${escapeHtml(l.text)}`),
-  ];
-  return lines.map((l) => `<div class="d2-line">${l}</div>`).join("");
-}
-
-function renderGrammar() {
-  const it = G.items[G.i];
-  G.locked = false;
-  document.getElementById("gPos").textContent = G.i + 1;
-  document.getElementById("gBar").style.width = (G.i / G.items.length) * 100 + "%";
-  document.getElementById("gFeedback").classList.add("hidden");
-
-  document.getElementById("gEn").innerHTML = grammarLines(it, false);
-
-  const wrap = document.getElementById("gChoices");
-  wrap.innerHTML = "";
-  shuffle([it.correct, ...it.wrongs]).forEach((text) => {
-    const b = document.createElement("button");
-    b.className = "choice choice-en";
-    b.textContent = text;
-    if (text === it.correct) b.dataset.correct = "1";
-    b.addEventListener("click", () => answerGrammar(b, text === it.correct, it));
-    wrap.appendChild(b);
-  });
-
-  speakGrammar(it, false);
-}
-
-/* あなの ところを とばして よむ(こたえが きこえないように)。
-   revealed=true の ときは せいかいを 入れて ぜんぶ よむ。 */
-function speakGrammar(it, revealed) {
-  const synth = wakeSynth();
-  if (!synth) return;
-  synth.cancel();
-
-  const texts = [...it.pre.map((l) => l.text)];
-  if (revealed) {
-    const after = it.after && /^[.,!?]/.test(it.after) ? it.after : ` ${it.after}`;
-    texts.push(`${it.before} ${it.correct}${after}`.replace(/\s+/g, " ").trim());
-  } else {
-    if (it.before) texts.push(it.before);
-    texts.push({ gap: true });
-    if (it.after) texts.push(it.after);
-  }
-  texts.push(...it.post.map((l) => l.text));
-
-  let i = 0;
-  const next = () => {
-    if (i >= texts.length) return;
-    const step = texts[i++];
-    if (step && step.gap) {
-      beep(760, 0.14, "sine", 0.05);
-      setTimeout(next, 620);
-      return;
-    }
-    const u = makeUtterance(step, "en", RATE_EN);
-    u.onend = () => setTimeout(next, 300);
-    synth.speak(u);
-  };
-  next();
-}
-
-function answerGrammar(btn, ok, it) {
-  if (G.locked) return;
-  G.locked = true;
-
-  document.querySelectorAll("#gChoices .choice").forEach((b) => {
-    if (b.dataset.correct === "1") b.classList.add("ok");
-    else b.classList.add("dim");
-  });
-  if (!ok) btn.classList.add("ng");
-
-  // こたえを あなに 入れる
-  document.getElementById("gEn").innerHTML = grammarLines(it, true);
-
-  const fb = document.getElementById("gFeedback");
-  fb.classList.remove("hidden", "ok", "ng");
-  if (ok) {
-    G.correct++;
-    save();
-    sfxOk();
-    fb.classList.add("ok");
-    fb.innerHTML = `せいかい<span class="fb-ja">${it.correct} = ${it.correctJa}</span>`;
-  } else {
-    G.wrong.push(it);
-    sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-    fb.classList.add("ng");
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">こたえは <b>${escapeHtml(it.correct)}</b> ・ ${it.correctJa}</span>`;
-  }
-
-  speakGrammar(it, true);
-
-  setTimeout(() => {
-    G.i++;
-    if (G.i >= G.items.length) {
-      document.getElementById("gBar").style.width = "100%";
-      finishGrammar();
-    } else {
-      renderGrammar();
-    }
-  }, ok ? 2800 : 3600);
-}
-
-function finishGrammar() {
-  const total = G.items.length;
-  document.getElementById("gScore").textContent = G.correct;
-  document.getElementById("gResultTotal").textContent = total;
-  const pct = Math.round((G.correct / total) * 100);
-  const msg = document.getElementById("gMsg");
-  // えいけん5きゅうの ごうかくラインは だいたい 6わり
-  if (pct >= 100) {
-    msg.textContent = "パーフェクト!ほんばんでも だいじょうぶ!";
-    sfxChest();
-  } else if (pct >= 60) {
-    msg.textContent = `せいとうりつ ${pct}%。ごうかくラインを こえてるよ!この ちょうしで!`;
-    sfxChest();
-  } else {
-    msg.textContent = `せいとうりつ ${pct}%。ぶんを こえに 出して よむと おぼえやすいよ。もういちど!`;
-  }
-  if (G.wrong.length) {
-    msg.textContent += `\n\nまちがえた ことば: ${G.wrong.map((it) => it.correct).join(", ")}`;
-  }
-  document.getElementById("gResult").classList.remove("hidden");
-}
-
-document.getElementById("btnGrammar").addEventListener("click", () => { sfxClick(); startGrammar(); });
-document.getElementById("btnGRetry").addEventListener("click", () => { sfxClick(); startGrammar(); });
-document.getElementById("btnGHome").addEventListener("click", () => { sfxClick(); show("home"); });
 
 function renderMasteryTag(w) {
   const tag = document.getElementById("masteryTag");
@@ -1611,19 +793,15 @@ function buildChoices(w) {
   return shuffle([w, ...wrongs]);
 }
 
-/* Ⓐ・Ⓑの こたえかたは 3つから えらぶ。
-   know   … 子どもが こえで こたえて、おやが ⭕❌ を つける
-   choice … 4たくから えらぶ
-   type   … にほんごを キーボードで かく */
-const ANSWER_MODES = ["know", "choice", "type"];
-const answerMode = () => (ANSWER_MODES.includes(P.answerMode) ? P.answerMode : "choice");
-const isTypeMode = () => answerMode() === "type";
-const isKnowMode = () => answerMode() === "know";
-/* その もんだいを にゅうりょくで こたえさせるか。
-   ぜんちし・be動詞などは かけないので 4たくに おとす。 */
-const useTypeInput = (w) => isTypeMode() && !isTypeHard(w) && !useCloze(w);
+/* ---------- よむ / きく ----------
+   おなじ 155ごを 2つの やりかたで れんしゅうする。
+   read   … えいごを 見て いみを えらぶ(リーディング)
+   listen … えいごを きいて いみを えらぶ(リスニング)。こたえるまで もじは 出さない
+   こたえかたは 4たく だけ。 */
+const isListen = () => P.practice === "listen";
+
 /* きのうご(at / of / is / am など)は たんご 1つでは おぼえられないので、
-   えいけん5きゅう 大問1 と おなじ「ぶんの あなうめ」で 出す。 */
+   ぶんの あなうめ で 出す。 */
 const useCloze = (w) => isTypeHard(w) && !!clozeParts(w);
 
 /* ぶんを ( ) つきで えがく。こたえたあとは あなに こたえを 入れて 見せる */
@@ -1677,33 +855,19 @@ function speakCloze(w, full = false) {
   next();
 }
 
-/* ヒントの もとに する こたえ(いちばん みじかい ひらがなの こたえ) */
-function hintAnswer(w) {
-  const list = [...jaAnswerSet(w)].filter((a) => a.length >= 2 && !/[一-鿿]/.test(a));
-  if (!list.length) return null;
-  return list.sort((a, b) => a.length - b.length)[0];
-}
-
-/* 「と ○ ○」のように あたまの もじだけ 見せる。
-   2かいめの ヒントは あたま2もじ。 */
-function showHint(level) {
-  const w = Q.words[Q.i];
-  const a = hintAnswer(w);
-  const box = document.getElementById("quizHint");
-  if (!a) { box.classList.add("hidden"); return; }
-  const open = Math.min(level, a.length - 1);
-  const chars = a.split("").map((c, i) => (i < open ? c : "○")).join(" ");
-  box.innerHTML =
-    `<div class="hint-chars">${chars}</div>` +
-    `<div class="hint-note">${a.length}もじ。あたまは「${a.slice(0, open || 1)}」</div>`;
-  box.classList.remove("hidden");
-  Q.hint = level;
-  // ヒントは がめんの したの ほうに 出るので、見えるところまで うごかす
-  box.scrollIntoView({ behavior: "smooth", block: "center" });
+function addChoice(wrap, text, isEn, correct, w) {
+  const b = document.createElement("button");
+  b.className = isEn ? "choice choice-en" : "choice";
+  b.textContent = text;
+  if (correct) b.dataset.correct = "1";
+  b.addEventListener("click", () => answer(b, correct, w));
+  wrap.appendChild(b);
 }
 
 function renderQuiz() {
   const w = Q.words[Q.i];
+  const listen = isListen();
+  const cloze = useCloze(w);
   Q.locked = false;
 
   renderMasteryTag(w);
@@ -1712,150 +876,32 @@ function renderQuiz() {
   document.getElementById("quizBar").style.width = (Q.i / Q.words.length) * 100 + "%";
   document.getElementById("feedback").classList.add("hidden");
 
-  const cloze = useCloze(w);
-  const knowMode = isKnowMode();
-  const typeMode = useTypeInput(w);
-  const choicesWrap = document.getElementById("choices");
-  const typeWrap = document.getElementById("quizTypeWrap");
-  choicesWrap.classList.toggle("hidden", typeMode || knowMode);
-  typeWrap.classList.toggle("hidden", !typeMode);
-  // こえで こたえる モード: こたえは かくしておいて、見てから ⭕❌
-  document.getElementById("quizKnowWrap").classList.toggle("hidden", !knowMode);
-  document.getElementById("knowAnswer").classList.add("hidden");
-  document.getElementById("knowBtns").classList.add("hidden");
-  document.getElementById("btnKnowReveal").classList.remove("hidden");
-  // あなうめのときは 「えいご→いみ」の 見ためを かくす
-  document.getElementById("quizCloze").classList.toggle("hidden", !cloze);
-  document.getElementById("quizSlot").classList.toggle("hidden", cloze);
-  document.getElementById("quizEn").classList.toggle("hidden", cloze);
-  // にゅうりょくモードなのに 4たくで 出る たんごは、そのわけを 見せる
-  document.getElementById("typeFallback").classList.toggle("hidden", !(isTypeMode() && !typeMode) || cloze);
-  document.getElementById("quizHint").classList.add("hidden");
-  Q.tries = 0;
-  Q.hint = 0;
-  document.getElementById("btnQuizSpeak").classList.remove("hidden");
+  // よむ ときは えいご(あなうめなら ぶん)を 出す。
+  // きく ときは もじを ぜんぶ かくして おとだけに する。
+  const slot = document.getElementById("quizSlot");
+  slot.textContent = listen ? "🎧" : "?";
+  slot.classList.toggle("hidden", cloze && !listen);
+  document.getElementById("quizEn").classList.toggle("hidden", cloze || listen);
+  document.getElementById("quizCloze").classList.toggle("hidden", !cloze || listen);
 
+  const wrap = document.getElementById("choices");
+  wrap.innerHTML = "";
   if (cloze) {
-    // あなうめ: ぶんの ( ) に 入る たんごを えらぶ(えいけん5きゅう 大問1 と おなじ)
     document.getElementById("quizLabel").textContent =
-      knowMode ? "( ) に 入る たんごを こえで いおう" : "( ) に 入るのは どれ?";
+      listen ? "きいて、( ) に 入る 語を えらぼう" : "( ) に 入るのは どれ?";
     renderClozeSentence(w, "clozeEn", "clozeJa", true);
-    if (!knowMode) {
-      choicesWrap.innerHTML = "";
-      clozeChoices(w, shuffle).forEach((en) => {
-        const b = document.createElement("button");
-        b.className = "choice choice-en";
-        b.textContent = en;
-        if (en.toLowerCase() === w.en.toLowerCase()) b.dataset.correct = "1";
-        b.addEventListener("click", () => answer(b, en.toLowerCase() === w.en.toLowerCase(), w));
-        choicesWrap.appendChild(b);
-      });
-    }
+    clozeChoices(w, shuffle).forEach((en) =>
+      addChoice(wrap, en, true, en.toLowerCase() === w.en.toLowerCase(), w));
     speakCloze(w);
-  } else if (knowMode) {
-    // こえで こたえる: えいごを 見せて(えは かくして)、いみを 口で いう
-    document.getElementById("quizLabel").textContent = "この たんごの いみを こえで いおう";
-    document.getElementById("quizSlot").textContent = "❓";
-    document.getElementById("quizEn").textContent = w.en;
-    speak(w.en);
-  } else if (typeMode) {
-    // にゅうりょくモード: はつおんを きいて にほんごを かく(えは ヒントに なるので かくす)
-    document.getElementById("quizLabel").textContent = "たんごを きいて、にほんごで かこう";
-    document.getElementById("quizSlot").textContent = "❓";
-    document.getElementById("quizEn").textContent = w.en;
-    const input = document.getElementById("quizInput");
-    input.value = "";
-    input.className = "text-input";
-    setTimeout(() => input.focus(), 50);
-    speak(w.en);
   } else {
-    // 4たくモード: えいごを きいて いみを えらぶ
-    document.getElementById("quizLabel").textContent = "この たんごの いみは?";
-    document.getElementById("quizSlot").textContent = "❓";
+    document.getElementById("quizLabel").textContent =
+      listen ? "きいて、いみを えらぼう" : "この 英語の いみは?";
     document.getElementById("quizEn").textContent = w.en;
-    choicesWrap.innerHTML = "";
-    buildChoices(w).forEach((c) => {
-      const b = document.createElement("button");
-      b.className = "choice";
-      b.textContent = c.ja;
-      if (c.id === w.id) b.dataset.correct = "1";
-      b.addEventListener("click", () => answer(b, c.id === w.id, w));
-      choicesWrap.appendChild(b);
-    });
+    buildChoices(w).forEach((c) => addChoice(wrap, c.ja, false, c.id === w.id, w));
     speak(w.en);
   }
 }
 
-/* こえで こたえる モード。
-   こたえを 先に 見せてしまうと 子どもが 見て しまうので、
-   「こたえを 見る」を おすまで かくしておく。見せてから
-   おやが ⭕❌ を つける。 */
-document.getElementById("btnKnowReveal").addEventListener("click", () => {
-  if (!Q || Q.locked) return;
-  sfxClick();
-  const w = Q.words[Q.i];
-  const box = document.getElementById("knowAnswer");
-  if (useCloze(w)) {
-    renderClozeSentence(w, "clozeEn", "clozeJa", false);   // あなに こたえを 入れる
-    box.innerHTML = `<div class="know-ja">${escapeHtml(w.en)} = ${escapeHtml(w.ja)}</div>`;
-  } else {
-    document.getElementById("quizSlot").textContent = w.emoji;
-    box.innerHTML = `<div class="know-ja">${escapeHtml(w.ja)}</div>`;
-  }
-  box.classList.remove("hidden");
-  document.getElementById("btnKnowReveal").classList.add("hidden");
-  document.getElementById("knowBtns").classList.remove("hidden");
-});
-document.getElementById("btnKnowOk").addEventListener("click", (e) => {
-  if (!Q || Q.locked) return;
-  answer(e.currentTarget, true, Q.words[Q.i]);
-});
-document.getElementById("btnKnowNg").addEventListener("click", (e) => {
-  if (!Q || Q.locked) return;
-  answer(e.currentTarget, false, Q.words[Q.i]);
-});
-
-function submitQuizTyped() {
-  if (!Q || Q.locked) return;
-  const w = Q.words[Q.i];
-  const input = document.getElementById("quizInput");
-  if (!input.value.trim()) return;
-  const ok = isJaCorrect(input.value, w);
-
-  // 1かいめの まちがいは 不せいかいに しない。
-  // ヒントを 出して もういちど かかせる(手が とまらないように)
-  if (!ok && Q.tries === 0 && hintAnswer(w)) {
-    Q.tries = 1;
-    sfxNg();
-    input.className = "text-input ng";
-    showHint(1);
-    const fb = document.getElementById("feedback");
-    fb.classList.remove("hidden", "ok");
-    fb.classList.add("ng");
-    fb.innerHTML = `おしい! ヒントを みて もういちど<span class="fb-ja">つぎ まちがえたら ふせいかいだよ</span>`;
-    setTimeout(() => {
-      input.value = "";
-      input.className = "text-input";
-      input.focus();
-      speak(w.en);
-    }, 700);
-    return;
-  }
-
-  input.className = "text-input " + (ok ? "ok" : "ng");
-  answer(input, ok, w);
-}
-
-document.getElementById("btnQuizSubmit").addEventListener("click", submitQuizTyped);
-document.getElementById("btnQuizHint").addEventListener("click", () => {
-  if (!Q || Q.locked) return;
-  sfxClick();
-  showHint((Q.hint || 0) + 1);
-  document.getElementById("quizInput").focus();
-});
-document.getElementById("quizInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submitQuizTyped();
-});
 document.getElementById("btnQuizSpeak").addEventListener("click", () => {
   if (!Q) return;
   const w = Q.words[Q.i];
@@ -1866,26 +912,32 @@ function answer(btn, ok, correct) {
   if (Q.locked) return;
   Q.locked = true;
 
-  if (!useTypeInput(correct) && !isKnowMode()) {
-    document.querySelectorAll("#choices .choice").forEach((b) => {
-      if (b.dataset.correct === "1") b.classList.add("ok");
-      else b.classList.add("dim");
-    });
-    if (!ok) btn.classList.add("ng");
-  }
-  if (isKnowMode()) document.getElementById("knowBtns").classList.add("hidden");
+  document.querySelectorAll("#choices .choice").forEach((b) => {
+    if (b.dataset.correct === "1") b.classList.add("ok");
+    else b.classList.add("dim");
+  });
+  if (!ok) btn.classList.add("ng");
 
-  document.getElementById("quizSlot").textContent = correct.emoji;
+  // こたえたら もじを 出して、なんの 語だったか むすびつける
+  // (きく モードでは ここで はじめて つづりが 見える)
+  const slot = document.getElementById("quizSlot");
+  slot.textContent = correct.emoji;
+  slot.classList.remove("hidden");
+  if (useCloze(correct)) {
+    document.getElementById("quizCloze").classList.remove("hidden");
+    renderClozeSentence(correct, "clozeEn", "clozeJa", false);
+  } else {
+    document.getElementById("quizEn").classList.remove("hidden");
+  }
 
   const fb = document.getElementById("feedback");
   fb.classList.remove("hidden", "ok", "ng");
+  const pair = `<span class="fb-ja">${escapeHtml(correct.en)} = ${escapeHtml(correct.ja)}</span>`;
   let graduatedNow = false;
 
   if (ok) {
     Q.correct++;
     sfxOk();
-
-
     logWord(correct.id, Q.mode);
     if (Q.mode === "A") {
       const n = (P.mastery[correct.id] || 0) + 1;
@@ -1901,23 +953,16 @@ function answer(btn, ok, correct) {
       }
     }
     save();
-
-    if (useCloze(correct)) renderClozeSentence(correct, "clozeEn", "clozeJa", false);
     fb.classList.add("ok");
     if (graduatedNow) {
       const info = WEEKDAYS.find((w2) => w2.day === P.box[correct.id]);
-      fb.innerHTML = `🎉 そつぎょう!<span class="fb-ja">${info.icon} ${info.label}ようボックスへ うつったよ!</span>`;
+      fb.innerHTML = `おぼえた!<span class="fb-ja">${info.label}ようの ボックスへ</span>`;
     } else {
-      // にゅうりょくモードは ゆるく はんていするので、せいしきな こたえも 見せる
-      const full = useTypeInput(correct) ? `<span class="fb-ja">${correct.en} = ${correct.ja}</span>` : "";
-      fb.innerHTML = `せいかい${full}`;
+      fb.innerHTML = `せいかい${pair}`;
     }
   } else {
     Q.wrong.push(correct);
     sfxNg();
-    document.getElementById("app").classList.add("shake");
-    setTimeout(() => document.getElementById("app").classList.remove("shake"), 320);
-
     if (Q.mode === "A") {
       P.mastery[correct.id] = 0;
     } else {
@@ -1926,20 +971,23 @@ function answer(btn, ok, correct) {
       Q.demoted.push(correct);
     }
     save();
-
     fb.classList.add("ng");
-    const extra = Q.mode === "B" ? "<br>Ⓐの れんしゅうに もどったよ" : "";
-    fb.innerHTML = `💔 ざんねん!<span class="fb-ja">${correct.emoji} ${correct.en} = ${correct.ja}${extra}</span>`;
-    if (useCloze(correct)) renderClozeSentence(correct, "clozeEn", "clozeJa", false);
-    else speak(correct.en);
+    const extra = Q.mode === "B" ? "<br>Ⓐに もどります" : "";
+    fb.innerHTML = `ざんねん${pair.replace("</span>", extra + "</span>")}`;
   }
 
-  
-
-  // あなうめは ぶんまるごとを えいご→にほんご で きかせる(リスニングの れんしゅう)
+  // あなうめは ぶんまるごと、ふつうの 語は まちがえた ときだけ もういちど きかせる
   if (useCloze(correct)) speakPair(correct.ex, correct.exJa);
+  else if (!ok) speak(correct.en);
 
+  /* つぎの もんだいへ すすむ タイマー。こたえた すぐあとに「やめる」で
+     べつの クイズを はじめると、この タイマーが あとから なって
+     あたらしい クイズの 1もんめを かってに とばしてしまう
+     (Q は つねに いまの クイズを さすため)。こたえた ときの
+     クイズと ちがっていたら なにも しない。 */
+  const quiz = Q;
   setTimeout(() => {
+    if (Q !== quiz) return;
     Q.i++;
     if (Q.i >= Q.words.length) {
       document.getElementById("quizBar").style.width = "100%";
@@ -1948,7 +996,7 @@ function answer(btn, ok, correct) {
       renderQuiz();
     }
   }, useCloze(correct) ? (ok && !graduatedNow ? 2800 : 3400)
-                       : (ok && !graduatedNow ? 900 : 1900));
+                       : (ok && !graduatedNow ? 1100 : 2000));
 }
 
 /* ---------- けっか ---------- */
@@ -2029,7 +1077,16 @@ function renderWrong() {
 
 /* ---------- ナビ ---------- */
 document.getElementById("btnHome").addEventListener("click", () => show("home"));
-document.getElementById("btnA").addEventListener("click", () => { sfxClick(); show("ranges"); });
+/* よむ / きく の どちらで 入ったかを おぼえておく。
+   はんいも カードも おなじ ものを つかい、クイズの 出しかただけが かわる。 */
+function startPractice(mode) {
+  sfxClick();
+  P.practice = mode;
+  save();
+  show("ranges");
+}
+document.getElementById("btnRead").addEventListener("click", () => startPractice("read"));
+document.getElementById("btnListen").addEventListener("click", () => startPractice("listen"));
 document.getElementById("btnB").addEventListener("click", () => { sfxClick(); show("boxes"); });
 document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(b.dataset.back)));
 
