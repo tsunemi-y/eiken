@@ -485,8 +485,21 @@ let L = { range: 1, words: [], i: 0, flipped: false };
    ぶんの あなうめ で しめす。 */
 const useCloze = (w) => isTypeHard(w) && !!clozeParts(w);
 
+/* パス単の じゅんばんの まま カードを めくると、「father の つぎは
+   かならず mother」のように となりあう 語の ならびで おぼえて しまい、
+   たんごを 見ずに あてられて しまう。カードの じゅんばんだけ
+   まぜる(はんいの わけかた・ばんごうの ひょうじは かえない)。 */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function startLearn(rangeId) {
-  const ws = wordsNotLearned(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id));
+  const ws = shuffle(wordsNotLearned(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id)));
   if (ws.length === 0) {
     advancement("この はんいは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
     show("ranges");
