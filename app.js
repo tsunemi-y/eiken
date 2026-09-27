@@ -564,7 +564,8 @@ function renderCard() {
   const last = L.i === L.words.length - 1;
   document.querySelector("#btnNext .tile-title").textContent = last ? "さいしょへ" : "つぎ →";
 
-  if (cloze) speakCloze(w); else speak(w.en);
+  // じどうで よみあげない。えいごを 見て 子どもが じぶんで よむのが
+  //「リーディング」の れんしゅうなので、こえは 🔊ボタンを おした ときだけ 出す。
 }
 
 /* =========================================================
@@ -599,16 +600,12 @@ function playPairLocked(en, ja) {
 }
 
 function flipCard() {
-  const w = L.words[L.i];
   L.flipped = !L.flipped;
   document.getElementById("cardFront").classList.toggle("hidden", L.flipped);
   document.getElementById("cardBack").classList.toggle("hidden", !L.flipped);
-  if (L.flipped) {
-    sfxClick();
-    // うらは「いみ + れいぶん」。ここで れいぶんを えいご→にほんごで きかせ、
-    // よみおわるまで「つぎ」を おせないように する
-    playPairLocked(w.ex, w.exJa);
-  }
+  if (L.flipped) sfxClick();
+  // うらでも じどうでは よみあげない。れいぶんを ききたい ときは
+  // したせんの えいぶんを タップすれば、えいご→にほんごの じゅんに きける。
 }
 
 document.getElementById("card").addEventListener("click", (e) => {
