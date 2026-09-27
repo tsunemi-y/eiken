@@ -404,7 +404,7 @@ const WORD_LIST = [
   { en: "four", ja: "4", emoji: "4️⃣", ex: "I am four years old.", exJa: "わたしは 4さいです。" },
   { en: "five", ja: "5", emoji: "5️⃣", ex: "I have five balls.", exJa: "わたしは ボールを 5つ もっています。" },
   { en: "six", ja: "6", emoji: "6️⃣", ex: "It is six o'clock.", exJa: "6じです。" },
-  { en: "seven", ja: "7", emoji: "7️⃣", ex: "I have seven books.", exJa: "わたしは 本ほんを 7さつ もっています。" },
+  { en: "seven", ja: "7", emoji: "7️⃣", ex: "I have seven books.", exJa: "わたしは ほんを 7さつ もっています。" },
   { en: "eight", ja: "8", emoji: "8️⃣", ex: "I am eight years old.", exJa: "わたしは 8さいです。" },
   { en: "nine", ja: "9", emoji: "9️⃣", ex: "It is nine o'clock.", exJa: "9じです。" },
   { en: "ten", ja: "10", emoji: "🔟", ex: "I have ten fingers.", exJa: "わたしは ゆびが 10ぽん あります。" },
@@ -432,7 +432,7 @@ const WORD_LIST = [
   { en: "hundred", ja: "100", emoji: "💯", ex: "I have one hundred yen.", exJa: "100えん もっています。" },
   { en: "thousand", ja: "1000,1000の", emoji: "🔢", ex: "It is one thousand yen.", exJa: "1000えんです。" },
   { en: "first", ja: "最初,最初の,最初に,1番目の", kana: ["さいしょ", "さいしょの", "いちばんめの", "1ばんめ", "1ばんめの"], emoji: "🥇", ex: "This is my first time.", exJa: "これが はじめてです。" },
-  { en: "second", ja: "2番目,第2の,秒", kana: ["にばんめ", "だいにの", "びょう", "2ばんめ", "2ばんめの"], emoji: "🥈", ex: "This is my second book.", exJa: "これは 2さつめの 本ほんです。" },
+  { en: "second", ja: "2番目,第2の,秒", kana: ["にばんめ", "だいにの", "びょう", "2ばんめ", "2ばんめの"], emoji: "🥈", ex: "This is my second book.", exJa: "これは 2さつめの ほんです。" },
   { en: "third", ja: "3番目,第3の", kana: ["さんばんめ", "だいさんの", "3ばんめ", "3ばんめの"], emoji: "🥉", ex: "This is my third try.", exJa: "これで 3かいめです。" },
 
   // ===== 531〜540 =====
@@ -452,7 +452,7 @@ const WORD_LIST = [
   { en: "me", ja: "私を[に]", kana: ["わたしを", "わたしに"], emoji: "🙋", ex: "Look at me.", exJa: "わたしを みて。" },
   { en: "mine", ja: "私のもの", kana: ["わたしのもの"], emoji: "🙋", ex: "This pen is mine.", exJa: "この ペンは わたしのです。" },
   { en: "you", ja: "あなたは,あなたたちは(主格)", kana: ["あなたは", "あなたたちは"], emoji: "🧑", ex: "You are kind.", exJa: "あなたは しんせつです。" },
-  { en: "your", ja: "あなたの", emoji: "🧑", ex: "This is your book.", exJa: "これは あなたの 本ほんです。" },
+  { en: "your", ja: "あなたの", emoji: "🧑", ex: "This is your book.", exJa: "これは あなたの ほんです。" },
   { en: "you", ja: "あなたに[を](目的格)", kana: ["あなたに", "あなたを"], emoji: "🧑", ex: "I know you.", exJa: "わたしは あなたを しっています。" },
   { en: "yours", ja: "あなた(がた)のもの", emoji: "🧑", ex: "This bag is yours.", exJa: "この かばんは あなたのです。" },
   { en: "he", ja: "彼は", kana: ["かれは"], emoji: "👦", ex: "He is my brother.", exJa: "かれは わたしの きょうだいです。" },
@@ -480,7 +480,7 @@ const WORD_LIST = [
   { en: "theirs", ja: "彼らのもの,それらのもの", kana: ["かれらのもの", "それらのもの"], emoji: "👥", ex: "This bag is theirs.", exJa: "この かばんは かれらのです。" },
   { en: "this", ja: "これ,この", emoji: "👉", ex: "This is my pen.", exJa: "これは わたしの ペンです。" },
   { en: "that", ja: "あれ,あの", emoji: "👈", ex: "That is a cat.", exJa: "あれは ねこです。" },
-  { en: "these", ja: "これら,これらの", emoji: "👉", ex: "These are my books.", exJa: "これらは わたしの 本ほんです。" },
+  { en: "these", ja: "これら,これらの", emoji: "👉", ex: "These are my books.", exJa: "これらは わたしの ほんです。" },
   { en: "those", ja: "あれら,それら,あれらの", emoji: "👈", ex: "Those are my shoes.", exJa: "あれらは わたしの くつです。" },
   { en: "come from", ja: "～の出身である", kana: ["しゅっしんである"], emoji: "🌍", ex: "I come from Japan.", exJa: "わたしは にほんの しゅっしんです。" },
   { en: "come to", ja: "～に来る", kana: ["くる", "にくる"], emoji: "➡️", ex: "Come to my house.", exJa: "わたしの いえに きて。" },
@@ -497,7 +497,7 @@ const WORD_LIST = [
   { en: "look at", ja: "～を見る", kana: ["みる", "をみる"], emoji: "👀", ex: "Look at this.", exJa: "これを みて。" },
   { en: "sit down", ja: "座る", kana: ["すわる"], emoji: "🪑", ex: "Please sit down.", exJa: "すわって ください。" },
   { en: "sleep in bed", ja: "ベッドで眠る", kana: ["べっどでねむる"], emoji: "🛏️", ex: "I sleep in bed.", exJa: "わたしは ベッドで ねます。" },
-  { en: "speak to", ja: "～と話す", kana: ["はなす", "とはなす"], emoji: "🗣️", ex: "I speak to my teacher.", exJa: "わたしは 先生せんせいと はなします。" },
+  { en: "speak to", ja: "～と話す", kana: ["はなす", "とはなす"], emoji: "🗣️", ex: "I speak to my teacher.", exJa: "わたしは せんせいと はなします。" },
 
   // ===== 581〜590 =====
   { en: "stand up", ja: "立ち上がる", kana: ["たちあがる"], emoji: "🧍", ex: "Please stand up.", exJa: "たって ください。" },
@@ -506,7 +506,7 @@ const WORD_LIST = [
   { en: "talk about", ja: "～について話す", kana: ["についてはなす"], emoji: "💬", ex: "I talk about my dog.", exJa: "わたしは いぬについて はなします。" },
   { en: "a cup of", ja: "1杯の～", kana: ["いっぱいの"], emoji: "☕", ex: "I want a cup of tea.", exJa: "わたしは おちゃが 1ぱい ほしいです。" },
   { en: "a glass of", ja: "コップ一杯の～", kana: ["こっぷいっぱいの"], emoji: "🥛", ex: "I want a glass of water.", exJa: "わたしは みずが 1ぱい ほしいです。" },
-  { en: "a lot of", ja: "たくさんの～", emoji: "💯", ex: "I have a lot of books.", exJa: "わたしは 本ほんを たくさん もっています。" },
+  { en: "a lot of", ja: "たくさんの～", emoji: "💯", ex: "I have a lot of books.", exJa: "わたしは ほんを たくさん もっています。" },
   { en: "after school", ja: "放課後", kana: ["ほうかご"], emoji: "🏫", ex: "I play soccer after school.", exJa: "わたしは ほうかご サッカーを します。" },
   { en: "at home", ja: "家で,家に", kana: ["いえで", "いえに"], emoji: "🏠", ex: "I study at home.", exJa: "わたしは いえで べんきょうします。" },
   { en: "at school", ja: "学校で", kana: ["がっこうで"], emoji: "🏫", ex: "I study at school.", exJa: "わたしは がっこうで べんきょうします。" },
@@ -1204,264 +1204,3 @@ const JA_ALT = {
   stand: ["たつ", "たっている"],
   fly: ["とぶ", "ハエ"],
 };
-
-/* =========================================================
-   ボスを たおしたときの ドロップ(アイテム 100しゅるい)
-   せいとうりつが たかいほど レアリティが たかく、
-   1パックで もらえる こすうも ふえる
-   ========================================================= */
-const DROP_TIERS = [
-  {
-    key: "legendary", min: 1.00, pull: 1,
-    name: "レジェンダリー", color: "#FCEE4B", glow: "#FFF9C4", label: "でんせつ",
-    items: [
-      { id: "L01", ic: "🐉", n: "エンダードラゴン" },
-      { id: "L02", ic: "🥚", n: "ドラゴンのたまご" },
-      { id: "L03", ic: "⭐", n: "ネザースター" },
-      { id: "L04", ic: "🌟", n: "ビーコン" },
-      { id: "L05", ic: "⚒️", n: "ネザライトのツルハシ" },
-      { id: "L06", ic: "👑", n: "おうじゃの かんむり" },
-      { id: "L07", ic: "🏆", n: "ワールドの トロフィー" },
-      { id: "L08", ic: "🌈", n: "レインボービーコン" },
-      { id: "L09", ic: "🗿", n: "こだいの ぞう" },
-      { id: "L10", ic: "💫", n: "ながれぼし" },
-      { id: "L11", ic: "🪽", n: "エリトラ" },
-      { id: "L12", ic: "🌌", n: "エンドの そら" },
-      { id: "L13", ic: "⚱️", n: "トライデントの ほこら" },
-      { id: "L14", ic: "☠️", n: "ウィザーのずがい" },
-      { id: "L15", ic: "🖤", n: "ウォーデン" },
-      { id: "L16", ic: "🦯", n: "ネザライトのけん" },
-      { id: "L17", ic: "🔰", n: "ネザライトのたて" },
-      { id: "L18", ic: "🪃", n: "ネザライトのオノ" },
-      { id: "L19", ic: "🥾", n: "ネザライトのブーツ" },
-      { id: "L20", ic: "🦺", n: "ネザライトのよろい" },
-      { id: "L21", ic: "🪖", n: "ネザライトのかぶと" },
-      { id: "L22", ic: "🍏", n: "エンチャントりんご" },
-      { id: "L23", ic: "🍶", n: "ふしぎの ポーション" },
-      { id: "L24", ic: "⚗️", n: "でんせつの ちょうごうだい" },
-      { id: "L25", ic: "🔷", n: "エンダーアイの クリスタル" },
-      { id: "L26", ic: "🪄", n: "まほうの つえ" },
-      { id: "L27", ic: "💡", n: "エンチャントの ひかり" },
-      { id: "L28", ic: "🗝️", n: "エンドポータルの かぎ" },
-      { id: "L29", ic: "🌋", n: "ネザーの かざん" },
-      { id: "L30", ic: "🏮", n: "えいえんの ほのお" },
-      { id: "L31", ic: "⚡", n: "かみなりの ちから" },
-      { id: "L32", ic: "☄️", n: "いんせき" },
-      { id: "L33", ic: "🪐", n: "とおい わくせい" },
-      { id: "L34", ic: "🛸", n: "なぞの ひこうぶったい" },
-      { id: "L35", ic: "🌠", n: "ねがいの ほし" },
-      { id: "L36", ic: "🎊", n: "だいはなび" },
-      { id: "L37", ic: "🎇", n: "きらめく はなび" },
-      { id: "L38", ic: "💥", n: "だいばくはつ" },
-      { id: "L39", ic: "💣", n: "TNTの やま" },
-      { id: "L40", ic: "🧲", n: "ロデストーンコンパス" },
-      { id: "L41", ic: "📜", n: "たからの ちず" },
-      { id: "L42", ic: "🏰", n: "エンドシティ" },
-      { id: "L43", ic: "🗼", n: "かんぼうとう" },
-      { id: "L44", ic: "⛩️", n: "こだいの もん" },
-      { id: "L45", ic: "🏛️", n: "かいていしんでん" },
-      { id: "L46", ic: "🌉", n: "ネザーの はし" },
-      { id: "L47", ic: "🕍", n: "ウッドランドの やかた" },
-      { id: "L48", ic: "🏯", n: "こだいの みやこ" },
-      { id: "L49", ic: "💿", n: "レコード 11ばん" },
-      { id: "L50", ic: "📀", n: "でんせつの レコード" },
-      { id: "L51", ic: "🎤", n: "エンドの うた" },
-      { id: "L52", ic: "🎼", n: "ドラゴンの こもりうた" },
-      { id: "L53", ic: "🐋", n: "ハート オブ ザ シー" },
-      { id: "L54", ic: "🌊", n: "コンジット" },
-      { id: "L55", ic: "🐙", n: "かいていの ぬし" },
-      { id: "L56", ic: "🦈", n: "ふかかいの ぬし" },
-      { id: "L57", ic: "🪼", n: "ひかる クラゲ" },
-      { id: "L58", ic: "🏔️", n: "えいきゅうの こおり" },
-      { id: "L59", ic: "🔹", n: "こおりの けっしょう" },
-      { id: "L60", ic: "🌪️", n: "たつまき" },
-      { id: "L61", ic: "🌫️", n: "エンダーの うずまき" },
-      { id: "L62", ic: "👁️", n: "まもりの め" },
-      { id: "L63", ic: "📿", n: "でんせつの ネックレス" },
-      { id: "L64", ic: "💍", n: "でんせつの ゆびわ" },
-      { id: "L65", ic: "🎩", n: "まほうの ぼうし" },
-      { id: "L66", ic: "🕶️", n: "エンダーの サングラス" },
-      { id: "L67", ic: "🥇", n: "きんメダル" },
-      { id: "L68", ic: "🎖️", n: "めいよの くんしょう" },
-      { id: "L69", ic: "🏅", n: "チャンピオンの メダル" },
-      { id: "L70", ic: "🦄", n: "でんせつの ユニコーン" },
-      { id: "L71", ic: "🦅", n: "そらの おうじゃ" },
-      { id: "L72", ic: "🦉", n: "よるの けんじゃ" },
-      { id: "L73", ic: "🐕‍🦺", n: "しろい おおかみ" },
-      { id: "L74", ic: "🦁", n: "きんいろの ライオン" },
-      { id: "L75", ic: "🐯", n: "でんせつの トラ" },
-      { id: "L76", ic: "🦖", n: "こだいの きょうりゅう" },
-      { id: "L77", ic: "🦕", n: "ちょうきょだいりゅう" },
-      { id: "L78", ic: "🐲", n: "そらとぶ ドラゴン" },
-      { id: "L79", ic: "🌅", n: "よあけの ひかり" },
-      { id: "L80", ic: "🌄", n: "やまの ごらいこう" },
-      { id: "L81", ic: "🎑", n: "まんげつの よる" },
-      { id: "L82", ic: "🌕", n: "まんげつ" },
-      { id: "L83", ic: "🌙", n: "みかづき" },
-      { id: "L84", ic: "☀️", n: "たいようの かけら" },
-      { id: "L85", ic: "🌞", n: "たいようの おうかん" },
-      { id: "L86", ic: "🚀", n: "うちゅうロケット" },
-      { id: "L87", ic: "🛰️", n: "じんこうえいせい" },
-      { id: "L88", ic: "🤖", n: "てつゴーレムの おう" },
-      { id: "L89", ic: "👽", n: "うちゅうじん" },
-      { id: "L90", ic: "🧙", n: "だいまどうし" },
-      { id: "L91", ic: "🧚", n: "ようせいの はね" },
-      { id: "L92", ic: "🧜", n: "うみの ひめ" },
-      { id: "L93", ic: "🦂", n: "サソリの ぬし" },
-      { id: "L94", ic: "🪹", n: "でんせつの まゆ" },
-      { id: "L95", ic: "🫙", n: "きんいろの ハチミツ" },
-      { id: "L96", ic: "🎁", n: "でんせつの たからばこ" },
-      { id: "L97", ic: "🧳", n: "ぼうけんしゃの カバン" },
-      { id: "L98", ic: "⚓", n: "ふかかいの いかり" },
-      { id: "L99", ic: "🌐", n: "ワールドの コア" },
-      { id: "L100", ic: "♾️", n: "むげんの ちから" },
-    ],
-  },
-  {
-    key: "epic", min: 0.90, pull: 1,
-    name: "エピック", color: "#B96BFF", glow: "#E7CCFF", label: "きわめてレア",
-    items: [
-      { id: "E01", ic: "💎", n: "ダイヤモンド" },
-      { id: "E02", ic: "💠", n: "ダイヤブロック" },
-      { id: "E03", ic: "⚔️", n: "ダイヤのけん" },
-      { id: "E04", ic: "🛠️", n: "ダイヤのツルハシ" },
-      { id: "E05", ic: "💚", n: "エメラルド" },
-      { id: "E06", ic: "🧿", n: "エンダーアイ" },
-      { id: "E07", ic: "🔮", n: "エンダーパール" },
-      { id: "E08", ic: "🟪", n: "シュルカーボックス" },
-      { id: "E09", ic: "🌀", n: "エンダーマン" },
-      { id: "E10", ic: "🧟", n: "ゾンビ" },
-      { id: "E11", ic: "💀", n: "スケルトン" },
-      { id: "E12", ic: "🕷️", n: "クモ" },
-      { id: "E13", ic: "👻", n: "ガスト" },
-      { id: "E14", ic: "🔱", n: "トライデント" },
-      { id: "E15", ic: "📖", n: "エンチャントのほん" },
-      { id: "E16", ic: "🟥", n: "レッドストーンブロック" },
-      { id: "E17", ic: "✨", n: "けいけんちオーブ" },
-      { id: "E18", ic: "🏺", n: "こだいの つぼ" },
-      { id: "E19", ic: "🦑", n: "イカ" },
-      { id: "E20", ic: "⛓️", n: "くさりブロック" },
-    ],
-  },
-  {
-    key: "rare", min: 0.80, pull: 1,
-    name: "レア", color: "#4AEDD9", glow: "#C4FFF8", label: "めずらしい",
-    items: [
-      { id: "R01", ic: "🟨", n: "きんインゴット" },
-      { id: "R02", ic: "🔩", n: "てつインゴット" },
-      { id: "R03", ic: "🔗", n: "くさり" },
-      { id: "R04", ic: "🛡️", n: "たて" },
-      { id: "R05", ic: "🏹", n: "ゆみ" },
-      { id: "R06", ic: "🎯", n: "まと" },
-      { id: "R07", ic: "🧭", n: "コンパス" },
-      { id: "R08", ic: "⏰", n: "とけい" },
-      { id: "R09", ic: "🗺️", n: "ちず" },
-      { id: "R10", ic: "🔭", n: "スパイグラス" },
-      { id: "R11", ic: "🧪", n: "ポーション" },
-      { id: "R12", ic: "🍯", n: "ハチミツ" },
-      { id: "R13", ic: "🐝", n: "ミツバチ" },
-      { id: "R14", ic: "🐷", n: "ブタ" },
-      { id: "R15", ic: "🐮", n: "ウシ" },
-      { id: "R16", ic: "🐔", n: "ニワトリ" },
-      { id: "R17", ic: "🐺", n: "オオカミ" },
-      { id: "R18", ic: "🐱", n: "ネコ" },
-      { id: "R19", ic: "🐴", n: "ウマ" },
-      { id: "R20", ic: "🦊", n: "キツネ" },
-      { id: "R21", ic: "🐑", n: "ヒツジ" },
-      { id: "R22", ic: "🎃", n: "ジャック・オ・ランタン" },
-      { id: "R23", ic: "🎆", n: "うちあげはなび" },
-      { id: "R24", ic: "🎵", n: "レコード" },
-      { id: "R25", ic: "🥁", n: "おんぷブロック" },
-      { id: "R26", ic: "🚂", n: "トロッコ" },
-      { id: "R27", ic: "⛵", n: "ボート" },
-      { id: "R28", ic: "🧨", n: "TNT" },
-    ],
-  },
-  {
-    key: "common", min: 0.70, pull: 1,
-    name: "コモン", color: "#B0B0B0", glow: "#E8E8E8", label: "ふつう",
-    items: [
-      { id: "C01", ic: "🟩", n: "くさブロック" },
-      { id: "C02", ic: "🟫", n: "つちブロック" },
-      { id: "C03", ic: "🪨", n: "まるいし" },
-      { id: "C04", ic: "⬜", n: "いしブロック" },
-      { id: "C05", ic: "🪵", n: "オークのき" },
-      { id: "C06", ic: "🌲", n: "マツのき" },
-      { id: "C07", ic: "🍃", n: "はっぱ" },
-      { id: "C08", ic: "🏜️", n: "すな" },
-      { id: "C09", ic: "🪟", n: "ガラス" },
-      { id: "C10", ic: "🧱", n: "レンガ" },
-      { id: "C11", ic: "⚫", n: "せきたん" },
-      { id: "C12", ic: "🕯️", n: "たいまつ" },
-      { id: "C13", ic: "🪜", n: "はしご" },
-      { id: "C14", ic: "🚪", n: "きのドア" },
-      { id: "C15", ic: "🛏️", n: "ベッド" },
-      { id: "C16", ic: "🧵", n: "いと" },
-      { id: "C17", ic: "🪶", n: "とりのはね" },
-      { id: "C18", ic: "🐣", n: "ヒヨコ" },
-      { id: "C19", ic: "🌾", n: "こむぎ" },
-      { id: "C20", ic: "🥕", n: "ニンジン" },
-      { id: "C21", ic: "🥔", n: "ジャガイモ" },
-      { id: "C22", ic: "🍎", n: "リンゴ" },
-      { id: "C23", ic: "🍞", n: "パン" },
-      { id: "C24", ic: "🍖", n: "やきにく" },
-      { id: "C25", ic: "🐟", n: "さかな" },
-      { id: "C26", ic: "🦴", n: "ほね" },
-      { id: "C27", ic: "🕸️", n: "クモのいと" },
-      { id: "C28", ic: "🍄", n: "キノコ" },
-      { id: "C29", ic: "🌵", n: "サボテン" },
-      { id: "C30", ic: "🎋", n: "サトウキビ" },
-      { id: "C31", ic: "🪣", n: "バケツ" },
-      { id: "C32", ic: "🧊", n: "こおり" },
-      { id: "C33", ic: "❄️", n: "ゆき" },
-      { id: "C34", ic: "🔥", n: "ひ" },
-      { id: "C35", ic: "🎣", n: "つりざお" },
-      { id: "C36", ic: "⛏️", n: "いしのツルハシ" },
-      { id: "C37", ic: "🗡️", n: "いしのけん" },
-      { id: "C38", ic: "🪓", n: "いしのオノ" },
-      { id: "C39", ic: "📦", n: "はこ" },
-      { id: "C40", ic: "🪺", n: "とりのす" },
-    ],
-  },
-];
-
-const ALL_ITEMS = DROP_TIERS.flatMap((t) => t.items.map((i) => ({ ...i, tier: t })));
-const ITEM_BY_ID = {};
-ALL_ITEMS.forEach((i) => { ITEM_BY_ID[i.id] = i; });
-const ITEM_TOTAL = ALL_ITEMS.length;
-
-function tierForRate(rate) {
-  return DROP_TIERS.find((t) => rate >= t.min) || null;
-}
-
-function shuffleArr(a) {
-  const b = a.slice();
-  for (let i = b.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
-    [b[i], b[j]] = [b[j], b[i]];
-  }
-  return b;
-}
-
-/* パックを ひらく。レアリティが たかいほど アイテムが おおく 出る。
-   owned(もっている アイテム)を わたすと、まだ もっていない ものから
-   さきに 出す。ずかんが うまりやすく、おなじ ものばかりで がっかりしない。 */
-function openPack(rate, owned) {
-  const tier = tierForRate(rate);
-  if (!tier) return null;
-  const has = owned || {};
-  const fresh = tier.items.filter((it) => !has[it.id]);
-  const dup = tier.items.filter((it) => has[it.id]);
-  const bag = [...shuffleArr(fresh), ...shuffleArr(dup)];
-  return { tier, items: bag.slice(0, tier.pull) };
-}
-
-/* このもんだいすうで、そのレアリティに とどくのに ひつような せいかいすう */
-function needForTier(tier, total) {
-  return Math.max(1, Math.ceil(tier.min * total));
-}
-
-/* せいかいすう から いまの レアリティを もとめる(とどいて いなければ null) */
-function tierForScore(score, total) {
-  return DROP_TIERS.find((t) => score >= needForTier(t, total)) || null;
-}

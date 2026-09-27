@@ -76,20 +76,12 @@ function load() {
   }
   if (!d) d = {};
   return {
-    blocks: d.blocks || 0,
-    chests: d.chests || 0,
-    xp: d.xp || 0,
-    level: d.level || 0,
-    streak: d.streak || { n: 0, last: null },
     mastery: d.mastery || {},   // wordId -> 0..2 (Aでの れんぞく せいかいすう)
     box: d.box || {},           // wordId -> weekday(0-6) そつぎょうずみ
     lastRange: d.lastRange || 1,
     answerMode: ["know", "choice", "type"].includes(d.answerMode) ? d.answerMode : "choice",
-    packs: d.packs !== undefined ? d.packs : (d.bossDefeated || 0),   // あけた パックの かず
     today: freshDay(d.today),            // きょう やったぶんの きろく
     history: d.history || {},            // 日づけ -> {w: れんしゅうご数, g: そつぎょう数}
-    bossDrops: d.bossDrops || [],        // (きゅうバージョン)てにいれた ドロップ
-    items: d.items || {},                // itemId -> てにいれた こすう
   };
 }
 
@@ -167,16 +159,6 @@ function dailyGoal() {
   return Math.max(1, Math.ceil(remain / Math.max(1, days)));
 }
 
-function bumpStreak() {
-  const t = today();
-  if (P.streak.last === t) return;
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  const ys = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
-  P.streak.n = P.streak.last === ys ? P.streak.n + 1 : 1;
-  P.streak.last = t;
-  save();
-}
 
 /* ---------- おと(WebAudio) ---------- */
 let actx = null;
@@ -357,32 +339,7 @@ function speakPair(en, ja, onDone) {
 }
 
 /* ---------- エフェクト ---------- */
-function orbs(n = 6, emoji = "🟢") {
-  for (let i = 0; i < n; i++) {
-    const el = document.createElement("div");
-    el.className = "orb";
-    el.textContent = emoji;
-    el.style.left = 20 + Math.random() * 60 + "vw";
-    el.style.top = 40 + Math.random() * 30 + "vh";
-    el.style.animationDelay = i * 0.06 + "s";
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1400);
-  }
-}
-function blockBreak(x, y, color = "#5EA827") {
-  for (let i = 0; i < 10; i++) {
-    const p = document.createElement("div");
-    p.className = "particle";
-    p.style.background = color;
-    p.style.left = x + "px";
-    p.style.top = y + "px";
-    p.style.setProperty("--dx", (Math.random() - 0.5) * 160 + "px");
-    p.style.setProperty("--dy", (Math.random() - 0.5) * 160 + "px");
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 900);
-  }
-}
-function advancement(name, icon = "🏆", head = "しんちょくの たっせい!") {
+function advancement(name, icon = "✓", head = "") {
   const el = document.getElementById("adv");
   document.getElementById("advIc").textContent = icon;
   document.getElementById("advHead").textContent = head;
@@ -394,7 +351,7 @@ function advancement(name, icon = "🏆", head = "しんちょくの たっせ�
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "boxes", "items", "learn", "quiz", "result", "wrong", "grammar", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
+["home", "ranges", "wordlist", "boxes", "learn", "quiz", "result", "wrong", "grammar", "wordorder", "daimon2", "listen1", "listen2"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -404,60 +361,31 @@ function show(name) {
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
-  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes, items: renderItems }[name] || (() => {}))();
+  ({ home: renderHome, ranges: renderRanges, boxes: renderBoxes }[name] || (() => {}))();
 }
 
 /* ---------- HUD ---------- */
-function updateHUD() {
-  document.getElementById("blockCount").textContent = P.blocks;
-  document.getElementById("chestCount").textContent = P.chests;
-  document.getElementById("streakCount").textContent = P.streak.n;
-  document.getElementById("xpLevel").textContent = P.level;
-  const need = 10 + P.level * 2;
-  document.getElementById("xpFill").style.width = Math.min(100, (P.xp / need) * 100) + "%";
-}
-function addXP(n) {
-  P.xp += n;
-  let leveled = false;
-  while (P.xp >= 10 + P.level * 2) {
-    P.xp -= 10 + P.level * 2;
-    P.level++;
-    leveled = true;
-  }
-  save();
-  updateHUD();
-  if (leveled) {
-    sfxLevel();
-    advancement(`レベル ${P.level} に なった!`, "⬆️", "レベルアップ!");
-  }
-}
 
 /* ---------- ホーム ---------- */
 function renderHome() {
-  updateHUD();
 
   const days = daysLeft();
   document.getElementById("daysLeft").textContent = days;
 
-  const remain = TOTAL - boxedCount();
+  /* のこり日数が すくない ときに「1日◯ご」を 出しても
+     とどかない かずに なって やる気を そぐだけ なので、
+     いまの すすみぐあいを そのまま 見せる。 */
+  const boxed = boxedCount();
   const pace = document.getElementById("paceMessage");
-  if (remain <= 0) {
-    pace.textContent = "🎉 ぜんぶ ボックスに はいったよ!かんぺき!";
-  } else if (days <= 0) {
-    pace.textContent = "きょうが ほんばん!いままでの ちからを ぜんぶ 出そう!";
+  if (days <= 0) {
+    pace.textContent = "きょうが 本番。いままで やった ぶんを 出しきろう。";
   } else {
-    const perDay = Math.max(1, Math.ceil(remain / days));
-    pace.textContent = `🎯ごうかくラインまで のこり ${remain}ご。1日に ${perDay}ごで まにあうよ!`;
+    pace.textContent = `おぼえた 単語 ${boxed} / ${TOTAL}ご`;
   }
 
   renderToday();
 
   renderAnsMode();
-
-  const got = collectedCount();
-  document.getElementById("itemsSub").textContent = got === 0
-    ? "パックで ひいた アイテムを 見る"
-    : `${got} / ${ITEM_TOTAL} しゅるい あつめた`;
 
   const wd = new Date().getDay();
   const todayInfo = WEEKDAYS.find((w) => w.day === wd);
@@ -551,7 +479,7 @@ function renderRanges() {
         <span class="range-marks">${doneToday ? '<span class="rm-today">📅きょう</span>' : ""}${finished ? '<span class="rm-done">✅</span>' : ""}</span>
       </div>
       <div class="range-prog">
-        <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
         <span class="range-count">📦${done}/${ws.length}</span>
       </div>
     `;
@@ -570,7 +498,6 @@ function promoteToBox(id) {
   P.box[id] = new Date().getDay();
   logGraduate(id);
   save();
-  updateHUD();
 }
 
 function renderWordlist(rangeId) {
@@ -643,12 +570,12 @@ const ANS_NOTES = {
 };
 function renderAnsMode() {
   const m = answerMode();
-  document.querySelectorAll("#ansSeg .ans-btn").forEach((b) => {
+  document.querySelectorAll("#ansSeg .seg-btn").forEach((b) => {
     b.classList.toggle("on", b.dataset.mode === m);
   });
   document.getElementById("ansNote").textContent = ANS_NOTES[m];
 }
-document.querySelectorAll("#ansSeg .ans-btn").forEach((b) => {
+document.querySelectorAll("#ansSeg .seg-btn").forEach((b) => {
   b.addEventListener("click", () => {
     sfxClick();
     P.answerMode = b.dataset.mode;
@@ -656,44 +583,6 @@ document.querySelectorAll("#ansSeg .ans-btn").forEach((b) => {
     renderAnsMode();
   });
 });
-
-/* ---------- 🎒 もちもの ずかん ----------
-   パックで ひいた アイテムを レアリティごとに ならべて 見せる。
-   まだ 出ていない ものは ❔ で かくして、なにが のこっているかを
-   わかるようにする(ずかんを うめたく なる しかけ)。 */
-function collectedCount() { return ALL_ITEMS.filter((it) => P.items[it.id]).length; }
-
-function renderItems() {
-  const got = collectedCount();
-  document.getElementById("itemGot").textContent = got;
-  document.getElementById("itemTotal").textContent = ITEM_TOTAL;
-  document.getElementById("itemBar").style.width = (got / ITEM_TOTAL) * 100 + "%";
-
-  const wrap = document.getElementById("itemTiers");
-  wrap.innerHTML = "";
-  DROP_TIERS.forEach((t) => {
-    const mine = t.items.filter((it) => P.items[it.id]).length;
-    const sec = document.createElement("div");
-    sec.className = "item-tier";
-    sec.style.setProperty("--tc", t.color);
-    const cells = t.items.map((it) => {
-      const n = P.items[it.id] || 0;
-      if (!n) return `<div class="item-cell"><div class="item-ic">❔</div><div class="item-n">???</div></div>`;
-      return `<div class="item-cell got"><div class="item-ic">${it.ic}</div>` +
-             `<div class="item-n">${it.n}</div>` +
-             (n > 1 ? `<div class="item-dup">×${n}</div>` : "") + `</div>`;
-    }).join("");
-    sec.innerHTML =
-      `<div class="item-tier-head">` +
-        `<span class="item-tier-name">${t.name}<span class="item-tier-sub">${t.label}</span></span>` +
-        `<span class="item-tier-count">${mine}/${t.items.length}</span>` +
-      `</div>` +
-      `<div class="item-grid">${cells}</div>`;
-    wrap.appendChild(sec);
-  });
-}
-
-document.getElementById("btnItems").addEventListener("click", () => { sfxClick(); show("items"); });
 
 /* ---------- Ⓑ ようびボックス ---------- */
 function renderBoxes() {
@@ -870,110 +759,24 @@ function shuffle(a) {
   return b;
 }
 
-/* =========================================================
-   🎁 パックゲージ(Ⓐの クイズに くみこみ)
-
-   せいかいが ふえるほど もらえる パックの レアリティが 上がる。
-   「あと なんもん せいかいすれば つぎの レアリティか」を
-   クイズちゅう ずっと 見せて、さいごまで 手を ぬかないように する。
-   ========================================================= */
-function packGaugeState() {
-  const total = Q.words.length;
-  const remaining = total - Q.i;                 // まだ こたえていない かず
-  const maxPossible = Q.correct + remaining;     // ぜんぶ せいかいした ときの かず
-  return {
-    total,
-    now: tierForScore(Q.correct, total),                 // いま とどいている レアリティ
-    best: tierForScore(maxPossible, total),              // これから とどきうる さいこう
-    maxPossible,
-  };
-}
-
-function renderPackGauge() {
-  const gauge = document.getElementById("packGauge");
-  if (Q.mode === "B") { gauge.classList.add("hidden"); return; }
-  gauge.classList.remove("hidden");
-
-  const st = packGaugeState();
-  const total = st.total;
-
-  // マスを ならべる。みぎに いくほど レアリティが 上がるのが 見た目で わかる
-  const track = document.getElementById("pgTrack");
-  track.innerHTML = "";
-  for (let j = 1; j <= total; j++) {
-    const tier = tierForScore(j, total);
-    const cell = document.createElement("div");
-    cell.className = "pg-cell" + (j <= Q.correct ? " on" : "") + (j > st.maxPossible ? " lost" : "");
-    // レアリティに とどく まえの マスも、せいかいが つみあがるのが わかるよう みどりに
-    cell.style.setProperty("--c", tier ? tier.color : "#5EA827");
-    // レアリティが 切りかわる マスに しるしを つける
-    const prev = tierForScore(j - 1, total);
-    if (tier && (!prev || prev.key !== tier.key)) {
-      cell.classList.add("mark");
-      cell.dataset.tier = tier.name.slice(0, 1);
-    }
-    track.appendChild(cell);
-  }
-
-  const pack = document.getElementById("pgPack");
-  pack.textContent = st.now ? "🎁" : "📦";
-  pack.style.setProperty("--c", st.now ? st.now.color : "#6E6E6E");
-  pack.className = "pg-pack" + (st.now ? " got t-" + st.now.key : "");
-
-  const tierEl = document.getElementById("pgTier");
-  tierEl.textContent = st.now ? `いま ${st.now.name} パック` : "まだ パックなし";
-  tierEl.style.color = st.now ? st.now.color : "var(--text-dim)";
-
-  // つぎの レアリティまで あと なんもん か
-  const next = DROP_TIERS.slice().reverse()
-    .find((t) => (!st.now || t.min > st.now.min) && st.maxPossible >= needForTier(t, total));
-  const el = document.getElementById("pgNext");
-  if (next) {
-    const left = needForTier(next, total) - Q.correct;
-    el.innerHTML = `あと <b style="color:${next.color}">${left}もん</b> せいかいで <b style="color:${next.color}">${next.name}</b>!`;
-  } else if (st.now) {
-    el.innerHTML = `<b style="color:${st.now.color}">さいこうランク かくてい!</b>`;
-  } else {
-    el.innerHTML = `のこり ぜんぶ せいかいしても パックは とどかない…<br>さいごまで やりきろう!`;
-  }
-}
-
-/* せいかいした ときの えんしゅつ(パックが 1だん上がったら はでに しらせる) */
-function bumpPackGauge(beforeTier) {
-  const st = packGaugeState();
-  const pack = document.getElementById("pgPack");
-  pack.classList.remove("up");
-  void pack.offsetWidth;
-  pack.classList.add("up");
-  if (st.now && (!beforeTier || st.now.key !== beforeTier.key)) {
-    sfxGraduate();
-    orbs(8, "🎁");
-    advancement(`${st.now.name} パック かくとく けん!`, "🎁", "ランク アップ!");
-    const r = pack.getBoundingClientRect();
-    blockBreak(r.left + r.width / 2, r.top + r.height / 2, st.now.color);
-  }
-}
-
 function startQuiz(rangeId, mode) {
   const pool = wordsStillLearning(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id));
   const words = shuffle(pool);
   Q = {
-    mode, rangeId, words, i: 0, correct: 0, combo: 0, graduated: [], wrong: [], locked: false,
+    mode, rangeId, words, i: 0, correct: 0, graduated: [], wrong: [], locked: false,
   };
   logRange(rangeId);
   logQuiz();
   document.getElementById("quizTotal").textContent = words.length;
   show("quiz");
-  renderPackGauge();
   renderQuiz();
 }
 
 function startBoxQuiz(day) {
   const pool = wordsInBox(day);
-  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, combo: 0, demoted: [], wrong: [], locked: false };
+  Q = { mode: "B", day, words: shuffle(pool), i: 0, correct: 0, demoted: [], wrong: [], locked: false };
   document.getElementById("quizTotal").textContent = Q.words.length;
   show("quiz");
-  renderPackGauge();
   renderQuiz();
 }
 
@@ -1209,13 +1012,10 @@ function checkWordOrder() {
 
   if (ok) {
     WO.correct++;
-    P.blocks++;
     save();
-    updateHUD();
     sfxOk();
-    orbs(4, "🟢");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${fullEn}</span>`;
+    fb.innerHTML = `せいかい<span class="fb-ja">${fullEn}</span>`;
   } else {
     sfxNg();
     document.getElementById("app").classList.add("shake");
@@ -1245,14 +1045,11 @@ document.getElementById("btnWoReset").addEventListener("click", () => {
 });
 
 function finishWordOrder() {
-  bumpStreak();
   document.getElementById("woScore").textContent = WO.correct;
   document.getElementById("woResultTotal").textContent = WO.qs.length;
   document.getElementById("woResult").classList.remove("hidden");
-  addXP(WO.correct);
   if (WO.correct === WO.qs.length) {
     sfxChest();
-    orbs(10, "💎");
     advancement("ごじゅん ぜんもん せいかい!", "🧩", "すごい!");
   }
 }
@@ -1336,13 +1133,10 @@ function answerDaimon2(btn, ok, it) {
   fb.classList.remove("hidden", "ok", "ng");
   if (ok) {
     D2.correct++;
-    P.blocks++;
     save();
-    updateHUD();
     sfxOk();
-    orbs(4, "🟢");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.correctJa}</span>`;
+    fb.innerHTML = `せいかい<span class="fb-ja">${it.correctJa}</span>`;
   } else {
     sfxNg();
     document.getElementById("app").classList.add("shake");
@@ -1364,14 +1158,11 @@ function answerDaimon2(btn, ok, it) {
 }
 
 function finishDaimon2() {
-  bumpStreak();
   document.getElementById("d2Score").textContent = D2.correct;
   document.getElementById("d2ResultTotal").textContent = D2.items.length;
   document.getElementById("d2Result").classList.remove("hidden");
-  addXP(D2.correct);
   if (D2.correct === D2.items.length) {
     sfxChest();
-    orbs(10, "💎");
     advancement("大もん2 ぜんもん せいかい!", "💬", "すごい!");
   }
 }
@@ -1462,13 +1253,10 @@ function answerListen1(btn, opt, it) {
   fb.classList.remove("hidden", "ok", "ng");
   if (opt.ok) {
     L1.correct++;
-    P.blocks++;
     save();
-    updateHUD();
     sfxOk();
-    orbs(4, "🟢");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>${it.correct} = ${it.correctJa}</span>`;
+    fb.innerHTML = `せいかい<span class="fb-ja">${it.prompt} = ${it.promptJa}<br>${it.correct} = ${it.correctJa}</span>`;
   } else {
     sfxNg();
     document.getElementById("app").classList.add("shake");
@@ -1490,14 +1278,11 @@ function answerListen1(btn, opt, it) {
 }
 
 function finishListen1() {
-  bumpStreak();
   document.getElementById("l1Score").textContent = L1.correct;
   document.getElementById("l1ResultTotal").textContent = L1.items.length;
   document.getElementById("l1Result").classList.remove("hidden");
-  addXP(L1.correct);
   if (L1.correct === L1.items.length) {
     sfxChest();
-    orbs(10, "💎");
     advancement("リスニング1部 ぜんもん せいかい!", "🎧", "すごい!");
   }
 }
@@ -1584,13 +1369,10 @@ function answerListen2(btn, ok, it) {
   const dialogueJa = `A: ${it.a}<br>B: ${it.b}<br>Q: ${it.q} = ${it.qJa}`;
   if (ok) {
     L2.correct++;
-    P.blocks++;
     save();
-    updateHUD();
     sfxOk();
-    orbs(4, "🟢");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${dialogueJa}</span>`;
+    fb.innerHTML = `せいかい<span class="fb-ja">${dialogueJa}</span>`;
   } else {
     sfxNg();
     document.getElementById("app").classList.add("shake");
@@ -1612,14 +1394,11 @@ function answerListen2(btn, ok, it) {
 }
 
 function finishListen2() {
-  bumpStreak();
   document.getElementById("l2Score").textContent = L2.correct;
   document.getElementById("l2ResultTotal").textContent = L2.items.length;
   document.getElementById("l2Result").classList.remove("hidden");
-  addXP(L2.correct);
   if (L2.correct === L2.items.length) {
     sfxChest();
-    orbs(10, "💎");
     advancement("リスニング2部 ぜんもん せいかい!", "🎧", "すごい!");
   }
 }
@@ -1627,8 +1406,6 @@ function finishListen2() {
 document.getElementById("btnListen2Mode").addEventListener("click", () => { sfxClick(); startListen2(); });
 document.getElementById("btnL2Retry").addEventListener("click", () => { sfxClick(); startListen2(); });
 document.getElementById("btnL2Home").addEventListener("click", () => { sfxClick(); show("home"); });
-
-
 
 
 /* =========================================================
@@ -1751,14 +1528,10 @@ function answerGrammar(btn, ok, it) {
   fb.classList.remove("hidden", "ok", "ng");
   if (ok) {
     G.correct++;
-    P.blocks++;
     save();
-    updateHUD();
     sfxOk();
-    const r = btn.getBoundingClientRect();
-    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
     fb.classList.add("ok");
-    fb.innerHTML = `⛏️ せいかい!<span class="fb-ja">${it.correct} = ${it.correctJa}</span>`;
+    fb.innerHTML = `せいかい<span class="fb-ja">${it.correct} = ${it.correctJa}</span>`;
   } else {
     G.wrong.push(it);
     sfxNg();
@@ -1782,7 +1555,6 @@ function answerGrammar(btn, ok, it) {
 }
 
 function finishGrammar() {
-  bumpStreak();
   const total = G.items.length;
   document.getElementById("gScore").textContent = G.correct;
   document.getElementById("gResultTotal").textContent = total;
@@ -1791,10 +1563,10 @@ function finishGrammar() {
   // えいけん5きゅうの ごうかくラインは だいたい 6わり
   if (pct >= 100) {
     msg.textContent = "パーフェクト!ほんばんでも だいじょうぶ!";
-    sfxChest(); orbs(12, "💎");
+    sfxChest();
   } else if (pct >= 60) {
     msg.textContent = `せいとうりつ ${pct}%。ごうかくラインを こえてるよ!この ちょうしで!`;
-    sfxChest(); orbs(8, "🟢");
+    sfxChest();
   } else {
     msg.textContent = `せいとうりつ ${pct}%。ぶんを こえに 出して よむと おぼえやすいよ。もういちど!`;
   }
@@ -1802,7 +1574,6 @@ function finishGrammar() {
     msg.textContent += `\n\nまちがえた ことば: ${G.wrong.map((it) => it.correct).join(", ")}`;
   }
   document.getElementById("gResult").classList.remove("hidden");
-  addXP(G.correct);
 }
 
 document.getElementById("btnGrammar").addEventListener("click", () => { sfxClick(); startGrammar(); });
@@ -1938,10 +1709,6 @@ function renderQuiz() {
   document.getElementById("quizBar").style.width = (Q.i / Q.words.length) * 100 + "%";
   document.getElementById("feedback").classList.add("hidden");
 
-  const cb = document.getElementById("combo");
-  cb.classList.toggle("hidden", Q.combo < 2);
-  document.getElementById("comboNum").textContent = Q.combo;
-
   const cloze = useCloze(w);
   const knowMode = isKnowMode();
   const typeMode = useTypeInput(w);
@@ -1995,7 +1762,7 @@ function renderQuiz() {
     document.getElementById("quizEn").textContent = w.en;
     const input = document.getElementById("quizInput");
     input.value = "";
-    input.className = "typing-input";
+    input.className = "text-input";
     setTimeout(() => input.focus(), 50);
     speak(w.en);
   } else {
@@ -2057,7 +1824,7 @@ function submitQuizTyped() {
   if (!ok && Q.tries === 0 && hintAnswer(w)) {
     Q.tries = 1;
     sfxNg();
-    input.className = "typing-input ng";
+    input.className = "text-input ng";
     showHint(1);
     const fb = document.getElementById("feedback");
     fb.classList.remove("hidden", "ok");
@@ -2065,14 +1832,14 @@ function submitQuizTyped() {
     fb.innerHTML = `おしい! ヒントを みて もういちど<span class="fb-ja">つぎ まちがえたら ふせいかいだよ</span>`;
     setTimeout(() => {
       input.value = "";
-      input.className = "typing-input";
+      input.className = "text-input";
       input.focus();
       speak(w.en);
     }, 700);
     return;
   }
 
-  input.className = "typing-input " + (ok ? "ok" : "ng");
+  input.className = "text-input " + (ok ? "ok" : "ng");
   answer(input, ok, w);
 }
 
@@ -2111,16 +1878,9 @@ function answer(btn, ok, correct) {
   fb.classList.remove("hidden", "ok", "ng");
   let graduatedNow = false;
 
-  let packTierBefore = null;
   if (ok) {
-    packTierBefore = tierForScore(Q.correct, Q.words.length);   // ふえる まえの ランク
     Q.correct++;
-    Q.combo++;
-    P.blocks++;
     sfxOk();
-    const r = btn.getBoundingClientRect();
-    blockBreak(r.left + r.width / 2, r.top + r.height / 2, "#5EA827");
-    orbs(Q.combo >= 3 ? 6 : 3, "🟢");
 
 
     logWord(correct.id, Q.mode);
@@ -2138,7 +1898,6 @@ function answer(btn, ok, correct) {
       }
     }
     save();
-    updateHUD();
 
     if (useCloze(correct)) renderClozeSentence(correct, "clozeEn", "clozeJa", false);
     fb.classList.add("ok");
@@ -2146,13 +1905,11 @@ function answer(btn, ok, correct) {
       const info = WEEKDAYS.find((w2) => w2.day === P.box[correct.id]);
       fb.innerHTML = `🎉 そつぎょう!<span class="fb-ja">${info.icon} ${info.label}ようボックスへ うつったよ!</span>`;
     } else {
-      const combo = Q.combo >= 3 ? ` <span style="color:var(--gold)">${Q.combo}れんぞく!</span>` : "";
       // にゅうりょくモードは ゆるく はんていするので、せいしきな こたえも 見せる
       const full = useTypeInput(correct) ? `<span class="fb-ja">${correct.en} = ${correct.ja}</span>` : "";
-      fb.innerHTML = `⛏️ ブロック ゲット!${combo}${full}`;
+      fb.innerHTML = `せいかい${full}`;
     }
   } else {
-    Q.combo = 0;
     Q.wrong.push(correct);
     sfxNg();
     document.getElementById("app").classList.add("shake");
@@ -2174,8 +1931,7 @@ function answer(btn, ok, correct) {
     else speak(correct.en);
   }
 
-  renderPackGauge();
-  if (ok) bumpPackGauge(packTierBefore);
+  
 
   // あなうめは ぶんまるごとを えいご→にほんご で きかせる(リスニングの れんしゅう)
   if (useCloze(correct)) speakPair(correct.ex, correct.exJa);
@@ -2194,75 +1950,27 @@ function answer(btn, ok, correct) {
 
 /* ---------- けっか ---------- */
 function finish() {
-  bumpStreak();
   const total = Q.words.length;
   const score = Q.correct;
-
-  addXP(score * 2);
-
-  const loot = [{ ic: "🟩", t: `ブロック ×${score}` }];
+  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   let title, msg;
-  let pack = null;
 
   if (Q.mode === "B") {
     const keep = total - Q.demoted.length;
-    title = "📦 ふくしゅう かんりょう!";
-    msg = `${keep}ご ボックスに のこった。\n${Q.demoted.length}ご Ⓐに もどった。`;
-    if (Q.demoted.length === 0 && total > 0) {
-      P.chests++;
-      loot.push({ ic: "🧰", t: "チェスト ×1" });
-      sfxChest();
-      orbs(10, "💎");
-    }
+    title = Q.demoted.length === 0 ? "ふくしゅう かんぺき" : "ふくしゅう かんりょう";
+    msg = `${keep}ご ボックスに のこりました。` +
+          (Q.demoted.length ? `\n${Q.demoted.length}ご はⒶに もどります。` : "");
   } else {
-    const rate = total > 0 ? score / total : 0;
-    const pct = Math.round(rate * 100);
-    pack = openPack(rate, P.items);
-
-    if (pack) {
-      P.packs++;
-      P.chests++;
-      pack.perfect = rate >= 1;
-      pack.items.forEach((it) => {
-        it.isNew = !P.items[it.id];
-        P.items[it.id] = (P.items[it.id] || 0) + 1;
-      });
-      loot.push({ ic: "🧰", t: "チェスト ×1" });
-      pack.items.forEach((it) => loot.push({ ic: it.ic, t: it.n }));
-      title = `🎁 ${pack.tier.name} パック かくとく!`;
-      const upper = DROP_TIERS.slice().reverse().find((t) => t.min > pack.tier.min);
-      msg = `せいとうりつ ${pct}% → アイテム ${pack.items.length}こ\n` +
-            (pack.perfect
-              ? "パーフェクト!さいこうの パックだ!"
-              : `あと ${needForTier(upper, total) - score}もん せいかいしていたら ${upper.name} だった!`);
-      sfxChest();
-      orbs(12, "💎");
-    } else {
-      const low = DROP_TIERS[DROP_TIERS.length - 1];
-      title = "📦 パックは とどかなかった…";
-      msg = `せいとうりつ ${pct}%\n` +
-            `${needForTier(low, total)}もん せいかいすると ${low.name} パックが もらえるよ!`;
-    }
-
-    if (Q.graduated.length > 0) {
-      P.chests += Q.graduated.length;
-      loot.push({ ic: "🧰", t: `そつぎょう チェスト ×${Q.graduated.length}` });
-      msg += `\n🎉 ${Q.graduated.length}ご Ⓑボックスへ そつぎょう!`;
-      if (!pack) { sfxChest(); orbs(10, "💎"); }
-    }
+    title = pct >= 100 ? "ぜんもん せいかい" : pct >= 60 ? "ごうかくラインごえ" : "もういちど やってみよう";
+    msg = `せいとうりつ ${pct}%`;
+    if (Q.graduated.length > 0) msg += `\n${Q.graduated.length}ご がⒷボックスへ すすみました。`;
   }
   save();
 
-  document.getElementById("resultChest").textContent =
-    Q.mode === "B" ? "📦" : pack ? "🎁" : "📦";
   document.getElementById("resultTitle").textContent = title;
   document.getElementById("resultScore").textContent = score;
   document.getElementById("resultTotal").textContent = total;
   document.getElementById("resultMsg").innerText = msg;
-
-  document.getElementById("loot").innerHTML = loot
-    .map((l) => `<div class="loot-item"><span>${l.ic}</span><span>${l.t}</span></div>`)
-    .join("");
 
   document.getElementById("btnBackRanges").classList.toggle("hidden", Q.mode !== "A");
   document.getElementById("btnBackBoxes").classList.toggle("hidden", Q.mode !== "B");
@@ -2274,9 +1982,6 @@ function finish() {
   document.getElementById("btnReviewWrong").classList.toggle("hidden", Q.wrong.length === 0 && (!Q.demoted || Q.demoted.length === 0));
 
   show("result");
-  updateHUD();
-
-  if (pack) setTimeout(() => runPack(pack), 350);
 }
 
 document.getElementById("btnBackRanges").addEventListener("click", () => { sfxClick(); show("ranges"); });
@@ -2293,165 +1998,6 @@ document.getElementById("btnRetry").addEventListener("click", () => {
 document.getElementById("btnResultHome").addEventListener("click", () => { sfxClick(); show("home"); });
 document.getElementById("btnReviewWrong").addEventListener("click", () => { sfxClick(); renderWrong(); });
 document.getElementById("btnWrongBack").addEventListener("click", () => show("result"));
-
-/* =========================================================
-   パック かいふう(ボスを たおしたときの ごうかな えんしゅつ)
-   レアリティが たかいほど ためが ながく、ひかり・おと・かみふぶきが ふえる
-   ========================================================= */
-const PACK_FX = {
-  common:    { charge:  800, rays:  0, spin: "",          flash: false, confetti:  0, shake: 0, stagger: 260, notes: [420, 560] },
-  rare:      { charge: 1300, rays: 14, spin: "spin",      flash: false, confetti: 20, shake: 0, stagger: 300, notes: [420, 560, 700, 840] },
-  epic:      { charge: 1900, rays: 24, spin: "spin",      flash: true,  confetti: 45, shake: 1, stagger: 340, notes: [392, 494, 587, 698, 880, 1047] },
-  legendary: { charge: 2600, rays: 40, spin: "spin-fast", flash: true,  confetti: 110, shake: 2, stagger: 420, notes: [330, 392, 494, 587, 698, 880, 1047, 1319, 1568] },
-};
-const CONFETTI_COLORS = ["#FCEE4B", "#4AEDD9", "#B96BFF", "#17DD62", "#E03434", "#FFFFFF"];
-
-let packBusy = false;
-
-function confettiRain(n, colors) {
-  for (let i = 0; i < n; i++) {
-    const c = document.createElement("div");
-    c.className = "confetti";
-    c.style.left = Math.random() * 100 + "vw";
-    c.style.background = colors[Math.floor(Math.random() * colors.length)];
-    c.style.animationDuration = 1.6 + Math.random() * 1.6 + "s";
-    c.style.animationDelay = Math.random() * 0.9 + "s";
-    document.body.appendChild(c);
-    setTimeout(() => c.remove(), 4200);
-  }
-}
-
-function packFlash() {
-  const f = document.getElementById("packFlash");
-  f.classList.remove("hidden");
-  f.style.animation = "none";
-  void f.offsetWidth;
-  f.style.animation = "";
-  setTimeout(() => f.classList.add("hidden"), 600);
-}
-
-function screenShake(level) {
-  if (!level) return;
-  const app = document.getElementById("app");
-  app.classList.add("screen-shake");
-  setTimeout(() => app.classList.remove("screen-shake"), 500 * level);
-}
-
-/* かいふう スタート。カードを タップすると あく */
-function runPack(pack) {
-  const ov = document.getElementById("packOverlay");
-  const fx = PACK_FX[pack.tier.key];
-
-  packBusy = true;
-  ov.className = "pack-overlay t-" + pack.tier.key;
-  ov.style.setProperty("--rc", pack.tier.color);
-  ov.style.setProperty("--rg", pack.tier.glow);
-
-  document.getElementById("packTier").textContent = pack.tier.name + " PACK";
-  document.getElementById("packPerfect").classList.toggle("hidden", !pack.perfect);
-  document.getElementById("packColl").classList.add("hidden");
-  document.getElementById("packItems").innerHTML = "";
-  document.getElementById("packTap").classList.remove("hidden");
-  document.getElementById("btnPackClose").classList.add("hidden");
-
-  const card = document.getElementById("packCard");
-  card.classList.remove("burst");
-  card.style.display = "";
-
-  // ほうしゃじょうの ひかりを レアリティのぶんだけ ならべる
-  const rays = document.getElementById("packRays");
-  rays.className = "pack-rays " + fx.spin;
-  rays.innerHTML = "";
-  for (let i = 0; i < fx.rays; i++) {
-    const r = document.createElement("div");
-    r.className = "pack-ray";
-    r.style.transform = `rotate(${(360 / fx.rays) * i}deg)`;
-    if (pack.tier.key === "legendary") {
-      r.style.background = `linear-gradient(to bottom, ${CONFETTI_COLORS[i % CONFETTI_COLORS.length]}, transparent 70%)`;
-    }
-    rays.appendChild(r);
-  }
-
-  card.onclick = () => openPackNow(pack, fx);
-}
-
-function openPackNow(pack, fx) {
-  const ov = document.getElementById("packOverlay");
-  const card = document.getElementById("packCard");
-  if (ov.classList.contains("charging") || ov.classList.contains("opened")) return;
-
-  card.onclick = null;
-  document.getElementById("packTap").classList.add("hidden");
-  ov.classList.add("charging");
-
-  // ための あいだ、だんだん たかい おとに なる
-  const step = fx.charge / fx.notes.length;
-  fx.notes.forEach((f, i) => setTimeout(() => beep(f, 0.1, "square", 0.05), i * step));
-
-  setTimeout(() => {
-    ov.classList.remove("charging");
-    ov.classList.add("opened");
-    card.classList.add("burst");
-    setTimeout(() => { card.style.display = "none"; }, 400);
-
-    if (fx.flash) packFlash();
-    screenShake(fx.shake);
-    sfxChest();
-    if (fx.confetti) {
-      confettiRain(fx.confetti, pack.tier.key === "legendary" ? CONFETTI_COLORS : [pack.tier.color, pack.tier.glow]);
-    }
-
-    setTimeout(() => revealItems(pack, fx), 380);
-  }, fx.charge);
-}
-
-/* 1パック 1まいなので、ちいさい タイルを ならべるのでは なく
-   トレーディングカード 1まいとして 大きく 見せる。 */
-function revealItems(pack, fx) {
-  const wrap = document.getElementById("packItems");
-  const it = pack.items[0];
-  const have = P.items[it.id] || 1;
-  const no = ALL_ITEMS.findIndex((x) => x.id === it.id) + 1;
-
-  wrap.innerHTML = `
-    <div class="pull-card">
-      <div class="pull-card-head">
-        <span class="pull-rarity">${pack.tier.name}</span>
-        <span class="pull-no">No.${String(no).padStart(3, "0")}</span>
-      </div>
-      <div class="pull-card-art"><span class="pull-ic">${it.ic}</span></div>
-      <div class="pull-card-name">${it.n}</div>
-      ${it.isNew ? '<div class="pull-new">NEW!</div>' : `<div class="pull-dup">もってる かず ×${have}</div>`}
-    </div>
-  `;
-  sfxGraduate();
-  if (it.isNew) orbs(6, it.ic);
-
-  setTimeout(() => {
-    // レイを おとして アイテムの なまえを よみやすくする
-    document.getElementById("packOverlay").classList.add("settled");
-    // ずかんが どこまで うまったか を その場で 見せる
-    const got = collectedCount();
-    const coll = document.getElementById("packColl");
-    coll.innerHTML =
-      `<div class="pc-lb">コレクション <b>${got}</b> / ${ITEM_TOTAL} しゅるい</div>` +
-      `<div class="mc-bar thin"><div class="mc-bar-fill" style="width:${(got / ITEM_TOTAL) * 100}%"></div></div>`;
-    coll.classList.remove("hidden");
-    document.getElementById("btnPackClose").classList.remove("hidden");
-    if (it.isNew) {
-      advancement(`${pack.tier.name} ・ ${it.n}`, it.ic, "はじめての アイテム!");
-    }
-    packBusy = false;
-  }, 700);
-}
-
-document.getElementById("btnPackClose").addEventListener("click", () => {
-  sfxClick();
-  const ov = document.getElementById("packOverlay");
-  ov.className = "pack-overlay hidden";
-  packBusy = false;
-  updateHUD();
-});
 
 /* ---------- まちがえた たんご ---------- */
 function renderWrong() {

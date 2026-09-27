@@ -3,438 +3,369 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>えいごクラフト 5きゅう</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛏️</text></svg>">
+<title>えいご 5きゅう</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="app">
 
-  <!-- ===== うえの バー ===== -->
-  <header class="hud" id="hud">
-    <div class="hud-title" id="btnHome" role="button">⛏️ えいごクラフト</div>
-    <div class="hud-stats">
-      <span class="hud-chip" title="ブロック"><span class="ic">🟩</span><span id="blockCount">0</span></span>
-      <span class="hud-chip" title="チェスト"><span class="ic">🧰</span><span id="chestCount">0</span></span>
-      <span class="hud-chip" title="れんぞく"><span class="ic">🔥</span><span id="streakCount">0</span></span>
-    </div>
+  <header class="topbar">
+    <div class="brand" id="btnHome" role="button">えいご 5きゅう</div>
+    <div class="countdown-chip">本番まで <b id="daysLeft">--</b> 日</div>
   </header>
-
-  <!-- ===== けいけんちバー ===== -->
-  <div class="xp-wrap">
-    <div class="xp-level" id="xpLevel">0</div>
-    <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
-  </div>
 
   <!-- ===== ホーム ===== -->
   <section class="screen" id="screen-home">
-    <div class="panel countdown">
-      <div class="cd-num">🎯 えいけんまで <span id="daysLeft">--</span><span class="cd-unit">にち</span></div>
-      <div class="cd-pace" id="paceMessage"></div>
-    </div>
+    <p class="pace" id="paceMessage"></p>
 
-    <button class="mc-btn wide primary continue-btn" id="btnContinue">
-      <span class="mc-btn-icon">▶️</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title" id="continueTitle">つづきから</span>
-        <span class="mc-btn-sub" id="continueSub"></span>
+    <button class="tile tile-primary" id="btnContinue">
+      <span class="tile-main">
+        <span class="tile-title" id="continueTitle">つづきから</span>
+        <span class="tile-sub" id="continueSub"></span>
       </span>
+      <span class="tile-arrow">→</span>
     </button>
 
-    <div class="ab-grid">
-      <button class="mc-btn ab-btn" id="btnA">
-        <span class="ab-letter">A</span>
-        <span class="mc-btn-title">たんごを れんしゅう</span>
-        <span class="mc-btn-sub">はんいを えらんで ちょうせん</span>
+    <h2 class="sec-head">単語</h2>
+    <div class="tile-row">
+      <button class="tile tile-half" id="btnA">
+        <span class="tile-main">
+          <span class="tile-title">Ⓐ おぼえる</span>
+          <span class="tile-sub">はんいを えらぶ</span>
+        </span>
       </button>
-      <button class="mc-btn ab-btn primary" id="btnB">
-        <span class="ab-letter">B</span>
-        <span class="mc-btn-title">ようびボックス</span>
-        <span class="mc-btn-sub" id="todayBoxLabel">きょうの ふくしゅう</span>
-        <span class="notif hidden" id="boxNotif">0</span>
+      <button class="tile tile-half" id="btnB">
+        <span class="tile-main">
+          <span class="tile-title">Ⓑ ふくしゅう</span>
+          <span class="tile-sub" id="todayBoxLabel">きょうの ボックス</span>
+        </span>
+        <span class="badge hidden" id="boxNotif">0</span>
       </button>
     </div>
 
-    <div class="panel ans-mode">
-      <div class="ans-mode-lb">Ⓐ・Ⓑの こたえかた</div>
-      <div class="ans-seg" id="ansSeg">
-        <button class="ans-btn" data-mode="know"><span class="ans-ic">🗣️</span>こえで</button>
-        <button class="ans-btn" data-mode="choice"><span class="ans-ic">🔘</span>4たく</button>
-        <button class="ans-btn" data-mode="type"><span class="ans-ic">⌨️</span>かく</button>
+    <div class="seg-block">
+      <div class="seg-label">こたえかた</div>
+      <div class="seg" id="ansSeg">
+        <button class="seg-btn" data-mode="know">こえで</button>
+        <button class="seg-btn" data-mode="choice">4たく</button>
+        <button class="seg-btn" data-mode="type">かく</button>
       </div>
-      <div class="ans-note" id="ansNote"></div>
+      <div class="seg-note" id="ansNote"></div>
     </div>
 
-    <button class="mc-btn wide" id="btnItems">
-      <span class="mc-btn-icon">🎒</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">もちもの ずかん</span>
-        <span class="mc-btn-sub" id="itemsSub">パックで ひいた アイテムを 見る</span>
+    <h2 class="sec-head">リーディング</h2>
+    <button class="tile" id="btnGrammar">
+      <span class="tile-main">
+        <span class="tile-title">大もん1 ・ 語句の あなうめ</span>
+        <span class="tile-sub">文を 読んで ( ) に 入る 語を えらぶ ・ 15問</span>
       </span>
+      <span class="tile-arrow">→</span>
+    </button>
+    <button class="tile" id="btnDaimon2Mode">
+      <span class="tile-main">
+        <span class="tile-title">大もん2 ・ 会話の あなうめ</span>
+        <span class="tile-sub">会話を 読んで うけこたえを えらぶ ・ 10問</span>
+      </span>
+      <span class="tile-arrow">→</span>
+    </button>
+    <button class="tile" id="btnWordOrderMode">
+      <span class="tile-main">
+        <span class="tile-title">大もん3 ・ 語句の ならべかえ</span>
+        <span class="tile-sub">日本語に あうように 語を ならべる ・ 10問</span>
+      </span>
+      <span class="tile-arrow">→</span>
     </button>
 
-    <button class="mc-btn wide grammar-btn" id="btnGrammar">
-      <span class="mc-btn-icon">📝</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">大もん1 れんしゅう</span>
-        <span class="mc-btn-sub">ぶんの ( ) を うめる ・ ほんばんと おなじ かたち</span>
+    <h2 class="sec-head">リスニング</h2>
+    <button class="tile" id="btnListen1Mode">
+      <span class="tile-main">
+        <span class="tile-title">第1部 ・ 会話の うけこたえ</span>
+        <span class="tile-sub">聞いて、あう こたえを えらぶ ・ 10問</span>
       </span>
+      <span class="tile-arrow">→</span>
     </button>
-
-    <button class="mc-btn wide" id="btnWordOrderMode">
-      <span class="mc-btn-icon">🧩</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">ごじゅんれんしゅう</span>
-        <span class="mc-btn-sub">単語タイルを ならべて 文を つくる ・ 大もん3の ちからだめし</span>
+    <button class="tile" id="btnListen2Mode">
+      <span class="tile-main">
+        <span class="tile-title">第2部 ・ 会話の ないよう</span>
+        <span class="tile-sub">会話を 聞いて しつもんに こたえる ・ 10問</span>
       </span>
+      <span class="tile-arrow">→</span>
     </button>
-
-    <button class="mc-btn wide" id="btnDaimon2Mode">
-      <span class="mc-btn-icon">💬</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">大もん2 れんしゅう</span>
-        <span class="mc-btn-sub">会話の うけこたえを えらぶ ・ 大もん2の ちからだめし</span>
-      </span>
-    </button>
-
-    <button class="mc-btn wide" id="btnListen1Mode">
-      <span class="mc-btn-icon">🎧</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">リスニング だい1ぶ れんしゅう</span>
-        <span class="mc-btn-sub">きいて、うけこたえを えらぶ ・ ほんばんの だい1ぶと おなじ かたち</span>
-      </span>
-    </button>
-
-    <button class="mc-btn wide" id="btnListen2Mode">
-      <span class="mc-btn-icon">🎧</span>
-      <span class="mc-btn-body">
-        <span class="mc-btn-title">リスニング だい2ぶ れんしゅう</span>
-        <span class="mc-btn-sub">会話を きいて、ないようを こたえる ・ ほんばんの だい2ぶと おなじ かたち</span>
-      </span>
-    </button>
-
   </section>
 
-  <!-- ===== A: はんいえらび ===== -->
+  <!-- ===== Ⓐ はんいえらび ===== -->
   <section class="screen hidden" id="screen-ranges">
-    <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">Ⓐ たんごを えらぶ</h2>
-    <p class="scr-desc">15ごずつ。7わり せいかいで ボスを たおせる!<br>せいとうりつが たかいほど レアな アイテムが 出るぞ 💎</p>
-    <div class="range-today-bar" id="rangeToday"></div>
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="scr-title">Ⓐ はんいを えらぶ</h2>
+    <div class="today-bar" id="rangeToday"></div>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
 
-  <!-- ===== A: たんごいちらん(カウントの かくにん) ===== -->
+  <!-- ===== Ⓐ たんごいちらん ===== -->
   <section class="screen hidden" id="screen-wordlist">
-    <button class="back-btn" id="btnWordlistBack">◀ もどる</button>
-    <h2 class="scr-title" id="wordlistTitle">📋 たんごいちらん</h2>
-    <p class="scr-desc">いまの せいかいカウント(●●●で3こに なると そつぎょう)<br>もう しってる たんごは「✅しってる」で Ⓑへ おくれます</p>
+    <button class="back-btn" id="btnWordlistBack">← もどる</button>
+    <h2 class="scr-title" id="wordlistTitle">たんごいちらん</h2>
+    <p class="scr-desc">●●● が 3つで Ⓑへ すすみます。もう しっている 語は「しってる」で とばせます。</p>
     <div class="word-list" id="wordList"></div>
-    <button class="mc-btn wide" id="btnWordlistSkipAll">✅ このはんいは ぜんぶ しってる → まとめてⒷへ</button>
-    <button class="mc-btn wide primary" id="btnWordlistStart">📖 カードで おぼえる → クイズ</button>
+    <button class="tile tile-quiet" id="btnWordlistSkipAll"><span class="tile-main"><span class="tile-title">ぜんぶ しってる → まとめてⒷへ</span></span></button>
+    <button class="tile tile-primary" id="btnWordlistStart"><span class="tile-main"><span class="tile-title">カードで おぼえる → クイズ</span></span><span class="tile-arrow">→</span></button>
   </section>
 
-  <!-- ===== B: ようびボックス ===== -->
+  <!-- ===== Ⓑ ようびボックス ===== -->
   <section class="screen hidden" id="screen-boxes">
-    <button class="back-btn" data-back="home">◀ もどる</button>
+    <button class="back-btn" data-back="home">← もどる</button>
     <h2 class="scr-title">Ⓑ ようびボックス</h2>
-    <p class="scr-desc">そつぎょうした たんごが、おぼえた ようびの はこに はいるよ。<br>まちがえると Ⓐに もどるから きをつけて!</p>
+    <p class="scr-desc">おぼえた 語が、こたえた ようびの ボックスに 入ります。まちがえるとⒶに もどります。</p>
     <div class="box-grid" id="boxGrid"></div>
-  </section>
-
-  <!-- ===== 🎒 もちもの ずかん(パックで ひいた アイテム) ===== -->
-  <section class="screen hidden" id="screen-items">
-    <button class="back-btn" data-back="home">◀ もどる</button>
-    <h2 class="scr-title">🎒 もちもの ずかん</h2>
-    <p class="scr-desc">Ⓐの クイズで もらった パックから 出た アイテムだよ。<br>まだ 出てない アイテムは ❔ で かくれてる!</p>
-
-    <div class="panel item-sum">
-      <div class="item-sum-lb">コレクション <b id="itemGot">0</b> / <span id="itemTotal">100</span> しゅるい</div>
-      <div class="mc-bar"><div class="mc-bar-fill" id="itemBar"></div></div>
-    </div>
-
-    <div id="itemTiers"></div>
-  </section>
-
-  <!-- ===== ごじゅんれんしゅう(ほんばん だい3もん形式) ===== -->
-  <section class="screen hidden" id="screen-wordorder">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">🧩 ごじゅん れんしゅう</div>
-      <div class="quiz-pos"><span id="woPos">1</span>/<span id="woTotal">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="woBar"></div></div>
-
-    <div class="panel quiz-panel wo-panel">
-      <div class="quiz-label">この いみに なるように ならべよう</div>
-      <div class="wo-ja" id="woJa">わたしは いえに います。</div>
-      <div class="wo-build" id="woBuild"></div>
-      <div class="wo-bank" id="woBank"></div>
-      <button class="mc-btn small" id="btnWoReset">🔁 やりなおす</button>
-    </div>
-
-    <div class="feedback hidden" id="woFeedback"></div>
-
-    <div class="panel hidden" id="woResult">
-      <div class="panel-head">🧩 ごじゅん けっか</div>
-      <div class="result-score"><span id="woScore">0</span> / <span id="woResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
-      <button class="mc-btn wide primary" id="btnWoRetry">🧩 もういちど</button>
-      <button class="mc-btn wide" id="btnWoHome">🏠 ホームへ</button>
-    </div>
-  </section>
-
-  <!-- ===== 大もん2 れんしゅう(会話文の文空所補充) ===== -->
-  <section class="screen hidden" id="screen-daimon2">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">💬 大もん2 れんしゅう</div>
-      <div class="quiz-pos"><span id="d2Pos">1</span>/<span id="d2Total">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="d2Bar"></div></div>
-
-    <div class="panel quiz-panel d2-panel">
-      <div class="quiz-label">( ) に 入る うけこたえは どれ?</div>
-      <div class="d2-dialogue" id="d2Dialogue"></div>
-      <button class="sound-btn" id="btnD2Speak">🔊 かいわを きく</button>
-    </div>
-
-    <div class="choices" id="d2Choices"></div>
-    <div class="feedback hidden" id="d2Feedback"></div>
-
-    <div class="panel hidden" id="d2Result">
-      <div class="panel-head">💬 大もん2 けっか</div>
-      <div class="result-score"><span id="d2Score">0</span> / <span id="d2ResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
-      <button class="mc-btn wide primary" id="btnD2Retry">💬 もういちど</button>
-      <button class="mc-btn wide" id="btnD2Home">🏠 ホームへ</button>
-    </div>
-  </section>
-
-  <!-- ===== リスニング だい1ぶ れんしゅう(会話の応答文選択) ===== -->
-  <section class="screen hidden" id="screen-listen1">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">🎧 リスニング だい1ぶ</div>
-      <div class="quiz-pos"><span id="l1Pos">1</span>/<span id="l1Total">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="l1Bar"></div></div>
-
-    <div class="panel quiz-panel">
-      <div class="quiz-label">きいて、いちばん あう うけこたえを えらぼう</div>
-      <div class="slot big">🎧</div>
-      <button class="sound-btn" id="btnL1Replay">🔊 もういちど ぜんぶ きく</button>
-    </div>
-
-    <div class="ln-choices l1-choices" id="l1Choices"></div>
-    <div class="feedback hidden" id="l1Feedback"></div>
-
-    <div class="panel hidden" id="l1Result">
-      <div class="panel-head">🎧 リスニング だい1ぶ けっか</div>
-      <div class="result-score"><span id="l1Score">0</span> / <span id="l1ResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
-      <button class="mc-btn wide primary" id="btnL1Retry">🎧 もういちど</button>
-      <button class="mc-btn wide" id="btnL1Home">🏠 ホームへ</button>
-    </div>
-  </section>
-
-  <!-- ===== リスニング だい2ぶ れんしゅう(会話の内容一致選択) ===== -->
-  <section class="screen hidden" id="screen-listen2">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">🎧 リスニング だい2ぶ</div>
-      <div class="quiz-pos"><span id="l2Pos">1</span>/<span id="l2Total">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="l2Bar"></div></div>
-
-    <div class="panel quiz-panel">
-      <div class="quiz-label">会話と しつもんを きいて こたえよう</div>
-      <div class="slot big">🎧</div>
-      <button class="sound-btn" id="btnL2Replay">🔊 もういちど ぜんぶ きく</button>
-    </div>
-
-    <div class="choices" id="l2Choices"></div>
-    <div class="feedback hidden" id="l2Feedback"></div>
-
-    <div class="panel hidden" id="l2Result">
-      <div class="panel-head">🎧 リスニング だい2ぶ けっか</div>
-      <div class="result-score"><span id="l2Score">0</span> / <span id="l2ResultTotal">0</span> せいかい</div>
-      <div class="result-msg">まちがえても Ⓐ・Ⓑの きろくは かわらないよ。なんかいでも れんしゅう しよう!</div>
-      <button class="mc-btn wide primary" id="btnL2Retry">🎧 もういちど</button>
-      <button class="mc-btn wide" id="btnL2Home">🏠 ホームへ</button>
-    </div>
-  </section>
-
-  <!-- ===== 大問1れんしゅう(ぶんの あなうめ) ===== -->
-  <section class="screen hidden" id="screen-grammar">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="quiz-head">
-      <div class="mastery-tag">📝 大もん1 れんしゅう</div>
-      <div class="quiz-pos"><span id="gPos">1</span>/<span id="gTotal">15</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="gBar"></div></div>
-
-    <div class="panel quiz-panel">
-      <div class="quiz-label">( ) に 入るのは どれ?</div>
-      <div class="cloze">
-        <div class="cloze-en" id="gEn"></div>
-      </div>
-    </div>
-
-    <div class="choices" id="gChoices"></div>
-    <div class="feedback hidden" id="gFeedback"></div>
-
-    <div class="panel hidden" id="gResult">
-      <div class="panel-head">📝 大もん1 けっか</div>
-      <div class="result-score"><span id="gScore">0</span> / <span id="gResultTotal">0</span> せいかい</div>
-      <div class="result-msg" id="gMsg"></div>
-      <button class="mc-btn wide primary" id="btnGRetry">📝 もういちど</button>
-      <button class="mc-btn wide" id="btnGHome">🏠 ホームへ</button>
-    </div>
   </section>
 
   <!-- ===== おぼえる(カード) ===== -->
   <section class="screen hidden" id="screen-learn">
-    <button class="back-btn" data-back="home">◀ やめる</button>
-    <div class="learn-head">
-      <span class="zone-tag" id="learnZoneTag">Ⓐ 1〜15ばん</span>
-      <span class="learn-pos" id="learnPos">1 / 10</span>
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip" id="learnZoneTag">Ⓐ</span>
+      <span class="pos" id="learnPos">1 / 10</span>
     </div>
 
     <div class="card" id="card">
       <div class="card-face" id="cardFront">
         <div class="card-no" id="cardNo">No.1</div>
-        <div class="slot big" id="cardSlotQ">❓</div>
+        <div class="slot" id="cardSlotQ">?</div>
         <div class="card-en" id="cardEn">house</div>
-        <button class="sound-btn" id="btnSpeak">🔊 もういちど きく</button>
-        <div class="card-hint">タップして こたえを みる 👆</div>
+        <button class="sound-btn" id="btnSpeak">もう いちど きく</button>
+        <div class="card-hint">タップして こたえを みる</div>
       </div>
       <div class="card-face hidden" id="cardBack">
         <div class="card-en small" id="cardEnBack">house</div>
-        <div class="slot big" id="cardEmoji">🏠</div>
+        <div class="slot" id="cardEmoji">🏠</div>
         <div class="card-ja" id="cardJa">いえ</div>
         <div class="vis hidden" id="cardVis"></div>
         <div class="card-ex" id="cardEx"></div>
-        <button class="sound-btn" id="btnSpeak2">🔊 きく</button>
+        <button class="sound-btn" id="btnSpeak2">きく</button>
       </div>
     </div>
 
-    <div class="listen-note hidden" id="listenNote">🔊 にほんごの さいごまで きいてね…</div>
+    <div class="listen-note hidden" id="listenNote">にほんごの さいごまで きいてね…</div>
 
-    <div class="learn-nav">
-      <button class="mc-btn small" id="btnPrev">◀ まえ</button>
-      <button class="mc-btn small primary" id="btnNext">つぎ ▶</button>
+    <div class="nav-row">
+      <button class="tile tile-quiet tile-nav" id="btnPrev"><span class="tile-main"><span class="tile-title">← まえ</span></span></button>
+      <button class="tile tile-primary tile-nav" id="btnNext"><span class="tile-main"><span class="tile-title">つぎ →</span></span></button>
     </div>
-    <button class="mc-btn wide danger hidden" id="btnGoQuiz">🎁 パックを かけて クイズ!</button>
+    <button class="tile tile-accent hidden" id="btnGoQuiz"><span class="tile-main"><span class="tile-title">クイズに すすむ</span></span><span class="tile-arrow">→</span></button>
   </section>
 
-  <!-- ===== クイズ ===== -->
+  <!-- ===== クイズ(Ⓐ・Ⓑ) ===== -->
   <section class="screen hidden" id="screen-quiz">
-    <div class="pack-gauge hidden" id="packGauge">
-      <div class="pg-pack" id="pgPack">🎁</div>
-      <div class="pg-tier" id="pgTier">まだ パックなし</div>
-      <div class="pg-track" id="pgTrack"></div>
-      <div class="pg-next" id="pgNext"></div>
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip" id="masteryTag"></span>
+      <span class="pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></span>
     </div>
+    <div class="bar"><div class="bar-fill" id="quizBar"></div></div>
 
-    <div class="quiz-head">
-      <div class="mastery-tag" id="masteryTag"></div>
-      <div class="quiz-pos"><span id="quizPos">1</span>/<span id="quizTotal">10</span></div>
-    </div>
-    <div class="mc-bar thin"><div class="mc-bar-fill" id="quizBar"></div></div>
-
-    <div class="combo hidden" id="combo">🔥 <span id="comboNum">2</span> れんぞく!</div>
-
-    <div class="panel quiz-panel">
-      <div class="quiz-label" id="quizLabel">この たんごの いみは?</div>
-      <div class="slot big" id="quizSlot">❓</div>
-      <div class="quiz-en" id="quizEn">house</div>
+    <div class="panel center">
+      <div class="q-label" id="quizLabel">この たんごの いみは?</div>
+      <div class="slot" id="quizSlot">?</div>
+      <div class="q-en" id="quizEn">house</div>
       <div class="cloze hidden" id="quizCloze">
         <div class="cloze-en" id="clozeEn"></div>
         <div class="cloze-ja" id="clozeJa"></div>
       </div>
-      <button class="sound-btn" id="btnQuizSpeak">🔊 きく</button>
+      <button class="sound-btn" id="btnQuizSpeak">きく</button>
       <div class="dots" id="dots"></div>
     </div>
 
-    <div class="type-fallback hidden" id="typeFallback">⌨️ この たんごは かきにくいので 4たくで こたえよう</div>
+    <div class="note hidden" id="typeFallback">この たんごは かきにくいので 4たくで こたえます</div>
 
-    <!-- こえで こたえる モード: こたえを 見てから おやが ⭕❌ を つける -->
     <div class="know-wrap hidden" id="quizKnowWrap">
       <div class="know-answer hidden" id="knowAnswer"></div>
-      <button class="mc-btn wide primary" id="btnKnowReveal">👀 こたえを 見る</button>
+      <button class="tile tile-primary" id="btnKnowReveal"><span class="tile-main"><span class="tile-title">こたえを 見る</span></span></button>
       <div class="know-btns hidden" id="knowBtns">
-        <button class="mc-btn know-ng" id="btnKnowNg">❌ わかってない</button>
-        <button class="mc-btn know-ok" id="btnKnowOk">⭕ わかった</button>
+        <button class="tile tile-ng" id="btnKnowNg"><span class="tile-main"><span class="tile-title">わかってない</span></span></button>
+        <button class="tile tile-ok" id="btnKnowOk"><span class="tile-main"><span class="tile-title">わかった</span></span></button>
       </div>
     </div>
 
     <div class="choices" id="choices"></div>
-    <div class="typing-input-wrap hidden" id="quizTypeWrap">
-      <div class="quiz-hint hidden" id="quizHint"></div>
-      <input type="text" id="quizInput" class="typing-input" autocapitalize="off" autocomplete="off"
+
+    <div class="type-wrap hidden" id="quizTypeWrap">
+      <div class="hint hidden" id="quizHint"></div>
+      <input type="text" id="quizInput" class="text-input" autocapitalize="off" autocomplete="off"
         autocorrect="off" spellcheck="false" placeholder="にほんごで こたえる">
-      <div class="type-btns">
-        <button class="mc-btn small hint-btn" id="btnQuizHint">💡 ヒント</button>
-        <button class="mc-btn primary grow" id="btnQuizSubmit">こたえる</button>
+      <div class="nav-row">
+        <button class="tile tile-quiet tile-nav" id="btnQuizHint"><span class="tile-main"><span class="tile-title">ヒント</span></span></button>
+        <button class="tile tile-primary tile-nav" id="btnQuizSubmit"><span class="tile-main"><span class="tile-title">こたえる</span></span></button>
       </div>
     </div>
     <div class="feedback hidden" id="feedback"></div>
   </section>
 
-
   <!-- ===== けっか ===== -->
   <section class="screen hidden" id="screen-result">
-    <div class="panel result">
-      <div class="result-chest" id="resultChest">🧰</div>
+    <div class="panel center result">
       <div class="result-title" id="resultTitle"></div>
-      <div class="result-score"><span id="resultScore">0</span> / <span id="resultTotal">10</span> せいかい</div>
-      <div class="loot" id="loot"></div>
+      <div class="result-score"><span id="resultScore">0</span> <span class="slash">/</span> <span id="resultTotal">10</span></div>
       <div class="result-msg" id="resultMsg"></div>
-      <button class="mc-btn wide primary" id="btnBackRanges">Ⓐ はんいいちらんへ</button>
-      <button class="mc-btn wide primary hidden" id="btnBackBoxes">Ⓑ ボックスいちらんへ</button>
-      <button class="mc-btn wide" id="btnRetry">⚔️ もういちど クイズ</button>
-      <button class="mc-btn wide" id="btnReviewWrong">📕 まちがえた たんごを みる</button>
-      <button class="mc-btn wide" id="btnResultHome">🏠 ホームへ</button>
     </div>
+    <button class="tile tile-primary hidden" id="btnBackRanges"><span class="tile-main"><span class="tile-title">Ⓐ はんいいちらんへ</span></span></button>
+    <button class="tile tile-primary hidden" id="btnBackBoxes"><span class="tile-main"><span class="tile-title">Ⓑ ボックスいちらんへ</span></span></button>
+    <button class="tile" id="btnRetry"><span class="tile-main"><span class="tile-title">もう いちど クイズ</span></span></button>
+    <button class="tile" id="btnReviewWrong"><span class="tile-main"><span class="tile-title">まちがえた 語を みる</span></span></button>
+    <button class="tile tile-quiet" id="btnResultHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
   </section>
 
-  <!-- ===== まちがえた たんご ===== -->
+  <!-- ===== まちがえた語 ===== -->
   <section class="screen hidden" id="screen-wrong">
-    <button class="back-btn" id="btnWrongBack">◀ もどる</button>
-    <h2 class="scr-title">📕 まちがえた たんご</h2>
+    <button class="back-btn" id="btnWrongBack">← もどる</button>
+    <h2 class="scr-title">まちがえた 語</h2>
     <div class="wrong-list" id="wrongList"></div>
   </section>
 
-</div>
-
-<!-- ===== パック かいふう ===== -->
-<div class="pack-overlay hidden" id="packOverlay">
-  <div class="pack-aura" id="packAura"></div>
-  <div class="pack-rays" id="packRays"></div>
-  <div class="pack-stage" id="packStage">
-    <div class="pack-perfect hidden" id="packPerfect">★ P E R F E C T ★</div>
-    <div class="pack-tier" id="packTier"></div>
-    <div class="pack-card" id="packCard">
-      <div class="pack-card-shine"></div>
-      <div class="pack-card-ic">🎁</div>
-      <div class="pack-card-lb">アイテムパック</div>
+  <!-- ===== 大もん1 ===== -->
+  <section class="screen hidden" id="screen-grammar">
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip">大もん1 ・ 語句の あなうめ</span>
+      <span class="pos"><span id="gPos">1</span>/<span id="gTotal">15</span></span>
     </div>
-    <div class="pack-tap" id="packTap">タップして あける! 👆</div>
-    <div class="pack-items" id="packItems"></div>
-    <div class="pack-coll hidden" id="packColl"></div>
-    <button class="mc-btn wide primary hidden" id="btnPackClose">🎒 もちものに いれる</button>
-  </div>
-  <div class="pack-flash hidden" id="packFlash"></div>
+    <div class="bar"><div class="bar-fill" id="gBar"></div></div>
+
+    <div class="panel">
+      <div class="q-label">( ) に 入るのは どれ?</div>
+      <div class="cloze"><div class="cloze-en" id="gEn"></div></div>
+    </div>
+
+    <div class="choices" id="gChoices"></div>
+    <div class="feedback hidden" id="gFeedback"></div>
+
+    <div class="panel center hidden" id="gResult">
+      <div class="result-title">大もん1 けっか</div>
+      <div class="result-score"><span id="gScore">0</span> <span class="slash">/</span> <span id="gResultTotal">0</span></div>
+      <div class="result-msg" id="gMsg"></div>
+      <button class="tile tile-primary" id="btnGRetry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
+      <button class="tile tile-quiet" id="btnGHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
+    </div>
+  </section>
+
+  <!-- ===== 大もん2 ===== -->
+  <section class="screen hidden" id="screen-daimon2">
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip">大もん2 ・ 会話の あなうめ</span>
+      <span class="pos"><span id="d2Pos">1</span>/<span id="d2Total">10</span></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="d2Bar"></div></div>
+
+    <div class="panel">
+      <div class="q-label">( ) に 入る うけこたえは どれ?</div>
+      <div class="dialogue" id="d2Dialogue"></div>
+      <button class="sound-btn" id="btnD2Speak">かいわを きく</button>
+    </div>
+
+    <div class="choices" id="d2Choices"></div>
+    <div class="feedback hidden" id="d2Feedback"></div>
+
+    <div class="panel center hidden" id="d2Result">
+      <div class="result-title">大もん2 けっか</div>
+      <div class="result-score"><span id="d2Score">0</span> <span class="slash">/</span> <span id="d2ResultTotal">0</span></div>
+      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
+      <button class="tile tile-primary" id="btnD2Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
+      <button class="tile tile-quiet" id="btnD2Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
+    </div>
+  </section>
+
+  <!-- ===== 大もん3(ごじゅん) ===== -->
+  <section class="screen hidden" id="screen-wordorder">
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip">大もん3 ・ 語句の ならべかえ</span>
+      <span class="pos"><span id="woPos">1</span>/<span id="woTotal">10</span></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="woBar"></div></div>
+
+    <div class="panel center">
+      <div class="q-label">この いみに なるように ならべよう</div>
+      <div class="wo-ja" id="woJa"></div>
+      <div class="wo-build" id="woBuild"></div>
+      <div class="wo-bank" id="woBank"></div>
+      <button class="sound-btn" id="btnWoReset">やりなおす</button>
+    </div>
+
+    <div class="feedback hidden" id="woFeedback"></div>
+
+    <div class="panel center hidden" id="woResult">
+      <div class="result-title">大もん3 けっか</div>
+      <div class="result-score"><span id="woScore">0</span> <span class="slash">/</span> <span id="woResultTotal">0</span></div>
+      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
+      <button class="tile tile-primary" id="btnWoRetry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
+      <button class="tile tile-quiet" id="btnWoHome"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
+    </div>
+  </section>
+
+  <!-- ===== リスニング 第1部 ===== -->
+  <section class="screen hidden" id="screen-listen1">
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip">リスニング 第1部</span>
+      <span class="pos"><span id="l1Pos">1</span>/<span id="l1Total">10</span></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="l1Bar"></div></div>
+
+    <div class="panel center listen-panel">
+      <div class="q-label">きいて、あう うけこたえを えらぼう</div>
+      <div class="listen-ic">🎧</div>
+      <button class="sound-btn" id="btnL1Replay">もう いちど ぜんぶ きく</button>
+    </div>
+
+    <div class="ln-choices" id="l1Choices"></div>
+    <div class="feedback hidden" id="l1Feedback"></div>
+
+    <div class="panel center hidden" id="l1Result">
+      <div class="result-title">第1部 けっか</div>
+      <div class="result-score"><span id="l1Score">0</span> <span class="slash">/</span> <span id="l1ResultTotal">0</span></div>
+      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
+      <button class="tile tile-primary" id="btnL1Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
+      <button class="tile tile-quiet" id="btnL1Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
+    </div>
+  </section>
+
+  <!-- ===== リスニング 第2部 ===== -->
+  <section class="screen hidden" id="screen-listen2">
+    <button class="back-btn" data-back="home">← やめる</button>
+    <div class="row-head">
+      <span class="chip">リスニング 第2部</span>
+      <span class="pos"><span id="l2Pos">1</span>/<span id="l2Total">10</span></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="l2Bar"></div></div>
+
+    <div class="panel center listen-panel">
+      <div class="q-label">かいわと しつもんを きいて こたえよう</div>
+      <div class="listen-ic">🎧</div>
+      <button class="sound-btn" id="btnL2Replay">もう いちど ぜんぶ きく</button>
+    </div>
+
+    <div class="choices" id="l2Choices"></div>
+    <div class="feedback hidden" id="l2Feedback"></div>
+
+    <div class="panel center hidden" id="l2Result">
+      <div class="result-title">第2部 けっか</div>
+      <div class="result-score"><span id="l2Score">0</span> <span class="slash">/</span> <span id="l2ResultTotal">0</span></div>
+      <div class="result-msg">Ⓐ・Ⓑの きろくは かわりません。なんかいでも れんしゅう できます。</div>
+      <button class="tile tile-primary" id="btnL2Retry"><span class="tile-main"><span class="tile-title">もう いちど</span></span></button>
+      <button class="tile tile-quiet" id="btnL2Home"><span class="tile-main"><span class="tile-title">ホームへ</span></span></button>
+    </div>
+  </section>
+
 </div>
 
-<div class="advancement hidden" id="adv">
-  <div class="adv-ic" id="advIc">🏆</div>
-  <div class="adv-body"><div class="adv-head" id="advHead">しんちょくの たっせい!</div><div class="adv-name" id="advName"></div></div>
+<div class="toast hidden" id="adv">
+  <div class="toast-ic" id="advIc">✓</div>
+  <div class="toast-body"><div class="toast-head" id="advHead"></div><div class="toast-name" id="advName"></div></div>
 </div>
 
 <script src="words-data.js"></script>
