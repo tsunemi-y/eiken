@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ぎもんし おぼえかた</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 9mm 10mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Zen Maru Gothic", "IPAGothic", sans-serif; color: #1b2230; font-size: 10pt; }
+  .en { font-family: "Inter", sans-serif; font-weight: 700; }
+  .page { height: 278mm; display: flex; flex-direction: column; }
+  .page + .page { break-before: page; }
+  h1 { font-size: 15pt; margin: 0; display: flex; justify-content: space-between; align-items: baseline; }
+  h1 small { font-size: 8.5pt; color: #6b7384; font-weight: 500; }
+  .lead { font-size: 9.3pt; color: #4a5263; margin: 1.2mm 0 2.5mm; line-height: 1.5; }
+  .lead b { color: #2f6fe4; }
+
+  /* 1まいめ:カード */
+  .cards { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 0; border: .3mm dashed #b8bfcc; }
+  .card { border: .3mm dashed #b8bfcc; padding: 3mm 4mm; display: flex; flex-direction: column; justify-content: center; gap: 2.2mm; }
+  .top { display: flex; align-items: center; gap: 3mm; }
+  .top .ic { font-size: 30pt; line-height: 1; }
+  .top .en { font-size: 32pt; letter-spacing: .01em; line-height: 1; }
+  .top .ja { margin-left: auto; font-size: 19pt; font-weight: 700; color: var(--c); }
+  .goro { background: var(--bg); border-radius: 2mm; padding: 2mm 3mm; font-size: 14pt; font-weight: 700; line-height: 1.4; }
+  .goro .s { color: var(--c); }
+  .goro .k { font-size: 9.5pt; font-weight: 500; color: #4a5263; display: block; }
+  .row { font-size: 11pt; line-height: 1.45; }
+  .row .tag { display: inline-block; font-size: 8.5pt; font-weight: 700; color: #fff; background: #8a92a3; border-radius: 1mm; padding: 0 1.3mm; margin-right: 1.2mm; }
+  .row .en { font-size: 11.5pt; }
+
+  /* 2まいめ:こたえで みわける */
+  .hint { border: .4mm solid #7b4bd6; border-radius: 2.5mm; padding: 2mm 3mm; margin-bottom: 3mm; }
+  .hint h2 { font-size: 11.5pt; margin: 0 0 1.2mm; color: #7b4bd6; }
+  .hint table { width: 100%; border-collapse: collapse; }
+  .hint td { padding: .9mm 1.5mm; border-bottom: .2mm dashed #d5d9e2; font-size: 9.8pt; }
+  .hint tr:last-child td { border-bottom: none; }
+  .hint td.a { width: 46%; }
+  .hint td.a .en { font-size: 10.5pt; color: #4a5263; }
+  .hint td.arrow { width: 6%; text-align: center; color: #8a92a3; }
+  .hint td.qw .en { font-size: 13pt; color: #7b4bd6; }
+  .bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 2mm; margin: 0 0 2.5mm; }
+  .bank span { font-family: "Inter", sans-serif; font-weight: 700; font-size: 13pt; border: .35mm solid #cfd5e0; border-radius: 2mm; padding: .6mm 3mm; }
+  .qs { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 2mm; }
+  .q { border: .35mm solid #cfd5e0; border-radius: 2.5mm; padding: 1.5mm 3mm; display: flex; flex-direction: column; justify-content: center; position: relative; }
+  .q .no { position: absolute; top: 1.2mm; left: 2mm; font-family: "Inter", sans-serif; font-size: 8pt; font-weight: 700; color: #8a92a3; }
+  .q .ask { font-family: "Inter", sans-serif; font-weight: 700; font-size: 16pt; }
+  .q .ask .blank { display: inline-block; min-width: 20mm; border-bottom: .5mm solid #1b2230; margin-right: 1mm; }
+  .q .ans { font-family: "Inter", sans-serif; font-weight: 600; font-size: 13pt; color: #2a9d62; margin-top: .8mm; }
+  .q .ans::before { content: "こたえ ▶ "; font-family: "Zen Maru Gothic", sans-serif; font-size: 8pt; color: #6b7384; }
+
+  /* 3まいめ:おうちの ひとへ */
+  .sec { border: .35mm solid #cfd5e0; border-radius: 2.5mm; padding: 2.2mm 3.5mm; margin-bottom: 2.6mm; }
+  .sec h2 { font-size: 11.5pt; margin: 0 0 1.2mm; }
+  .sec p, .sec li { font-size: 9.6pt; line-height: 1.55; margin: 0; }
+  .sec ul { margin: 0; padding-left: 4.5mm; }
+  .plan { width: 100%; border-collapse: collapse; }
+  .plan td { border-bottom: .2mm dashed #d5d9e2; padding: 1.2mm 1.5mm; font-size: 9.6pt; vertical-align: top; line-height: 1.5; }
+  .plan tr:last-child td { border-bottom: none; }
+  .plan td.d { width: 25mm; font-weight: 700; color: #2f6fe4; white-space: nowrap; }
+  .plan td.t { width: 13mm; font-weight: 700; white-space: nowrap; }
+  .plan td.m { width: 13mm; color: #6b7384; white-space: nowrap; text-align: right; }
+  .key { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.2mm 2mm; }
+  .key div { font-size: 9.6pt; } .key .en { font-size: 10.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ============ 1まいめ:おぼえかたカード ============ -->
+<section class="page">
+  <h1>❓ ぎもんし おぼえかたカード <small>てんせんで きって カードにしても OK</small></h1>
+  <div class="lead">① 音の <b>ゴロ</b> を いっしょに いう → ② <b>うごき</b> を つける → ③ れいの しつもんに こたえる。<br>おぼえたら、英語だけ 見せて「いみ と うごき」が でるか ためしてね。</div>
+  <div class="cards">
+
+    <div class="card" style="--c:#2f6fe4; --bg:#eaf1fd">
+      <div class="top"><span class="ic">😲</span><span class="en">what</span><span class="ja">なに</span></div>
+      <div class="goro"><span class="s">ワッ</span>(ト)! なに これ!?<span class="k">びっくりして「ワッ!なに!?」</span></div>
+      <div class="row"><span class="tag">うごき</span>りょう手を ひろげて「ワッ!」</div>
+      <div class="row"><span class="tag">れい</span><span class="en">What is this?</span> → <span class="en">It's a pen.</span></div>
+    </div>
+
+    <div class="card" style="--c:#e0613a; --bg:#fdeee8">
+      <div class="top"><span class="ic">👻</span><span class="en">who</span><span class="ja">だれ</span></div>
+      <div class="goro"><span class="s">フー</span>ッて した の、だれ!?<span class="k">うしろから おばけが「フーッ」</span></div>
+      <div class="row"><span class="tag">うごき</span>ひとを ゆびさす</div>
+      <div class="row"><span class="tag">れい</span><span class="en">Who is he?</span> → <span class="en">He is my dad.</span></div>
+    </div>
+
+    <div class="card" style="--c:#c2410c; --bg:#fff1e6">
+      <div class="top"><span class="ic">👖</span><span class="en">whose</span><span class="ja">だれの</span></div>
+      <div class="goro"><span class="s">フーズ</span>ボン、だれの?<span class="k">who(だれ) に <b>se</b> が ついたら「だれ<b>の</b>」</span></div>
+      <div class="row"><span class="tag">うごき</span>もちものを もちあげて「だれの?」</div>
+      <div class="row"><span class="tag">れい</span><span class="en">Whose bag is this?</span> → <span class="en">It's Ken's.</span></div>
+    </div>
+
+    <div class="card" style="--c:#2a9d62; --bg:#e7f6ee">
+      <div class="top"><span class="ic">👀</span><span class="en">where</span><span class="ja">どこ</span></div>
+      <div class="goro">「どこや?」「<span class="s">うえや</span>!(ウェア)」<span class="k">さがしものは「うえや!」で where</span></div>
+      <div class="row"><span class="tag">うごき</span>きょろきょろ みまわす</div>
+      <div class="row"><span class="tag">れい</span><span class="en">Where is my cap?</span> → <span class="en">It's on the bed.</span></div>
+    </div>
+
+    <div class="card" style="--c:#0e7490; --bg:#e3f4f8">
+      <div class="top"><span class="ic">😭</span><span class="en">when</span><span class="ja">いつ</span></div>
+      <div class="goro"><span class="s">ウェーン</span>! いつ かえってくるの〜?<span class="k">ないて「いつ?」</span></div>
+      <div class="row"><span class="tag">うごき</span>うでどけいを 見る</div>
+      <div class="row"><span class="tag">れい</span><span class="en">When is your birthday?</span> → <span class="en">It's in May.</span></div>
+    </div>
+
+    <div class="card" style="--c:#7b4bd6; --bg:#f1ebfc">
+      <div class="top"><span class="ic">🧙</span><span class="en">which</span><span class="ja">どっち</span></div>
+      <div class="goro"><span class="s">ウィッチ</span>(まじょ) は どっち?<span class="k">ハロウィンの まじょ = ウィッチ</span></div>
+      <div class="row"><span class="tag">うごき</span>右手・左手を こうごに 出す</div>
+      <div class="row"><span class="tag">れい</span><span class="en">Which do you like, red or blue?</span> → <span class="en">Blue.</span></div>
+    </div>
+
+    <div class="card" style="--c:#b42318; --bg:#fdecea">
+      <div class="top"><span class="ic">🤔</span><span class="en">why</span><span class="ja">なんで</span></div>
+      <div class="goro"><span class="s">ワイ</span>、なんで おこられたん?<span class="k">こたえは <b class="en">Because</b> 〜(なぜなら)</span></div>
+      <div class="row"><span class="tag">うごき</span>あたまを かいて くびを かしげる</div>
+      <div class="row"><span class="tag">れい</span><span class="en">Why are you happy?</span> → <span class="en">Because …</span></div>
+    </div>
+
+    <div class="card" style="--c:#a16207; --bg:#fdf6e3">
+      <div class="top"><span class="ic">🙂</span><span class="en">how</span><span class="ja">どう</span></div>
+      <div class="goro"><span class="s">ハウ</span>(how)? どう? げんき?<span class="k">まいあさ <b class="en">How are you?</b> で あいさつ</span></div>
+      <div class="row"><span class="tag">うごき</span>あいての かおを のぞきこむ</div>
+      <div class="row"><span class="tag">れい</span><span class="en">How are you?</span> → <span class="en">I'm fine.</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 2まいめ:こたえで みわける ============ -->
+<section class="page">
+  <h1>🔍 こたえを 見れば しつもんが わかる <small>しけんに でる かたち</small></h1>
+  <div class="lead">しけんでは <b>しつもんの さいしょ</b> が あなに なることが おおい。<b>こたえの 文</b> を 見て、なにを きいているか あてよう。</div>
+  <div class="hint">
+    <h2>こたえに これが あったら → この ことば</h2>
+    <table>
+      <tr><td class="a">もの(<span class="en">It's a pen.</span>)</td><td class="arrow">→</td><td class="qw"><span class="en">What</span> なに</td></tr>
+      <tr><td class="a">ひと(<span class="en">my mom / Tom</span>)</td><td class="arrow">→</td><td class="qw"><span class="en">Who</span> だれ</td></tr>
+      <tr><td class="a">「〜の」(<span class="en">Ken's / mine</span>)</td><td class="arrow">→</td><td class="qw"><span class="en">Whose</span> だれの</td></tr>
+      <tr><td class="a">ばしょ(<span class="en">on / in / under</span> 〜)</td><td class="arrow">→</td><td class="qw"><span class="en">Where</span> どこ</td></tr>
+      <tr><td class="a">ひにち・月・曜日(<span class="en">in May / on Sunday</span>)</td><td class="arrow">→</td><td class="qw"><span class="en">When</span> いつ</td></tr>
+      <tr><td class="a">2つから えらぶ(<span class="en">A or B</span>)</td><td class="arrow">→</td><td class="qw"><span class="en">Which</span> どっち</td></tr>
+      <tr><td class="a"><span class="en">Because</span> 〜(なぜなら)</td><td class="arrow">→</td><td class="qw"><span class="en">Why</span> なんで</td></tr>
+      <tr><td class="a">ようす(<span class="en">I'm fine.</span>)・とし・かず</td><td class="arrow">→</td><td class="qw"><span class="en">How</span> どう</td></tr>
+    </table>
+  </div>
+  <div class="bank"><span>What</span><span>Who</span><span>Whose</span><span>Where</span><span>When</span><span>Which</span><span>Why</span><span>How</span></div>
+  <div class="qs">
+    <div class="q"><span class="no">1</span><div class="ask"><span class="blank"></span> is my cap?</div><div class="ans">It's on the bed.</div></div>
+    <div class="q"><span class="no">2</span><div class="ask"><span class="blank"></span> old are you?</div><div class="ans">I'm eight.</div></div>
+    <div class="q"><span class="no">3</span><div class="ask"><span class="blank"></span> pencil is this?</div><div class="ans">It's Ken's.</div></div>
+    <div class="q"><span class="no">4</span><div class="ask"><span class="blank"></span> is this?</div><div class="ans">It's an apple.</div></div>
+    <div class="q"><span class="no">5</span><div class="ask"><span class="blank"></span> do you play tennis?</div><div class="ans">On Sunday.</div></div>
+    <div class="q"><span class="no">6</span><div class="ask"><span class="blank"></span> is that girl?</div><div class="ans">She is my sister.</div></div>
+    <div class="q"><span class="no">7</span><div class="ask"><span class="blank"></span> are you?</div><div class="ans">I'm fine, thank you.</div></div>
+    <div class="q"><span class="no">8</span><div class="ask"><span class="blank"></span> do you like, cats or dogs?</div><div class="ans">I like cats.</div></div>
+    <div class="q"><span class="no">9</span><div class="ask"><span class="blank"></span> time is it?</div><div class="ans">It's three.</div></div>
+    <div class="q"><span class="no">10</span><div class="ask"><span class="blank"></span> are you sad?</div><div class="ans">Because my dog is sick.</div></div>
+    <div class="q"><span class="no">11</span><div class="ask"><span class="blank"></span> is the cat?</div><div class="ans">It's under the table.</div></div>
+    <div class="q"><span class="no">12</span><div class="ask"><span class="blank"></span> is your birthday?</div><div class="ans">It's in June.</div></div>
+  </div>
+</section>
+
+<!-- ============ 3まいめ:おうちの ひとへ ============ -->
+<section class="page">
+  <h1>👪 おうちの ひとへ <small>本番 10/4(日)までの すすめかた</small></h1>
+  <div class="lead">ぎもんしは how いがいの 7こが <b>wh で はじまって 見た目が にている</b> うえに、ものの なまえと ちがって <b>えに できない</b> ので、くりかえし 見るだけでは はいりにくい ことばです。<br>そこで「<b>音のゴロ</b>」と「<b>からだの うごき</b>」を ひもづけ、さらに しけんで つかう「<b>こたえから みわける</b>」力に つなげます。</div>
+
+  <div class="sec">
+    <h2>📌 わすれない ための 4つの コツ</h2>
+    <ul>
+      <li><b>見せるより「いわせる」</b>:カードを ながめるより、英語だけ 見せて 思い出させる ほうが のこります。こたえが でなくても 3びょう まってから ヒントを。</li>
+      <li><b>まちがえたら すぐ ゴロ</b>:「ちがう」より「ウェーンは?」と ゴロを いうと、つぎから じぶんで 思い出せます。</li>
+      <li><b>みじかく、なんかいも</b>:1かい 3〜5ふん を 1日 2〜3かい。ながく 1かい やるより ずっと のこります。</li>
+      <li><b>ねる まえ に 1しゅう</b>:ねむって いるあいだに きおくが かたまります。さいごは かならず できた もので おわる。</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2>🗓️ 3日間の よてい(1かい 5ふん まで)</h2>
+    <table class="plan">
+      <tr><td class="d">10/1(木)</td><td class="t">よる</td><td>1まいめを いっしょに よむ。ゴロを こえに 出して、うごきを まねする(ふざけて OK)</td><td class="m">5ふん</td></tr>
+      <tr><td class="d"></td><td class="t">ねるまえ</td><td>英語だけ 見せて「いみ と うごき」を いわせる(8こ 1しゅう)</td><td class="m">2ふん</td></tr>
+      <tr><td class="d">10/2(金)</td><td class="t">あさ</td><td><b>うごきクイズ</b>:おとなが 英語を いう → 子どもが うごき+いみ。ぎゃくも(おとなが うごく → 子どもが 英語)</td><td class="m">2ふん</td></tr>
+      <tr><td class="d"></td><td class="t">よる</td><td>2まいめ。上の ひょうを 見ながら 1〜12 を こえで こたえる(かかなくて いい)</td><td class="m">5ふん</td></tr>
+      <tr><td class="d"></td><td class="t">ねるまえ</td><td>英語だけ 1しゅう。でなかった ことばに ✓</td><td class="m">2ふん</td></tr>
+      <tr><td class="d">10/3(土)</td><td class="t">あさ</td><td>✓が ついた ことばだけ、ゴロ → うごき → いみ</td><td class="m">2ふん</td></tr>
+      <tr><td class="d"></td><td class="t">よる</td><td>2まいめを <b>上の ひょうを かくして</b> もう1かい。できたら おおげさに ほめる</td><td class="m">5ふん</td></tr>
+      <tr><td class="d">10/4(日)</td><td class="t">あさ</td><td>英語だけ 1しゅう だけ。あたらしい ことは やらない。「ぜんぶ できるね」で おわる</td><td class="m">2ふん</td></tr>
+    </table>
+  </div>
+
+  <div class="sec">
+    <h2>✅ 2まいめの こたえ</h2>
+    <div class="key">
+      <div>1 <span class="en">Where</span></div><div>2 <span class="en">How</span></div><div>3 <span class="en">Whose</span></div>
+      <div>4 <span class="en">What</span></div><div>5 <span class="en">When</span></div><div>6 <span class="en">Who</span></div>
+      <div>7 <span class="en">How</span></div><div>8 <span class="en">Which</span></div><div>9 <span class="en">What</span></div>
+      <div>10 <span class="en">Why</span></div><div>11 <span class="en">Where</span></div><div>12 <span class="en">When</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>💡 それでも まざる とき</h2>
+    <ul>
+      <li><b>who と whose</b>:「フー(だれ)+ズ(の)」。<span class="en">Tom's</span> の 's と おなじ「〜の」と つたえる。</li>
+      <li><b>where と when</b>:「うえや!(ばしょ)」と「ウェーン(じかん)」。こたえに <span class="en">on Sunday</span> なら いつ、<span class="en">on the bed</span> なら どこ。</li>
+      <li><b>what と which</b>:「どっち?」と 2つ ゆびで しめせたら which。そうでなければ what。</li>
+      <li><b>how の なかま</b>:<span class="en">How old</span> なんさい / <span class="en">How many</span> いくつ / <span class="en">How much</span> いくら は、how の あとの ことばで いみが きまる。</li>
+    </ul>
+  </div>
+</section>
+</body>
+</html>
