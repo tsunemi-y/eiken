@@ -4,7 +4,6 @@
    「✅ おぼえた」を おした 語だけが おぼえたリストに 入る。
    ========================================================= */
 
-const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
 const KEY_V5 = "eigo_craft_v5";           // Ⓐ・Ⓑの ボックス方式だった ころ
 
 /* ---------- だれが やるか ----------
@@ -13,8 +12,8 @@ const KEY_V5 = "eigo_craft_v5";           // Ⓐ・Ⓑの ボックス方式だ�
    さいしょから。v5からの ひっこしも ようただけ(なおやに ようたの
    むかしの きろくが はいらないように)。 */
 const USERS = [
-  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true },
-  { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false },
+  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true,  exam: new Date(2026, 9, 4) },   // 2026/10/4
+  { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false, exam: new Date(2027, 0, 24) },  // 2027/1/24
 ];
 const USER_KEY = "eigo_user";
 function loadUser() {
@@ -102,7 +101,7 @@ function markLearned(id) {
 function daysLeft() {
   const t = new Date();
   t.setHours(0, 0, 0, 0);
-  return Math.ceil((EXAM_DATE - t) / 86400000);   // すぎたら マイナス
+  return Math.ceil((U.exam - t) / 86400000);   // すぎたら マイナス
 }
 
 /* ---------- きょうの きろく ---------- */
