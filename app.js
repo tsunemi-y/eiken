@@ -5,8 +5,24 @@
    ========================================================= */
 
 const EXAM_DATE = new Date(2026, 9, 4);   // 2026/10/4
-const KEY = "eigo_craft_v6";
 const KEY_V5 = "eigo_craft_v5";           // Ⓐ・Ⓑの ボックス方式だった ころ
+
+/* ---------- だれが やるか ----------
+   ようた・なおや で きろくを わける。ようたは いままでの きろく
+   (eigo_craft_v6)を そのまま つかい、なおやは べつの キーで
+   さいしょから。v5からの ひっこしも ようただけ(なおやに ようたの
+   むかしの きろくが はいらないように)。 */
+const USERS = [
+  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true },
+  { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false },
+];
+const USER_KEY = "eigo_user";
+function loadUser() {
+  let id = null;
+  try { id = localStorage.getItem(USER_KEY); } catch (e) { id = null; }
+  return USERS.find((u) => u.id === id) || USERS[0];
+}
+let U = loadUser();
 
 /* ---------- ほぞん ---------- */
 function today() {
@@ -31,9 +47,10 @@ function freshDay(t) {
    ルールに あわせて、ひきつがない(のこす と ルールが ぶれるため)。 */
 let migratedFromV5 = false;
 function load() {
+  migratedFromV5 = false;
   let d = null;
-  try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) { d = null; }
-  if (!d) {
+  try { d = JSON.parse(localStorage.getItem(U.key)); } catch (e) { d = null; }
+  if (!d && U.fromV5) {
     let old = null;
     try { old = JSON.parse(localStorage.getItem(KEY_V5)); } catch (e) { old = null; }
     if (old) {
@@ -54,12 +71,23 @@ function load() {
 }
 
 let P = load();
-function save() { localStorage.setItem(KEY, JSON.stringify(P)); }
+function save() { localStorage.setItem(U.key, JSON.stringify(P)); }
 /* ひっこした ちょくごに 1かい ほぞんして v6を つくる。
    こうしないと なにか おぼえるまで v6が できず、まいかい
    ひっこしなおす ことに なる。v5は もしもの ときの ひかえとして
    けさずに のこしておく。 */
 if (migratedFromV5) save();
+
+function switchUser(id) {
+  const u = USERS.find((x) => x.id === id);
+  if (!u || u.id === U.id) return;
+  U = u;
+  try { localStorage.setItem(USER_KEY, U.id); } catch (e) {}
+  P = load();
+  if (migratedFromV5) save();
+  wordlistOrder = { range: null, ids: [] };
+  show("home");
+}
 
 const TOTAL = WORD_LIST.length;
 
@@ -74,7 +102,7 @@ function markLearned(id) {
 function daysLeft() {
   const t = new Date();
   t.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.ceil((EXAM_DATE - t) / 86400000));
+  return Math.ceil((EXAM_DATE - t) / 86400000);   // すぎたら マイナス
 }
 
 /* ---------- きょうの きろく ---------- */
@@ -329,12 +357,21 @@ function show(name) {
 function renderHome() {
   const days = daysLeft();
   document.getElementById("daysLeft").textContent = days;
+  /* 本番の日が すぎたら「本番まで ◯日」は だまって かくす
+     (0日の まま「きょうが 本番」と でつづけないように) */
+  document.querySelector(".countdown-chip").classList.toggle("hidden", days < 0);
+
+  document.querySelectorAll(".user-btn").forEach((b) => {
+    b.classList.toggle("on", b.dataset.user === U.id);
+    b.setAttribute("aria-pressed", b.dataset.user === U.id ? "true" : "false");
+  });
+  document.getElementById("userName").textContent = U.name;
 
   const learned = learnedCount();
   const pace = document.getElementById("paceMessage");
-  pace.textContent = days <= 0
+  pace.textContent = days === 0
     ? "きょうが 本番。いままで やった ぶんを 出しきろう。"
-    : `おぼえた 単語 ${learned} / ${TOTAL}ご`;
+    : `${U.name}の おぼえた 単語 ${learned} / ${TOTAL}ご`;
 
   renderToday();
 }
@@ -672,13 +709,17 @@ document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("clic
 /* きろくの リセット。「おぼえた」の きろくが ぜんぶ きえるので、
    まちがって おしても もとに もどせないように 2かい たしかめる。 */
 document.getElementById("btnResetAll").addEventListener("click", () => {
-  if (!confirm(`いま「おぼえた」に なっている ${learnedCount()}ごの きろくを ぜんぶ けします。もとに もどせません。`)) return;
+  if (!confirm(`${U.name}の「おぼえた」${learnedCount()}ごの きろくを ぜんぶ けします(ほかの 人の きろくは けしません)。もとに もどせません。`)) return;
   if (!confirm("ほんとうに よろしいですか?")) return;
   P.learned = {};
   P.today = freshDay(null);
   save();
   sfxClick();
   show("home");
+});
+
+document.querySelectorAll(".user-btn").forEach((b) => {
+  b.addEventListener("click", () => { sfxClick(); switchUser(b.dataset.user); });
 });
 
 /* ---------- スタート ---------- */

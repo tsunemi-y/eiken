@@ -325,3 +325,18 @@ input { font-family: inherit; }
   .card-en { font-size: 27px; }
   .cloze-en { font-size: 17px; }
 }
+
+/* ---------- だれが やるか ---------- */
+.user-pick {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  background: var(--line-soft); border-radius: var(--r); padding: 5px;
+  margin-bottom: 14px;
+}
+.user-btn {
+  font-family: var(--ja); font-size: 16px; font-weight: 700; color: var(--ink-2);
+  background: transparent; border: 0; border-radius: var(--r-s);
+  padding: 12px 0; cursor: pointer;
+}
+.user-btn.on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+.brand-user { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-bg); border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 1px; }
+.brand-user:empty { display: none; }
