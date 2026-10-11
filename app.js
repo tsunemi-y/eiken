@@ -12,7 +12,7 @@ const KEY_V5 = "eigo_craft_v5";           // Ⓐ・Ⓑの ボックス方式だ�
    さいしょから。v5からの ひっこしも ようただけ(なおやに ようたの
    むかしの きろくが はいらないように)。 */
 const USERS = [
-  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true,  exam: new Date(2026, 9, 4) },   // 2026/10/4
+  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true,  exam: new Date(2027, 0, 24) },  // 2027/1/24
   { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false, exam: new Date(2027, 0, 24) },  // 2027/1/24
 ];
 const USER_KEY = "eigo_user";
