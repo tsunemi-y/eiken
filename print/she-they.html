@@ -3,175 +3,179 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>she・her・they・their</title>
+<title>つりで おぼえる she・her・they・their</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 9mm 10mm; }
   * { box-sizing: border-box; }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { margin: 0; font-family: "Zen Maru Gothic", "IPAGothic", sans-serif; color: #1b2230; font-size: 10.5pt; background: #fff; }
-  .en { font-family: "Inter", sans-serif; font-weight: 700; }
-  .page { height: 278mm; display: flex; flex-direction: column; gap: 3mm; }
+  body { margin: 0; font-family: "Zen Maru Gothic", "IPAGothic", sans-serif; color: #12263a; font-size: 12pt; background: #fff; }
+  .en { font-family: "Inter", sans-serif; font-weight: 800; }
+  .page { height: 278mm; display: flex; flex-direction: column; gap: 3.2mm; }
   .page + .page { break-before: page; }
-  h1 { font-size: 16pt; margin: 0; display: flex; justify-content: space-between; align-items: baseline; }
-  h1 small { font-size: 8.5pt; color: #6b7384; font-weight: 500; }
-  h2 { font-size: 12pt; margin: 0 0 1.8mm; }
-  .box { border: .35mm solid #cfd5e0; border-radius: 3mm; padding: 2.8mm 3.5mm; }
-  .she { --c: #d6336c; --bg: #fdebf2; }
-  .they { --c: #1c7ed6; --bg: #e7f3fd; }
-  .c-she { color: #d6336c; } .c-they { color: #1c7ed6; }
-  .r { text-decoration: underline; text-decoration-thickness: .6mm; text-underline-offset: .8mm; }
+  h1 { font-size: 19pt; margin: 0; text-align: center; }
+  h1 .en { font-size: 21pt; }
+  .sub { text-align: center; font-size: 11pt; color: #4a6075; margin: -1.5mm 0 0; }
+  .she { --c: #d6336c; --bg: #fdebf2; --bd: #f3a6c3; }
+  .they { --c: #0b7285; --bg: #e3f6f8; --bd: #8fd3dc; }
+  .c-she { color: #d6336c; } .c-they { color: #0b7285; }
+  .rod { color: #e8590c; }
 
-  /* ひょう */
-  table.pr { width: 100%; border-collapse: separate; border-spacing: 0; }
-  table.pr th { font-size: 10pt; font-weight: 700; padding: 1.2mm 2mm; color: #4a5263; text-align: center; }
-  table.pr th.wa { color: #fff; background: #3d4657; border-radius: 2mm 0 0 0; }
-  table.pr th.no { color: #fff; background: #12a150; border-radius: 0 2mm 0 0; }
-  table.pr td { padding: 1mm 2mm; border-bottom: .2mm dashed #d5d9e2; text-align: center; font-size: 10pt; }
-  table.pr td.who { text-align: left; width: 46mm; white-space: nowrap; }
-  table.pr td .en { font-size: 15pt; }
-  table.pr td .kana { font-size: 7.5pt; color: #6b7384; margin-left: 1mm; }
-  table.pr tr.hl td { background: var(--bg); border-bottom-color: transparent; }
-  table.pr tr.hl td .en { color: var(--c); font-size: 19pt; }
-  table.pr tr.dim td { color: #8a92a3; }
-  table.pr tr.dim td .en { color: #8a92a3; font-size: 12.5pt; }
+  /* うみ と おか の 2れつ */
+  .scene { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .col { border-radius: 4mm; padding: 3mm 3.5mm; }
+  .col.person { background: #fff7e6; border: .5mm solid #ffd8a8; }
+  .col.thing  { background: #e7f5ff; border: .5mm solid #a5d8ff; }
+  .col h2 { margin: 0 0 1mm; font-size: 14.5pt; text-align: center; }
+  .col .what { text-align: center; font-size: 10.5pt; color: #4a6075; margin-bottom: 2mm; }
+  .card { background: #fff; border: .45mm solid var(--bd); border-radius: 3mm; padding: 2mm 3mm; margin-top: 2mm; display: flex; align-items: center; gap: 3mm; }
+  .card .pic { font-size: 22pt; line-height: 1; width: 30mm; letter-spacing: -1mm; text-align: center; white-space: nowrap; }
+  .card .w { font-size: 25pt; color: var(--c); line-height: 1; }
+  .card .k { font-size: 9pt; color: #4a6075; }
+  .card .m { font-size: 13pt; font-weight: 700; }
+  .card .m b { color: var(--c); }
+  .card .ex { font-family: "Inter", sans-serif; font-weight: 700; font-size: 13pt; margin-top: .6mm; }
+  .card .ex b { color: var(--c); }
 
-  /* ルール */
-  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
-  .rule h2 { display: flex; align-items: center; gap: 2mm; }
-  .rule h2 .n { display: inline-flex; width: 7mm; height: 7mm; border-radius: 50%; background: #3d4657; color: #fff; font-size: 10pt; align-items: center; justify-content: center; }
-  .rule p { margin: 0 0 1.5mm; line-height: 1.55; font-size: 10pt; }
-  .ex { font-family: "Inter", sans-serif; font-weight: 700; font-size: 12pt; line-height: 1.75; }
-  .ex .arrow { font-family: "Zen Maru Gothic", sans-serif; font-weight: 500; font-size: 8.5pt; color: #6b7384; }
-  .tag { display: inline-block; font-family: "Zen Maru Gothic", sans-serif; font-size: 8pt; font-weight: 700; border-radius: 1mm; padding: 0 1.4mm; color: #fff; vertical-align: 2px; }
-  .tag.wa { background: #3d4657; } .tag.no { background: #12a150; }
-  .big-r { font-family: "Inter", sans-serif; font-weight: 800; font-size: 22pt; color: #12a150; line-height: 1; }
+  /* r = つりざお */
+  .rodbox { border: .6mm solid #e8590c; border-radius: 4mm; background: #fff4e6; padding: 3mm 4mm; display: grid; grid-template-columns: 34mm 1fr; gap: 4mm; align-items: center; }
+  .bigr { text-align: center; line-height: 1; }
+  .bigr .r { font-family: "Inter", sans-serif; font-weight: 800; font-size: 64pt; color: #e8590c; }
+  .bigr .eq { font-size: 26pt; }
+  .rodbox h2 { margin: 0 0 1.5mm; font-size: 15pt; }
+  .rodbox p { margin: 0 0 1.5mm; font-size: 12pt; line-height: 1.6; }
+  .hook { font-family: "Inter", sans-serif; font-weight: 800; font-size: 19pt; display: flex; gap: 6mm; flex-wrap: wrap; margin: 1mm 0 1.5mm; }
+  .hook span .r { color: #e8590c; text-decoration: underline; text-decoration-thickness: .9mm; text-underline-offset: 1.2mm; }
+  .no-rod { font-size: 11pt; color: #4a6075; }
 
   /* ゴロ */
-  .goro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm; }
-  .g { border-radius: 2.5mm; background: var(--bg); padding: 2.2mm 2.5mm; }
-  .g .en { font-size: 20pt; color: var(--c); display: block; line-height: 1.1; }
-  .g .kana { font-size: 8pt; color: #4a5263; }
-  .g .m { font-size: 11pt; font-weight: 700; margin-top: .8mm; }
-  .g .s { font-size: 8.8pt; line-height: 1.45; margin-top: .8mm; }
+  .goro { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .g { border-radius: 3.5mm; background: var(--bg); padding: 2.5mm 3.5mm; display: flex; gap: 3mm; align-items: center; }
+  .g .ic { font-size: 28pt; line-height: 1; }
+  .g .t { font-size: 13.5pt; font-weight: 700; line-height: 1.45; }
+  .g .t b { color: var(--c); }
+  .g .t small { display: block; font-size: 9.5pt; font-weight: 500; color: #4a6075; }
 
-  /* れい */
-  .pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6mm 4mm; }
-  .pair { display: flex; align-items: center; gap: 2mm; padding: 1.2mm 0; border-bottom: .2mm dashed #d5d9e2; }
-  .pair .ic { font-size: 15pt; width: 9mm; text-align: center; }
-  .pair .e { font-family: "Inter", sans-serif; font-weight: 600; font-size: 12pt; }
-  .pair .e b { font-weight: 800; }
-  .pair .j { font-size: 8.5pt; color: #4a5263; display: block; }
+  /* つりゲーム */
+  .game { border: .5mm solid #a5d8ff; background: #f3faff; border-radius: 4mm; padding: 2.5mm 4mm 3mm; }
+  .game h2 { margin: 0 0 1mm; font-size: 14pt; }
+  .game p { margin: 0 0 2.5mm; font-size: 10.5pt; line-height: 1.6; }
+  .fishes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .fish { position: relative; height: 21mm; border: .45mm dashed #6b7f93; border-radius: 3mm; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .fish .body { position: relative; width: 30mm; height: 14mm; background: var(--bg); border: .6mm solid var(--c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5mm; }
+  .fish .body::after { content: ""; position: absolute; right: -6.5mm; top: 50%; transform: translateY(-50%); border-left: 6.5mm solid var(--c); border-top: 4.5mm solid transparent; border-bottom: 4.5mm solid transparent; }
+  .fish .body::before { content: ""; position: absolute; left: 3.5mm; top: 3.5mm; width: 1.8mm; height: 1.8mm; border-radius: 50%; background: #12263a; }
+  .fish .en { font-size: 17pt; color: var(--c); }
+  .fish .clip { position: absolute; top: .8mm; left: 2mm; font-size: 7pt; color: #8aa0b4; }
+
+  .check { border: .5mm dashed #4a6075; border-radius: 4mm; padding: 2.5mm 4mm; font-size: 13pt; font-weight: 700; line-height: 1.7; text-align: center; }
+  .check .s { color: #4a6075; font-size: 10.5pt; font-weight: 500; }
 
   /* 2まいめ */
-  .lead { font-size: 9.5pt; color: #4a5263; line-height: 1.55; margin: 0; }
-  .qs { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 3mm; flex: 1; grid-auto-rows: 1fr; }
-  .q { border: .35mm solid #cfd5e0; border-radius: 2.5mm; padding: 1.5mm 3mm; display: flex; align-items: center; gap: 2mm; position: relative; }
-  .q .no { font-family: "Inter", sans-serif; font-weight: 700; font-size: 9pt; color: #8a92a3; width: 5mm; }
-  .q .t { font-family: "Inter", sans-serif; font-weight: 600; font-size: 14pt; }
-  .q .ch { display: inline-flex; gap: 1mm; font-weight: 700; vertical-align: 1px; }
-  .q .ch span { border: .35mm solid #9aa3b2; border-radius: 1.5mm; padding: 0 2mm; font-size: 12.5pt; }
-  .q .ch i { font-style: normal; color: #9aa3b2; font-size: 11pt; }
-  .q .hint { position: absolute; right: 2mm; top: 1mm; font-size: 7pt; color: #9aa3b2; font-family: "Zen Maru Gothic", sans-serif; }
-  .tips { font-size: 9.3pt; line-height: 1.6; margin: 0; padding-left: 4.5mm; }
-  .key { transform: rotate(180deg); border-bottom: .3mm dashed #b8bfcc; padding-bottom: 2mm; font-size: 9.5pt; color: #4a5263; text-align: center; }
-  .key .en { font-size: 10.5pt; color: #1b2230; margin-right: 2.5mm; }
+  .qs { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 2.5mm 3mm; }
+  .q { border: .4mm solid #b6c6d6; border-radius: 3mm; padding: 1.5mm 3mm; display: flex; align-items: center; gap: 2.5mm; }
+  .q .no { font-family: "Inter", sans-serif; font-weight: 800; font-size: 11pt; color: #8aa0b4; width: 6mm; }
+  .q .pic { font-size: 22pt; line-height: 1; width: 11mm; text-align: center; }
+  .q .t { font-family: "Inter", sans-serif; font-weight: 700; font-size: 14pt; line-height: 1.5; }
+  .q .ch { display: inline-flex; gap: 1mm; vertical-align: 1px; }
+  .q .ch span { border: .4mm solid #8aa0b4; border-radius: 2mm; padding: 0 2mm; font-size: 13.5pt; }
+  .q .ch i { font-style: normal; color: #8aa0b4; font-size: 12pt; }
+  .q .j { display: block; font-family: "Zen Maru Gothic", sans-serif; font-size: 8.5pt; font-weight: 500; color: #4a6075; line-height: 1.2; }
+  .parent { font-size: 10pt; line-height: 1.6; color: #34495e; border-top: .3mm solid #d5dee7; padding-top: 2mm; }
+  .key { transform: rotate(180deg); border-bottom: .3mm dashed #b6c6d6; padding-bottom: 2mm; font-size: 10pt; color: #4a6075; text-align: center; }
+  .key .en { font-size: 11pt; color: #12263a; margin-right: 2.5mm; font-weight: 700; }
 </style>
 </head>
 <body>
 
-<!-- ============ 1まいめ:おぼえる ============ -->
+<!-- ============ 1まいめ ============ -->
 <section class="page">
-  <h1>👩 she・her ／ 👨‍👩‍👦 they・their <small>「〜は」と「〜の」を みわけよう</small></h1>
+  <h1>🎣 つりで おぼえる <span class="en c-she">she</span>・<span class="en c-she">her</span>・<span class="en c-they">they</span>・<span class="en c-they">their</span></h1>
+  <p class="sub">「つりを する ひと」か、「その ひとの もの」か を 見わけよう!</p>
 
-  <div class="box">
-    <h2>📋 なかまの ひょう ── よこに ならべると、きまりが 見える</h2>
-    <table class="pr">
-      <tr><th></th><th class="wa">〜は ・ 〜が(ぶんの はじめ)</th><th class="no">〜の(うしろに もの)</th></tr>
-      <tr class="dim"><td class="who">わたし</td><td><span class="en">I</span></td><td><span class="en">my</span></td></tr>
-      <tr class="dim"><td class="who">あなた</td><td><span class="en">you</span></td><td><span class="en">you<span class="r">r</span></span></td></tr>
-      <tr class="dim"><td class="who">かれ(男の人)</td><td><span class="en">he</span></td><td><span class="en">his</span></td></tr>
-      <tr class="hl she"><td class="who">👩 かのじょ(女の人)</td><td><span class="en">she</span><span class="kana">シー</span></td><td><span class="en">he<span class="r">r</span></span><span class="kana">ハー</span></td></tr>
-      <tr class="dim"><td class="who">わたしたち</td><td><span class="en">we</span></td><td><span class="en">ou<span class="r">r</span></span></td></tr>
-      <tr class="hl they"><td class="who">👨‍👩‍👦 かれら(2人いじょう)</td><td><span class="en">they</span><span class="kana">ゼイ</span></td><td><span class="en">thei<span class="r">r</span></span><span class="kana">ゼア</span></td></tr>
-    </table>
-  </div>
-
-  <div class="rules">
-    <div class="box rule">
-      <h2><span class="n">1</span>うしろを 見よう!</h2>
-      <p>うしろに <b>もの</b>(bag・dog・house…)が あれば <span class="tag no">〜の</span><br>うしろに <b>is / are / うごき</b> が あれば <span class="tag wa">〜は</span></p>
-      <div class="ex">
-        <span class="c-she">She</span> is … <span class="arrow">← is が くる</span><br>
-        <span class="c-she">Her</span> bag … <span class="arrow">← もの が くる</span><br>
-        <span class="c-they">They</span> play … <span class="arrow">← うごき が くる</span><br>
-        <span class="c-they">Their</span> dog … <span class="arrow">← もの が くる</span>
+  <div class="scene">
+    <div class="col person">
+      <h2>🧍 つりを する ひと</h2>
+      <div class="what">ぶんの いちばん まえに いる 主役(しゅやく)</div>
+      <div class="card she">
+        <div class="pic">👩🎣</div>
+        <div><span class="w en">she</span> <span class="k">シー</span>
+          <div class="m">かのじょ<b>は</b></div>
+          <div class="ex"><b>She</b> likes fishing.</div></div>
+      </div>
+      <div class="card they">
+        <div class="pic">👨‍👩‍👦🎣</div>
+        <div><span class="w en">they</span> <span class="k">ゼイ</span>
+          <div class="m">かれら<b>は</b>(みんなは)</div>
+          <div class="ex"><b>They</b> go fishing.</div></div>
       </div>
     </div>
-    <div class="box rule">
-      <h2><span class="n">2</span>さいごが <span class="big-r">r</span> なら「〜の」</h2>
-      <p><span class="en">he<b class="r">r</b></span>・<span class="en">thei<b class="r">r</b></span>(それに <span class="en">you<b class="r">r</b></span>・<span class="en">ou<b class="r">r</b></span> も)<br>r(アール)で おわったら <b>「〜の」</b>。<br>r = 「もちものが <b>ある</b>」と おぼえよう。</p>
-      <p><span class="en c-she">she</span> は e、<span class="en c-they">they</span> は y で おわる → <b>「〜は」</b></p>
-      <p style="font-size:9pt;color:#4a5263">★ her だけは 文の さいごにも くる:<span class="en">I like her.</span>(かのじょ<b>が</b> すき)</p>
+    <div class="col thing">
+      <h2>🐟 その ひとの もの</h2>
+      <div class="what">うしろに さかな・ふね などの「もの」が くる</div>
+      <div class="card she">
+        <div class="pic">👩➡🐟</div>
+        <div><span class="w en">her</span> <span class="k">ハー</span>
+          <div class="m">かのじょ<b>の</b></div>
+          <div class="ex"><b>her</b> fish</div></div>
+      </div>
+      <div class="card they">
+        <div class="pic">👨‍👩‍👦➡🚤</div>
+        <div><span class="w en">their</span> <span class="k">ゼア</span>
+          <div class="m">かれら<b>の</b>(みんなの)</div>
+          <div class="ex"><b>their</b> boat</div></div>
+      </div>
     </div>
   </div>
 
-  <div class="box">
-    <h2>🎵 音で おぼえる ゴロ</h2>
-    <div class="goro">
-      <div class="g she"><span class="en">she</span><span class="kana">シー</span><div class="m">かのじょは</div><div class="s"><b>シー</b>は <b>シュ</b>やく!<br>文の いちばん まえに たつ</div></div>
-      <div class="g she"><span class="en">her</span><span class="kana">ハー</span><div class="m">かのじょの</div><div class="s"><b>ハー</b>の <b>ハ</b>ンドバッグ<br>うしろに もちもの</div></div>
-      <div class="g they"><span class="en">they</span><span class="kana">ゼイ</span><div class="m">かれらは</div><div class="s">みんなで <b>ゼイゼイ</b> はしる<br>うしろに うごき</div></div>
-      <div class="g they"><span class="en">their</span><span class="kana">ゼア</span><div class="m">かれらの</div><div class="s">さいごの r で<br>もちものが <b>ア</b>ール(ある)</div></div>
+  <div class="rodbox">
+    <div class="bigr"><span class="r">r</span><br><span class="eq">= 🎣</span></div>
+    <div>
+      <h2>さいごの <span class="rod en">r</span> は つりざお!</h2>
+      <div class="hook"><span>he<span class="r">r</span> 🐟</span><span>thei<span class="r">r</span> 🐟</span></div>
+      <p><span class="rod en">r</span> の かたちは、さおの さきが まがった つりざお。<br>さおが あるから、うしろに <b>さかな(もの)が かかる!</b> → 「〜<b>の</b>」</p>
+      <div class="no-rod"><span class="en c-she">she</span>・<span class="en c-they">they</span> は さお(r)なし → じぶんが うごく 主役 → 「〜<b>は</b>」</div>
     </div>
   </div>
 
-  <div class="box" style="flex:1">
-    <h2>✏️ れいぶん(こえに 出して よもう)</h2>
-    <div class="pairs">
-      <div class="pair"><span class="ic">👩</span><span class="e"><b class="c-she">She</b> is my mom.<span class="j">かのじょ<b>は</b> わたしの おかあさん です。</span></span></div>
-      <div class="pair"><span class="ic">👜</span><span class="e"><b class="c-she">Her</b> bag is red.<span class="j">かのじょ<b>の</b> かばんは あかい です。</span></span></div>
-      <div class="pair"><span class="ic">🎹</span><span class="e"><b class="c-she">She</b> plays the piano.<span class="j">かのじょ<b>は</b> ピアノを ひきます。</span></span></div>
-      <div class="pair"><span class="ic">🙋‍♀️</span><span class="e"><b class="c-she">Her</b> name is Emi.<span class="j">かのじょ<b>の</b> なまえは エミ です。</span></span></div>
-      <div class="pair"><span class="ic">👦👧</span><span class="e"><b class="c-they">They</b> are my friends.<span class="j">かれら<b>は</b> わたしの ともだち です。</span></span></div>
-      <div class="pair"><span class="ic">🏠</span><span class="e">This is <b class="c-they">their</b> house.<span class="j">これは かれら<b>の</b> いえ です。</span></span></div>
-      <div class="pair"><span class="ic">⚽</span><span class="e"><b class="c-they">They</b> play soccer.<span class="j">かれら<b>は</b> サッカーを します。</span></span></div>
-      <div class="pair"><span class="ic">🐶</span><span class="e"><b class="c-they">Their</b> dog is big.<span class="j">かれら<b>の</b> いぬは おおきい です。</span></span></div>
+  <div class="goro">
+    <div class="g she"><span class="ic">🤫</span><div class="t"><b>シーっ!</b> しずかに!<br>かのじょ<b>は</b> つりの めいじん<small>she(シー)= つりの ときは シーっ</small></div></div>
+    <div class="g they"><span class="ic">😮‍💨</span><div class="t">みんなで <b>ゼイゼイ</b><br>リールを まく<small>they(ゼイ)= みんな(2人いじょう)</small></div></div>
+  </div>
+
+  <div class="game">
+    <h2>🧲 つりゲーム(きりとって あそぼう)</h2>
+    <p>① 下の さかなを きりとって、口に ゼムクリップを つける ② わりばしに いと と じしゃくを つけて つりざおに する<br>③ おうちの ひとが「<b>かのじょの ふね!</b>」「<b>かれらは およぐ!</b>」と いったら、あう ことばを つりあげる 🎣</p>
+    <div class="fishes">
+      <div class="fish she"><span class="clip">✂</span><div class="body"><span class="en">she</span></div></div>
+      <div class="fish she"><span class="clip">✂</span><div class="body"><span class="en">her</span></div></div>
+      <div class="fish they"><span class="clip">✂</span><div class="body"><span class="en">they</span></div></div>
+      <div class="fish they"><span class="clip">✂</span><div class="body"><span class="en">their</span></div></div>
     </div>
   </div>
+
+  <div class="check">まよったら 2つ チェック! ✅ うしろに 🐟(もの)が いる? ✅ さいごに 🎣(r)が ある?<br><span class="s">どっちも「はい」→ <span class="en c-she">her</span> / <span class="en c-they">their</span> 、 「いいえ」→ <span class="en c-she">she</span> / <span class="en c-they">they</span></span></div>
 </section>
 
-<!-- ============ 2まいめ:れんしゅう ============ -->
+<!-- ============ 2まいめ ============ -->
 <section class="page">
-  <h1>🎯 どっちかな? <small>正しい ほうに ○ を つけよう</small></h1>
-  <p class="lead">まよったら ① <b>うしろを 見る</b>(もの → 〜の / is・are・うごき → 〜は)② <b>さいごが r なら 〜の</b>。<br>1〜4は ヒントつき。こたえは いちばん下(さかさま)。</p>
+  <h1>🎣 どっちを つりあげる? <span style="font-size:12pt;font-weight:500;color:#4a6075">ただしい ほうに ○</span></h1>
   <div class="qs">
-    <div class="q"><span class="no">1</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> is a teacher.</span><span class="hint">うしろは is</span></div>
-    <div class="q"><span class="no">2</span><span class="t">This is <span class="ch"><span>she</span><i>/</i><span>her</span></span> bike.</span><span class="hint">うしろは もの</span></div>
-    <div class="q"><span class="no">3</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> are my friends.</span><span class="hint">うしろは are</span></div>
-    <div class="q"><span class="no">4</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> house is big.</span><span class="hint">うしろは もの</span></div>
-    <div class="q"><span class="no">5</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> name is Aki.</span></div>
-    <div class="q"><span class="no">6</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> play tennis.</span></div>
-    <div class="q"><span class="no">7</span><span class="t">I like <span class="ch"><span>she</span><i>/</i><span>her</span></span> dog.</span></div>
-    <div class="q"><span class="no">8</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> likes music.</span></div>
-    <div class="q"><span class="no">9</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> cat is white.</span></div>
-    <div class="q"><span class="no">10</span><span class="t">Is that <span class="ch"><span>they</span><i>/</i><span>their</span></span> car?</span></div>
-    <div class="q"><span class="no">11</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> is ten years old.</span></div>
-    <div class="q"><span class="no">12</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> are in the park.</span></div>
-    <div class="q"><span class="no">13</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> cap is blue.</span></div>
-    <div class="q"><span class="no">14</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> like ice cream.</span></div>
-    <div class="q"><span class="no">15</span><span class="t">Where is <span class="ch"><span>she</span><i>/</i><span>her</span></span> pen?</span></div>
-    <div class="q"><span class="no">16</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> names are Ken and Yui.</span></div>
+    <div class="q she"><span class="no">1</span><span class="pic">👩</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> likes fishing.<span class="j">fishing = つり</span></span></div>
+    <div class="q"><span class="no">2</span><span class="pic">🐟</span><span class="t">This is <span class="ch"><span>she</span><i>/</i><span>her</span></span> fish.<span class="j">fish = さかな</span></span></div>
+    <div class="q"><span class="no">3</span><span class="pic">🎣</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> go fishing.<span class="j">go fishing = つりに いく</span></span></div>
+    <div class="q"><span class="no">4</span><span class="pic">🚤</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> boat is big.<span class="j">boat = ふね</span></span></div>
+    <div class="q"><span class="no">5</span><span class="pic">🐠</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> fish is big.<span class="j">big = おおきい</span></span></div>
+    <div class="q"><span class="no">6</span><span class="pic">🌊</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> are at the sea.<span class="j">sea = うみ</span></span></div>
+    <div class="q"><span class="no">7</span><span class="pic">🧢</span><span class="t">I like <span class="ch"><span>she</span><i>/</i><span>her</span></span> cap.<span class="j">cap = ぼうし</span></span></div>
+    <div class="q"><span class="no">8</span><span class="pic">👧</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> is my sister.<span class="j">sister = いもうと・おねえさん</span></span></div>
+    <div class="q"><span class="no">9</span><span class="pic">🐡</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> fish are small.<span class="j">small = ちいさい</span></span></div>
+    <div class="q"><span class="no">10</span><span class="pic">🪣</span><span class="t">Look at <span class="ch"><span>they</span><i>/</i><span>their</span></span> bucket.<span class="j">bucket = バケツ</span></span></div>
+    <div class="q"><span class="no">11</span><span class="pic">🍣</span><span class="t"><span class="ch"><span>They</span><i>/</i><span>Their</span></span> eat fish.<span class="j">eat = たべる</span></span></div>
+    <div class="q"><span class="no">12</span><span class="pic">🏊‍♀️</span><span class="t"><span class="ch"><span>She</span><i>/</i><span>Her</span></span> can swim.<span class="j">swim = およぐ</span></span></div>
   </div>
-  <div class="box">
-    <h2 style="font-size:10.5pt">👪 おうちの ひとへ</h2>
-    <ul class="tips">
-      <li>まちがえたら こたえを いうより先に「<b>うしろ 見て?</b>」とだけ きいてください。じぶんで 気づけると のこります。</li>
-      <li>1まいめの ひょうの <b>I → my</b> は もう わかる はず。「<b>she は I と おなじ ばしょ、her は my と おなじ ばしょ</b>」と つなげると はいりやすいです。</li>
-      <li>1かい 5ふん で じゅうぶん。2〜3日 あけて もう1かい やると わすれにくく なります。</li>
-    </ul>
-  </div>
-  <div class="key">こたえ: 1 <span class="en">She</span> 2 <span class="en">her</span> 3 <span class="en">They</span> 4 <span class="en">Their</span> 5 <span class="en">Her</span> 6 <span class="en">They</span> 7 <span class="en">her</span> 8 <span class="en">She</span><br>9 <span class="en">Their</span> 10 <span class="en">their</span> 11 <span class="en">She</span> 12 <span class="en">They</span> 13 <span class="en">Her</span> 14 <span class="en">They</span> 15 <span class="en">her</span> 16 <span class="en">Their</span></div>
+  <div class="parent">👪 <b>おうちの ひとへ</b>:まちがえたら こたえを いう まえに「<b>うしろに さかな おる? さお(r) ついてる?</b>」とだけ きいて、じぶんで なおさせてください。和訳は あえて のせていません(日本語の「は・の」で こたえが わかって しまうため)。</div>
+  <div class="key">こたえ: 1 <span class="en">She</span> 2 <span class="en">her</span> 3 <span class="en">They</span> 4 <span class="en">Their</span> 5 <span class="en">Her</span> 6 <span class="en">They</span> 7 <span class="en">her</span> 8 <span class="en">She</span> 9 <span class="en">Their</span> 10 <span class="en">their</span> 11 <span class="en">They</span> 12 <span class="en">She</span></div>
 </section>
 </body>
 </html>
