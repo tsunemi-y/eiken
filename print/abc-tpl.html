@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アルファベット なぞりがき</title>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 8mm 9mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Zen Maru Gothic", "IPAGothic", sans-serif; color: #12263a; background: #fff; }
+  .page { height: 280mm; display: flex; flex-direction: column; gap: 3mm; }
+  .page + .page { break-before: page; }
+  header { display: flex; align-items: center; justify-content: space-between; border-bottom: .6mm solid #74c0fc; padding-bottom: 1.5mm; }
+  h1 { font-size: 16pt; margin: 0; }
+  h1 .no { display: inline-block; background: #1971c2; color: #fff; border-radius: 50%; width: 8mm; height: 8mm; line-height: 8mm; text-align: center; font-size: 12pt; }
+  h1 .rng { font-family: "Andika", sans-serif; font-size: 15pt; color: #1971c2; }
+  .name { font-size: 11pt; }
+  .name span { display: inline-block; width: 45mm; border-bottom: .4mm solid #12263a; margin-left: 2mm; }
+  .how { font-size: 10pt; color: #4a6075; margin: 0; line-height: 1.5; }
+  .red { color: #e03131; font-weight: 700; }
+
+  .block { display: flex; gap: 4mm; border: .45mm solid #d0e4f2; border-radius: 3.5mm; padding: 2mm 2.5mm; background: linear-gradient(180deg, #f5fbff, #fff); }
+  .left { width: 34mm; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .pic { height: 17mm; display: flex; align-items: center; justify-content: center; }
+  .pic.emo { font-size: 38pt; line-height: 1; }
+  .pic svg { width: 30mm; height: 15mm; }
+  .word { font-family: "Andika", sans-serif; font-size: 15pt; margin-top: 1mm; line-height: 1.1; }
+  .word b { color: #e8590c; font-size: 17pt; }
+  .ja { font-size: 8.5pt; color: #4a6075; }
+  .reward { margin-top: 1.5mm; display: flex; flex-direction: column; align-items: center; }
+  .color-fish { width: 17mm; height: 8mm; }
+  .reward span { font-size: 6.5pt; color: #8aa0b4; }
+  .rows { display: flex; flex-direction: column; gap: 2mm; justify-content: center; }
+  .row { position: relative; }
+  .tag { position: absolute; left: .8mm; top: -.2mm; font-size: 5.5pt; color: #8aa0b4; z-index: 1; }
+  .staff { display: block; }
+  .staff text { font-family: "Andika", sans-serif; text-anchor: middle; }
+  .staff line { stroke-width: .25; }
+  .staff .l1, .staff .l4 { stroke: #9cc3e0; }
+  .staff .l2 { stroke: #9cc3e0; stroke-dasharray: 1 .8; }
+  .staff .l3 { stroke: #e03131; stroke-width: .4; }
+  .staff .sep { stroke: #e3edf5; stroke-width: .2; }
+
+  .review { border: .6mm dashed #fab005; border-radius: 3.5mm; padding: 2mm 3mm; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1.5mm; }
+  .review h2 { font-size: 13pt; margin: 0 0 1mm; text-align: center; }
+  .rv { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+{{PAGES}}
+<script src="../fishing.js"></script>
+<script>
+  // さかなの え は アプリと おなじ しくみ(fishing.js)で かく
+  const CUSTOM = {
+    eel:      { h: 5,  shape: "long", back: "#5c5a3a", belly: "#c9c29a", fin: "#4a4830" },
+    goldfish: { h: 15, back: "#f76707", belly: "#ffc078", fin: "#f76707" },
+    xray:     { h: 11, back: "#bcdfea", belly: "#eef8fb", fin: "#f2c94c", pat: "line" },
+    zebra:    { h: 9,  back: "#3b5bdb", belly: "#e7f5ff", fin: "#3b5bdb", pat: "band2" },
+  };
+  document.querySelectorAll("[data-fish]").forEach((el) => {
+    const k = el.dataset.fish;
+    const sp = CUSTOM[k] || FISH_BY_ID.get(k);
+    if (sp) el.innerHTML = fishSVG(sp);
+  });
+</script>
+</body>
+</html>
