@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>えいご 5きゅう</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>">
+<title>えいご つり 5きゅう</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
 <div id="app">
 
   <header class="topbar">
-    <div class="brand" id="btnHome" role="button">えいご 5きゅう <span class="brand-user" id="userName"></span></div>
+    <div class="brand" id="btnHome" role="button">🎣 えいご つり <span class="brand-user" id="userName"></span></div>
     <div class="countdown-chip">本番まで <b id="daysLeft">--</b> 日</div>
   </header>
 
@@ -27,6 +27,24 @@
     </div>
     <p class="pace" id="paceMessage"></p>
 
+    <!-- きょうの つりけっか -->
+    <div class="catch-panel" id="catchPanel"></div>
+
+    <!-- 曜日の クーラーボックス -->
+    <div class="box-head">
+      <span class="box-head-title">🧊 曜日の クーラーボックス</span>
+      <span class="box-head-sub">おぼえた 日の ボックスに 入るよ</span>
+    </div>
+    <div class="week-boxes" id="weekBoxes"></div>
+
+    <button class="tile tile-review hidden" id="btnReview">
+      <span class="tile-main">
+        <span class="tile-title" id="reviewTitle">🔁 ふくしゅう</span>
+        <span class="tile-sub" id="reviewSub"></span>
+      </span>
+      <span class="tile-arrow">→</span>
+    </button>
+
     <button class="tile tile-primary" id="btnContinue">
       <span class="tile-main">
         <span class="tile-title" id="continueTitle">つづきから</span>
@@ -37,8 +55,16 @@
 
     <button class="tile" id="btnStart">
       <span class="tile-main">
-        <span class="tile-title">📖🎧 たんごを おぼえる</span>
-        <span class="tile-sub">英語を 見て、🔊で 発音も きける。おぼえたら ボタンを おす</span>
+        <span class="tile-title">🗺️ つりばを えらぶ</span>
+        <span class="tile-sub">英語を 見て、🔊で 発音も きける。おぼえたら つりあげよう!</span>
+      </span>
+      <span class="tile-arrow">→</span>
+    </button>
+
+    <button class="tile" id="btnZukan">
+      <span class="tile-main">
+        <span class="tile-title">📕 さかな ずかん</span>
+        <span class="tile-sub" id="zukanSub"></span>
       </span>
       <span class="tile-arrow">→</span>
     </button>
@@ -49,8 +75,8 @@
   <!-- ===== はんいえらび ===== -->
   <section class="screen hidden" id="screen-ranges">
     <button class="back-btn" data-back="home">← もどる</button>
-    <h2 class="scr-title">たんごを えらぶ</h2>
-    <p class="scr-desc">英語を 見て(🔊で 発音も きける)、おぼえたら「✅ おぼえた」を おそう。</p>
+    <h2 class="scr-title">🗺️ つりばを えらぶ</h2>
+    <p class="scr-desc">英語を 見て(🔊で 発音も きける)、おぼえたら「🎣 おぼえた」で つりあげよう。</p>
     <div class="today-bar" id="rangeToday"></div>
     <div class="range-grid" id="rangeGrid"></div>
   </section>
@@ -59,10 +85,10 @@
   <section class="screen hidden" id="screen-wordlist">
     <button class="back-btn" id="btnWordlistBack">← もどる</button>
     <h2 class="scr-title" id="wordlistTitle">たんごいちらん</h2>
-    <p class="scr-desc">「✅ おぼえた」を おした 語だけが おぼえた ことに なります。もう しっている 語は「覚えた」で すぐに とばせます。</p>
+    <p class="scr-desc">カードで「🎣 おぼえた」を おすと さかなが つれるよ。もう しっている 語は「覚えた」で すぐに クーラーボックスへ(さかなは つれない)。</p>
     <div class="word-list" id="wordList"></div>
     <button class="tile tile-quiet" id="btnWordlistSkipAll"><span class="tile-main"><span class="tile-title">ぜんぶ おぼえた → まとめて おぼえたに</span></span></button>
-    <button class="tile tile-primary" id="btnWordlistStart"><span class="tile-main"><span class="tile-title">カードで おぼえる</span></span><span class="tile-arrow">→</span></button>
+    <button class="tile tile-primary" id="btnWordlistStart"><span class="tile-main"><span class="tile-title">🎣 カードで つりを はじめる</span></span><span class="tile-arrow">→</span></button>
   </section>
 
   <!-- ===== おぼえる(カード) ===== -->
@@ -97,7 +123,25 @@
       <button class="tile tile-quiet tile-nav" id="btnPrev"><span class="tile-main"><span class="tile-title">← まえ</span></span></button>
       <button class="tile tile-quiet tile-nav" id="btnNext"><span class="tile-main"><span class="tile-title">つぎ →</span></span></button>
     </div>
-    <button class="tile tile-ok" id="btnLearned"><span class="tile-main"><span class="tile-title">✅ これは おぼえた</span></span></button>
+    <button class="tile tile-ok" id="btnLearned"><span class="tile-main"><span class="tile-title" id="learnedTitle">🎣 おぼえた!(つりあげる)</span></span></button>
+    <button class="tile tile-forgot hidden" id="btnForgot"><span class="tile-main"><span class="tile-title">🔁 わすれてた(もういちど おぼえる)</span></span></button>
+  </section>
+
+  <!-- ===== クーラーボックスの なかみ ===== -->
+  <section class="screen hidden" id="screen-box">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="scr-title" id="boxTitle">🧊 ボックス</h2>
+    <p class="scr-desc" id="boxDesc"></p>
+    <button class="tile tile-review hidden" id="btnBoxReview"><span class="tile-main"><span class="tile-title" id="boxReviewTitle">🔁 ふくしゅう する</span></span><span class="tile-arrow">→</span></button>
+    <div class="word-list" id="boxList"></div>
+  </section>
+
+  <!-- ===== さかな ずかん ===== -->
+  <section class="screen hidden" id="screen-zukan">
+    <button class="back-btn" data-back="home">← もどる</button>
+    <h2 class="scr-title">📕 さかな ずかん</h2>
+    <p class="scr-desc" id="zukanDesc"></p>
+    <div id="zukanBody"></div>
   </section>
 
 </div>
@@ -108,6 +152,7 @@
 </div>
 
 <script src="words-data.js"></script>
+<script src="fishing.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

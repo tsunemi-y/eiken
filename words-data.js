@@ -931,9 +931,12 @@ const WORD_BY_ID = new Map(WORD_LIST.map((w) => [w.id, w]));
    くばりかたは いつも おなじなので、ゾーンの なかみは ひらく
    たびに かわらない(ならびじゅんは がめん がわで まぜる)。 */
 const ZONE_COUNT = 10;
+/* ゾーンは つりばの なまえで よぶ(なかみの くばりかたは おなじ) */
+const SPOTS = ["🏖️ すなはま", "⚓ みなと", "🪨 いそ", "🌉 はしの した", "🧱 テトラ",
+               "🚤 おき", "🏝️ しま", "🪸 さんごしょう", "🐋 ふかば", "🌌 しんかい"];
 const RANGES = [];
 for (let z = 0; z < ZONE_COUNT; z++) {
-  RANGES.push({ id: z + 1, title: `ゾーン${z + 1}`, ids: [] });
+  RANGES.push({ id: z + 1, title: SPOTS[z], ids: [] });
 }
 [...WORD_LIST].sort((x, y) => x.no - y.no).forEach((w, i) => {
   RANGES[i % ZONE_COUNT].ids.push(w.id);

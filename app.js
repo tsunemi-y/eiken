@@ -34,8 +34,10 @@ function today() {
    (つづきから ボタンと、はんいカードの 📅きょう しるしに つかう)。 */
 function freshDay(t) {
   const d = today();
-  if (t && t.d === d) return { d, ranges: t.ranges || [] };
-  return { d, ranges: [] };
+  if (t && t.d === d) return { d, ranges: t.ranges || [], correct: t.correct || 0, reviewed: t.reviewed || [] };
+  // correct = きょう せいかいした かず(つれる さかなの ランクに つかう)
+  // reviewed = きょう ふくしゅう ずみの 語
+  return { d, ranges: [], correct: 0, reviewed: [] };
 }
 
 /* v5(Ⓐ・Ⓑ ボックス方式)からの ひっこし。
@@ -47,6 +49,7 @@ function freshDay(t) {
 let migratedFromV5 = false;
 function load() {
   migratedFromV5 = false;
+  boxesMigrated = false;
   let d = null;
   try { d = JSON.parse(localStorage.getItem(U.key)); } catch (e) { d = null; }
   if (!d && U.fromV5) {
@@ -64,9 +67,25 @@ function load() {
   }
   if (!d) d = {};
   return {
-    learned: d.learned || {},   // wordId -> true(✅ おぼえた を おした 語だけ)
+    learned: toBoxes(d.learned || {}),   // wordId -> { w: 曜日(0=日〜6=土), d: おぼえた 日 }
+    fish: d.fish || {},                  // さかなid -> { n: つった かず, max: いちばん おおきい cm }
     today: freshDay(d.today),
   };
+}
+
+/* まえの きろくは「おぼえた = true」だけで、いつ おぼえたかが ない。
+   ボックス(曜日)が きめられないので、7この ボックスに じゅんばんに
+   くばって、ふくしゅうが 1つの 曜日に かたよらないように する。 */
+let boxesMigrated = false;
+function toBoxes(learned) {
+  const out = {};
+  let k = 0;
+  Object.keys(learned).map(Number).sort((a, b) => a - b).forEach((id) => {
+    const v = learned[id];
+    if (v && typeof v === "object" && typeof v.w === "number") out[id] = v;
+    else if (v) { out[id] = { w: k % 7, d: null }; k++; boxesMigrated = true; }
+  });
+  return out;
 }
 
 let P = load();
@@ -75,7 +94,7 @@ function save() { localStorage.setItem(U.key, JSON.stringify(P)); }
    こうしないと なにか おぼえるまで v6が できず、まいかい
    ひっこしなおす ことに なる。v5は もしもの ときの ひかえとして
    けさずに のこしておく。 */
-if (migratedFromV5) save();
+if (migratedFromV5 || boxesMigrated) save();
 
 function switchUser(id) {
   const u = USERS.find((x) => x.id === id);
@@ -83,7 +102,7 @@ function switchUser(id) {
   U = u;
   try { localStorage.setItem(USER_KEY, U.id); } catch (e) {}
   P = load();
-  if (migratedFromV5) save();
+  if (migratedFromV5 || boxesMigrated) save();
   wordlistOrder = { range: null, ids: [] };
   show("home");
 }
@@ -93,9 +112,36 @@ const TOTAL = WORD_LIST.length;
 function wordsNotLearned(ids) { return ids.filter((id) => !P.learned[id]); }
 function learnedCount() { return WORD_LIST.filter((w) => P.learned[w.id]).length; }
 function markLearned(id) {
-  P.learned[id] = true;
+  P.learned[id] = { w: new Date().getDay(), d: today() };
   save();
 }
+
+/* ---------- 曜日の クーラーボックス ----------
+   月曜に おぼえた 語は 月曜ボックスへ。まいしゅう その 曜日に ふくしゅう する。 */
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];          // 月〜日 の じゅんに ならべる
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+function boxIds(w) {
+  return WORD_LIST.filter((x) => P.learned[x.id] && P.learned[x.id].w === w).map((x) => x.id);
+}
+/* ふくしゅう する 語:その ボックスの うち、きょう おぼえた ばかりの 語と
+   きょう もう ふくしゅう した 語を のぞいたもの */
+function dueIds(w) {
+  rollDay();
+  const td = today();
+  return boxIds(w).filter((id) => P.learned[id].d !== td && !P.today.reviewed.includes(id));
+}
+
+/* ---------- つり ----------
+   せいかい(カードの「おぼえた」・ふくしゅうの「おぼえてた」)の たびに 1ぴき つる */
+function catchFish(onDone) {
+  rollDay();
+  P.today.correct += 1;
+  const r = playCatch(P.today.correct, P.fish, () => onDone && onDone());
+  const f = P.fish[r.sp.id] || { n: 0, max: 0 };
+  P.fish[r.sp.id] = { n: f.n + 1, max: Math.max(f.max, r.size) };
+  save();
+}
+function fishKinds() { return FISH.filter((f) => P.fish[f.id]).length; }
 
 /* しけんまで あと なん日 */
 function daysLeft() {
@@ -341,7 +387,7 @@ function advancement(name, icon = "✓", head = "") {
 
 /* ---------- がめん きりかえ ---------- */
 const S = {};
-["home", "ranges", "wordlist", "learn"].forEach((n) => {
+["home", "ranges", "wordlist", "learn", "box", "zukan"].forEach((n) => {
   S[n] = document.getElementById("screen-" + n);
 });
 function show(name) {
@@ -349,7 +395,7 @@ function show(name) {
   Object.values(S).forEach((s) => s.classList.add("hidden"));
   S[name].classList.remove("hidden");
   window.scrollTo(0, 0);
-  ({ home: renderHome, ranges: renderRanges }[name] || (() => {}))();
+  ({ home: renderHome, ranges: renderRanges, zukan: renderZukan }[name] || (() => {}))();
 }
 
 /* ---------- ホーム ---------- */
@@ -372,10 +418,99 @@ function renderHome() {
     ? "きょうが 本番。いままで やった ぶんを 出しきろう。"
     : `${U.name}の おぼえた 単語 ${learned} / ${TOTAL}ご`;
 
+  renderCatchPanel();
+  renderWeekBoxes();
   renderToday();
+  document.getElementById("zukanSub").textContent =
+    `つった さかな ${fishKinds()} / ${FISH.length}しゅるい`;
 }
 
-/* ---------- つづきから ---------- */
+function renderCatchPanel() {
+  rollDay();
+  const k = P.today.correct;
+  const t = FISH_TIERS[tierFor(Math.max(1, k + 1))];
+  const nx = toNextTier(k + 1);
+  const el = document.getElementById("catchPanel");
+  el.innerHTML = `
+    <div class="cp-left">
+      <div class="cp-label">きょうの ちょうか</div>
+      <div class="cp-num"><b>${k}</b> ひき</div>
+    </div>
+    <div class="cp-right">
+      <div class="cp-now">いまは <span style="color:${t.color}">${t.ic} ${t.name}</span> が つれる</div>
+      <div class="cp-next">${nx ? `あと <b>${nx.left + 1}</b>もん せいかいで ${nx.tier.ic} ${nx.tier.name}` : "👑 でんせつの さかなが つれるよ!"}</div>
+    </div>`;
+}
+
+function renderWeekBoxes() {
+  const todayW = new Date().getDay();
+  const wrap = document.getElementById("weekBoxes");
+  wrap.innerHTML = "";
+  WEEK_ORDER.forEach((w) => {
+    const n = boxIds(w).length;
+    const due = w === todayW ? dueIds(w).length : 0;
+    const el = document.createElement("button");
+    el.className = "wbox" + (w === todayW ? " today" : "") + (n === 0 ? " empty" : "");
+    el.innerHTML = `<span class="wb-day">${WD[w]}</span><span class="wb-n">${n}</span>${due ? `<span class="wb-due">${due}</span>` : ""}`;
+    el.addEventListener("click", () => { sfxClick(); renderBox(w); });
+    wrap.appendChild(el);
+  });
+  const due = dueIds(todayW).length;
+  const btn = document.getElementById("btnReview");
+  btn.classList.toggle("hidden", due === 0);
+  document.getElementById("reviewTitle").textContent = `🔁 ${WD[todayW]}ようボックスを ふくしゅう`;
+  document.getElementById("reviewSub").textContent = `${due}ご まってるよ(おぼえてたら また つれる!)`;
+  btn.onclick = () => { sfxClick(); startReview(todayW); };
+}
+
+/* ---------- ボックスの なかみ ---------- */
+function renderBox(w) {
+  const ids = boxIds(w);
+  const due = dueIds(w);
+  const isToday = w === new Date().getDay();
+  document.getElementById("boxTitle").textContent = `🧊 ${WD[w]}ようボックス(${ids.length}ご)`;
+  document.getElementById("boxDesc").textContent = isToday
+    ? `${WD[w]}ように おぼえた 語。きょうが ふくしゅうの 日!`
+    : `${WD[w]}ように おぼえた 語。まいしゅう ${WD[w]}ように ふくしゅう するよ。`;
+  const rb = document.getElementById("btnBoxReview");
+  rb.classList.toggle("hidden", due.length === 0);
+  document.getElementById("boxReviewTitle").textContent =
+    isToday ? `🔁 ふくしゅう する(${due.length}ご)` : `🔁 いま ふくしゅう する(${due.length}ご)`;
+  rb.onclick = () => { sfxClick(); startReview(w); };
+  const list = document.getElementById("boxList");
+  list.innerHTML = ids.length ? "" : `<p class="scr-desc">まだ からっぽ。${WD[w]}ように おぼえた 語が ここに 入るよ。</p>`;
+  ids.map((id) => WORD_BY_ID.get(id)).forEach((x) => {
+    const el = document.createElement("div");
+    const done = P.today.reviewed.includes(x.id);
+    el.className = "word-row" + (done ? " learned" : "");
+    el.innerHTML = `
+      <div class="word-ic">${x.emoji}</div>
+      <div class="word-body"><div class="word-en">${x.en}</div><div class="word-ja">${x.ja}</div></div>
+      ${done ? '<span class="word-boxed-tag">✅ きょう ふくしゅう ずみ</span>' : ""}`;
+    list.appendChild(el);
+  });
+  show("box");
+}
+
+/* ---------- ずかん ---------- */
+function renderZukan() {
+  document.getElementById("zukanDesc").textContent =
+    `${fishKinds()} / ${FISH.length}しゅるい つったよ。1日に せいかいが ふえるほど おおきい さかなが でる!`;
+  const body = document.getElementById("zukanBody");
+  body.innerHTML = FISH_TIERS.map((t, ti) => {
+    const cards = FISH.filter((f) => f.tier === ti).map((f) => {
+      const c = P.fish[f.id];
+      return `<div class="zk-card${c ? "" : " locked"}">
+        ${fishSVG(f, !c)}
+        <div class="zk-name">${c ? f.name : "？？？"}</div>
+        <div class="zk-rec">${c ? `${c.n}ひき ・ さいだい ${c.max}cm` : "まだ つれてない"}</div>
+      </div>`;
+    }).join("");
+    return `<div class="zk-tier">
+      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>1日に ${t.at}もんめ いじょうの せいかいで でる</small></div>
+      <div class="zk-grid">${cards}</div></div>`;
+  }).join("");
+}
 /* まだ おわっていない はんい。
    きょう さわった はんいが あれば そこ、なければ つぎに やるべき はんい。 */
 function nextRange() {
@@ -411,7 +546,7 @@ function renderRanges() {
   const sum = document.getElementById("rangeToday");
   sum.innerHTML = P.today.ranges.length === 0
     ? "📅 きょうは まだ やってないよ"
-    : `📅 きょう ひらいたのは <b>${P.today.ranges.length}ゾーン</b>`;
+    : `📅 きょう ひらいたのは <b>${P.today.ranges.length}かしょ</b>`;
 
   const nr = nextRange();
   const nextId = nr ? nr.id : null;
@@ -521,7 +656,7 @@ document.getElementById("btnWordlistStart").addEventListener("click", () => {
    まえは リーディング/リスニングを べつの がめんに わけていたが、
    えいごを 見せた うえで 音声ボタンを 出せば、それだけで りょうほう
    まかなえる。 */
-let L = { range: 1, words: [], i: 0, flipped: false };
+let L = { mode: "learn", range: 1, box: null, words: [], i: 0, flipped: false };
 
 /* きのうご(at / of / is / am など)は たんご 1つでは おぼえられないので、
    ぶんの あなうめ で しめす。 */
@@ -543,15 +678,33 @@ function shuffle(arr) {
 function startLearn(rangeId) {
   const ws = shuffle(wordsNotLearned(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id)));
   if (ws.length === 0) {
-    advancement("この ゾーンは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
+    advancement("この つりばは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
     show("ranges");
     return;
   }
   logRange(rangeId);
-  L = { range: rangeId, words: ws, i: 0, flipped: false };
+  L = { mode: "learn", range: rangeId, box: null, words: ws, i: 0, flipped: false };
   document.getElementById("learnZoneTag").textContent = RANGES[rangeId - 1].title;
+  setLearnButtons();
   show("learn");
   renderCard();
+}
+
+/* 曜日ボックスの ふくしゅう。おぼえてたら また 1ぴき つれる。
+   わすれてたら「まだ」に もどし、また おぼえた 日の ボックスに 入りなおす。 */
+function startReview(w) {
+  const ws = shuffle(dueIds(w)).map((id) => WORD_BY_ID.get(id));
+  if (ws.length === 0) { advancement("この ボックスは きょう ぜんぶ ふくしゅう したよ!", "🧊", "ばっちり"); show("home"); return; }
+  L = { mode: "review", range: null, box: w, words: ws, i: 0, flipped: false };
+  document.getElementById("learnZoneTag").textContent = `🧊 ${WD[w]}ようボックス ふくしゅう`;
+  setLearnButtons();
+  show("learn");
+  renderCard();
+}
+function setLearnButtons() {
+  const rv = L.mode === "review";
+  document.getElementById("learnedTitle").textContent = rv ? "🎣 おぼえてた!(つりあげる)" : "🎣 おぼえた!(つりあげる)";
+  document.getElementById("btnForgot").classList.toggle("hidden", !rv);
 }
 
 function visHTML(vis) {
@@ -634,7 +787,7 @@ function renderCard() {
 let speakGen = 0;
 
 function setLearnLock(on) {
-  ["btnPrev", "btnNext", "btnLearned"].forEach((id) => {
+  ["btnPrev", "btnNext", "btnLearned", "btnForgot"].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.disabled = on;
@@ -686,31 +839,59 @@ document.getElementById("btnNext").addEventListener("click", (e) => {
    おした 語は そのはんいの カードの れつから すぐに ぬける
    (なんども おなじ カードを めくらなくて すむように)。 */
 document.getElementById("btnLearned").addEventListener("click", (e) => {
-  if (e.currentTarget.disabled) return;
+  if (e.currentTarget.disabled || fishingBusy) return;
   const w = L.words[L.i];
-  sfxGraduate();
-  markLearned(w.id);
+  speakGen++;
+  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (err) {}
+  if (L.mode === "review") {
+    if (!P.today.reviewed.includes(w.id)) P.today.reviewed.push(w.id);
+  } else {
+    markLearned(w.id);
+  }
   L.words.splice(L.i, 1);
+  // さかなを つって、けっかを とじたら つぎの カードへ
+  catchFish(() => afterCardDone());
+});
+document.getElementById("btnForgot").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled || fishingBusy) return;
+  const w = L.words[L.i];
+  sfxClick();
+  // わすれてたら「まだ」に もどす。また おぼえたら、その日の ボックスに 入る
+  delete P.learned[w.id];
+  if (!P.today.reviewed.includes(w.id)) P.today.reviewed.push(w.id);
+  save();
+  L.words.splice(L.i, 1);
+  advancement(`${w.en} は また つりばで おぼえよう`, "🔁", "だいじょうぶ!");
+  afterCardDone();
+});
+function afterCardDone() {
   if (L.words.length === 0) {
-    advancement("この ゾーンは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
-    renderWordlist(L.range, true);
+    if (L.mode === "review") {
+      advancement(`${WD[L.box]}ようボックスの ふくしゅう おわり!`, "🧊", "おつかれさま");
+      show("home");
+    } else {
+      advancement("この つりばは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
+      renderWordlist(L.range, true);
+    }
     return;
   }
   if (L.i >= L.words.length) L.i = 0;
   renderCard();
-});
+}
 
 /* ---------- ナビ ---------- */
 document.getElementById("btnHome").addEventListener("click", () => show("home"));
 document.getElementById("btnStart").addEventListener("click", () => { sfxClick(); show("ranges"); });
+document.getElementById("btnZukan").addEventListener("click", () => { sfxClick(); show("zukan"); });
 document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(b.dataset.back)));
 
 /* きろくの リセット。「おぼえた」の きろくが ぜんぶ きえるので、
    まちがって おしても もとに もどせないように 2かい たしかめる。 */
 document.getElementById("btnResetAll").addEventListener("click", () => {
-  if (!confirm(`${U.name}の「おぼえた」${learnedCount()}ごの きろくを ぜんぶ けします(ほかの 人の きろくは けしません)。もとに もどせません。`)) return;
+  if (!confirm(`${U.name}の「おぼえた」${learnedCount()}ごと、つった さかな ${fishKinds()}しゅるいの きろくを ぜんぶ けします(ほかの 人の きろくは けしません)。もとに もどせません。`)) return;
   if (!confirm("ほんとうに よろしいですか?")) return;
   P.learned = {};
+  P.fish = {};
   P.today = freshDay(null);
   save();
   sfxClick();

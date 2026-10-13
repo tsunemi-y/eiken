@@ -1,24 +1,26 @@
 /* =========================================================
-   えいご 5きゅう
-   よむ ための UI。かざりより 文字の よみやすさを ゆうせん する。
+   えいご つり 5きゅう
+   うみと つりの みため。カードの 文字は よみやすさ ゆうせんの まま。
    ========================================================= */
 
 :root {
-  --bg:        #F5F6F8;
+  --bg:        #E6F4FA;
   --surface:   #FFFFFF;
-  --line:      #E4E7EC;
-  --line-soft: #F0F2F5;
+  --line:      #CFE3EE;
+  --line-soft: #EAF4F9;
 
-  --ink:       #16181D;   /* 本文 */
-  --ink-2:     #5A6170;   /* そえ字 */
-  --ink-3:     #98A0AE;   /* うすい */
+  --ink:       #0F2A3D;   /* 本文 */
+  --ink-2:     #4B6475;   /* そえ字 */
+  --ink-3:     #8BA3B3;   /* うすい */
 
-  --accent:    #3D5AFE;
-  --accent-d:  #2B45D6;
-  --accent-bg: #EDF0FF;
+  --accent:    #0B7FC4;   /* うみ */
+  --accent-d:  #075A8C;
+  --accent-bg: #DDF0FA;
 
   --ok:        #12A150;
   --ok-bg:     #E8F7EE;
+  --lure:      #F76707;   /* ルアーの オレンジ(つりあげる ボタン) */
+  --navy:      #0B3D6E;
   --ng:        #E0385A;
   --ng-bg:     #FDECEF;
   --warn:      #B25E00;
@@ -37,7 +39,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body {
-  background: var(--bg);
+  background: linear-gradient(180deg, #DFF2FB 0%, #EAF6FB 40%, #F4FAFD 100%) fixed;
   color: var(--ink);
   font-family: var(--ja);
   font-size: 16px;
@@ -56,11 +58,11 @@ input { font-family: inherit; }
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 14px 18px;
-  background: rgba(245,246,248,.88);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, #0B3D6E, #0B7FC4);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(11,61,110,.25);
 }
-.brand { font-size: 15px; font-weight: 700; letter-spacing: .02em; }
+.brand { font-size: 16px; font-weight: 700; letter-spacing: .02em; cursor: pointer; }
 .countdown-chip {
   font-size: 12px; color: var(--ink-2);
   background: var(--surface);
@@ -69,7 +71,7 @@ input { font-family: inherit; }
   padding: 5px 12px;
   white-space: nowrap;
 }
-.countdown-chip b { font-family: var(--en); font-size: 14px; color: var(--accent); font-weight: 700; }
+.countdown-chip b { font-family: var(--en); font-size: 14px; color: var(--lure); font-weight: 700; }
 
 /* ---------- がめん ---------- */
 .screen { padding: 18px 16px 8px; }
@@ -104,14 +106,23 @@ input { font-family: inherit; }
 .tile-sub   { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
 .tile-arrow { font-size: 16px; color: var(--ink-3); flex-shrink: 0; }
 
-.tile-primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(61,90,254,.28); }
+.tile-primary { background: linear-gradient(135deg, #1098DE, var(--accent)); border-color: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(11,127,196,.3); }
 .tile-primary .tile-sub, .tile-primary .tile-arrow { color: rgba(255,255,255,.8); }
 .tile-quiet  { background: transparent; box-shadow: none; }
 .tile-ok {
-  background: var(--ok); border-color: var(--ok); color: #fff;
-  box-shadow: 0 2px 8px rgba(18,161,80,.28);
-  justify-content: center; margin-top: 4px;
+  background: linear-gradient(180deg, #FF8A3D, var(--lure)); border-color: var(--lure); color: #fff;
+  box-shadow: 0 3px 0 #C24E00, 0 6px 14px rgba(247,103,7,.3);
+  justify-content: center; margin-top: 4px; padding: 17px 16px;
 }
+.tile-ok .tile-title { font-size: 17px; font-weight: 700; }
+.tile-ok:active { transform: translateY(2px); box-shadow: 0 1px 0 #C24E00; }
+.tile-forgot { background: #fff; border: 1.5px dashed var(--ink-3); box-shadow: none; justify-content: center; }
+.tile-forgot .tile-title { text-align: center; color: var(--ink-2); }
+.tile-review {
+  background: linear-gradient(135deg, #12B886, #0CA678); border-color: #0CA678; color: #fff;
+  box-shadow: 0 3px 10px rgba(12,166,120,.3);
+}
+.tile-review .tile-sub, .tile-review .tile-arrow { color: rgba(255,255,255,.85); }
 .tile-ok .tile-title { text-align: center; }
 
 .nav-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
@@ -226,8 +237,8 @@ input { font-family: inherit; }
 /* ---------- カード(おぼえる) ---------- */
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
+  border: 2px solid #BFE0F0;
+  border-radius: 20px;
   padding: 30px 20px;
   min-height: 300px;
   display: flex; align-items: center; justify-content: center;
@@ -338,5 +349,115 @@ input { font-family: inherit; }
   padding: 12px 0; cursor: pointer;
 }
 .user-btn.on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
-.brand-user { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-bg); border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 1px; }
+.brand-user { font-size: 12px; font-weight: 700; color: var(--navy); background: #fff; border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 1px; }
 .brand-user:empty { display: none; }
+
+/* =========================================================
+   つり まわり
+   ========================================================= */
+/* きょうの ちょうか */
+.catch-panel {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, #0B3D6E, #1971C2);
+  color: #fff; border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(11,61,110,.25);
+  position: relative; overflow: hidden;
+}
+.catch-panel::after {
+  content: "🐟"; position: absolute; right: -6px; bottom: -14px; font-size: 64px; opacity: .12; transform: scaleX(-1);
+}
+.cp-left { flex-shrink: 0; text-align: center; padding-right: 14px; border-right: 1px solid rgba(255,255,255,.25); }
+.cp-label { font-size: 11px; opacity: .8; }
+.cp-num { font-size: 14px; }
+.cp-num b { font-family: var(--en); font-size: 30px; line-height: 1.1; }
+.cp-right { min-width: 0; }
+.cp-now { font-size: 13px; font-weight: 700; }
+.cp-now span { background: #fff; border-radius: 999px; padding: 1px 8px; }
+.cp-next { font-size: 12px; opacity: .9; margin-top: 4px; }
+.cp-next b { font-family: var(--en); font-size: 15px; color: #FFD43B; }
+
+/* 曜日の クーラーボックス */
+.box-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 2px 2px 8px; }
+.box-head-title { font-size: 14px; font-weight: 700; }
+.box-head-sub { font-size: 11px; color: var(--ink-2); }
+.week-boxes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 14px; }
+.wbox {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 0;
+  background: #fff; border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 7px 0 5px; box-shadow: var(--shadow);
+}
+.wbox::before { content: ""; position: absolute; left: 6px; right: 6px; top: 3px; height: 3px; border-radius: 2px; background: #74C0FC; }
+.wb-day { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.wb-n { font-family: var(--en); font-size: 15px; font-weight: 700; color: var(--accent-d); line-height: 1.2; }
+.wbox.empty .wb-n { color: var(--ink-3); }
+.wbox.today { border-color: #0CA678; background: #E6FCF5; box-shadow: 0 0 0 3px rgba(12,166,120,.18); }
+.wbox.today::before { background: #0CA678; }
+.wb-due {
+  position: absolute; top: -7px; right: -5px; min-width: 18px; padding: 0 5px;
+  font-family: var(--en); font-size: 10px; font-weight: 700; line-height: 18px;
+  color: #fff; background: #F03E3E; border-radius: 999px;
+}
+
+/* つりば カード(ゾーン) */
+.range-card .range-title { font-size: 15px; }
+.range-card.next { border-color: var(--lure); box-shadow: 0 0 0 3px #FFE8D6, var(--shadow); }
+.range-badge { color: #C24E00; background: #FFE8D6; }
+.bar-fill { background: linear-gradient(90deg, #22B8CF, var(--accent)); }
+
+/* ずかん */
+.zk-tier { margin-bottom: 18px; }
+.zk-tier-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.zk-tier-head span { color: #fff; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 3px 11px; }
+.zk-tier-head small { font-size: 11px; color: var(--ink-2); }
+.zk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.zk-card {
+  background: linear-gradient(180deg, #F3FAFE, #fff); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 8px 9px; text-align: center; box-shadow: var(--shadow);
+}
+.zk-card .fish-svg { width: 100%; height: 58px; }
+.zk-card.locked { background: #F1F5F8; }
+.zk-name { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.zk-card.locked .zk-name { color: var(--ink-3); letter-spacing: .1em; }
+.zk-rec { font-size: 10.5px; color: var(--ink-2); }
+
+/* ---------- つりの アニメーション ---------- */
+.fish-overlay { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: min(100%, 480px); z-index: 300; background: #0B3D6E; overflow: hidden; }
+.fish-scene { width: 100%; height: 100%; display: block; }
+.fish-scene .w1 { animation: waveMove 3s linear infinite; }
+.fish-scene .w2 { animation: waveMove 5s linear infinite reverse; }
+.fish-scene .cloud { animation: cloudMove 18s linear infinite; }
+@keyframes waveMove { from { transform: translateX(0); } to { transform: translateX(40px); } }
+@keyframes cloudMove { from { transform: translateX(-40px); } to { transform: translateX(320px); } }
+.ripple { fill: none; stroke: rgba(255,255,255,.8); stroke-width: 2; animation: ripple 1.1s ease-out forwards; }
+@keyframes ripple { from { rx: 4px; ry: 1.5px; opacity: 1; } to { rx: 46px; ry: 12px; opacity: 0; } }
+.fish-hint {
+  position: absolute; left: 0; right: 0; bottom: 18px; text-align: center;
+  color: rgba(255,255,255,.75); font-size: 12px;
+}
+.catch-card {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(340px, calc(100% - 32px));
+  background: #fff; border-radius: 22px; padding: 18px 18px 16px; text-align: center;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  animation: popIn .38s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes popIn { from { transform: translate(-50%, -40%) scale(.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+.cc-badges { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.cc-badges span { font-size: 12px; font-weight: 700; color: #fff; border-radius: 999px; padding: 3px 10px; }
+.cc-new { background: #F03E3E; animation: blink 1s ease-in-out infinite; }
+.cc-lucky { background: #FAB005; }
+@keyframes blink { 50% { transform: scale(1.12); } }
+.cc-fish { margin: 6px 0 2px; }
+.cc-fish .fish-svg.big { width: 100%; height: 130px; filter: drop-shadow(0 6px 8px rgba(11,61,110,.25)); animation: flop 1.2s ease-in-out infinite; }
+@keyframes flop { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg) translateY(-3px); } }
+.cc-title { font-size: 20px; font-weight: 700; }
+.cc-size { font-size: 14px; color: var(--ink-2); }
+.cc-size b { font-family: var(--en); font-size: 30px; color: var(--lure); }
+.cc-sub { font-size: 12px; color: var(--ink-2); margin-top: 6px; line-height: 1.7; }
+.cc-sub b { font-family: var(--en); color: var(--lure); font-size: 14px; }
+.cc-btn {
+  margin-top: 12px; width: 100%; padding: 13px; border-radius: 14px;
+  background: var(--accent); color: #fff; font-size: 16px; font-weight: 700;
+  box-shadow: 0 3px 0 var(--accent-d);
+}
+.cc-btn:active { transform: translateY(2px); box-shadow: none; }
