@@ -945,6 +945,50 @@ function wordsInRange(rangeId) {
   return RANGES[rangeId - 1].ids.map((id) => WORD_BY_ID.get(id));
 }
 
+/* ---------- かんたんな じゅん(なおや よう) ----------
+   ちいさい 子は「かんたんな 語から じゅんばんに」すすめる。
+   レベル1(よく しっている カタカナ語・かず)→ … → レベル10(前置詞・ひんど・じゅくご)。
+   1レベル = 1つりば(すなはま=あさい → しんかい=ふかい)。 */
+const EASY_LEVELS = [
+  ["dog", "cat", "book", "house", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "boy", "girl"],
+  ["father", "mother", "brother", "sister", "friend", "family", "school", "park", "soccer", "baseball", "food", "lunch", "big", "small", "hot", "cold"],
+  ["I", "you", "my", "your", "is", "am", "are", "this", "that", "it", "like", "have", "play", "eat", "go", "see"],
+  ["he", "she", "his", "her", "we", "they", "good", "new", "old", "eleven", "twelve", "twenty", "name", "home", "day", "night"],
+  ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "today", "tomorrow", "morning", "week", "time", "breakfast", "dinner", "teacher"],
+  ["spring", "summer", "fall", "winter", "year", "class", "student", "homework", "sport", "come", "want", "read", "look", "watch", "drink"],
+  ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "write", "study", "listen"],
+  ["what", "how", "where", "when", "who", "whose", "which", "why", "our", "their", "me", "can", "do", "speak", "know", "live"],
+  ["in", "on", "at", "to", "from", "for", "with", "and", "or", "but", "not", "very", "now", "there", "hungry", "favorite"],
+  ["after", "before", "usually", "sometimes", "always", "first", "get up", "go to", "look at", "a lot of", "after school", "at home", "at school", "years old"],
+];
+const EASY_RANK = new Map();      // wordId -> かんたんな じゅんの ばんごう
+const EASY_LEVEL = new Map();     // wordId -> レベル(0〜9)
+{
+  const byEn = new Map(WORD_LIST.map((w) => [w.en, w]));
+  let i = 0;
+  EASY_LEVELS.forEach((lv, k) => lv.forEach((en) => {
+    const w = byEn.get(en);
+    if (w) { EASY_RANK.set(w.id, i++); EASY_LEVEL.set(w.id, k); }
+  }));
+  // リストに ない 語が あっても さいごの レベルに まわして かならず どこかに 入れる
+  WORD_LIST.forEach((w) => {
+    if (!EASY_RANK.has(w.id)) { EASY_RANK.set(w.id, 10000 + w.no); EASY_LEVEL.set(w.id, EASY_LEVELS.length - 1); }
+  });
+}
+const RANGE_SETS = {
+  mix: RANGES.map((r) => ({ title: r.title, ids: r.ids.slice() })),
+  easy: SPOTS.map((t, i) => ({
+    title: `${t} Lv.${i + 1}`,
+    ids: WORD_LIST.filter((w) => EASY_LEVEL.get(w.id) === i)
+      .sort((a, b) => EASY_RANK.get(a.id) - EASY_RANK.get(b.id)).map((w) => w.id),
+  })),
+};
+/* つりばの くぎりかたを きりかえる(mix=まぜて くばる / easy=かんたんな じゅん) */
+function useRangeSet(name) {
+  const set = RANGE_SETS[name] || RANGE_SETS.mix;
+  set.forEach((r, i) => { RANGES[i].title = r.title; RANGES[i].ids = r.ids.slice(); });
+}
+
 /* =========================================================
    B: ようびボックス(げつ〜にち の 7こ)
    JSの Date.getDay() の ばんごうに あわせる (0=にち,1=げつ...6=ど)

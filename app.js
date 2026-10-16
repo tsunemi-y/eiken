@@ -12,8 +12,8 @@ const KEY_V5 = "eigo_craft_v5";           // Ⓐ・Ⓑの ボックス方式だ�
    さいしょから。v5からの ひっこしも ようただけ(なおやに ようたの
    むかしの きろくが はいらないように)。 */
 const USERS = [
-  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true,  exam: new Date(2027, 0, 24) },  // 2027/1/24
-  { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false, exam: new Date(2027, 0, 24) },  // 2027/1/24
+  { id: "youta", name: "ようた", key: "eigo_craft_v6",       fromV5: true,  order: "mix",  exam: new Date(2027, 0, 24) },  // 2027/1/24
+  { id: "naoya", name: "なおや", key: "eigo_craft_v6_naoya", fromV5: false, order: "easy", exam: new Date(2027, 0, 24) },  // 2027/1/24
 ];
 const USER_KEY = "eigo_user";
 function loadUser() {
@@ -22,6 +22,15 @@ function loadUser() {
   return USERS.find((u) => u.id === id) || USERS[0];
 }
 let U = loadUser();
+useRangeSet(U.order);
+
+/* カードと 一覧の ならびかた。
+   ようた = まいかい まぜる(じゅんばんで おぼえて しまわないように)
+   なおや = かんたんな 語から じゅんばんに */
+function orderIds(ids) {
+  if (U.order === "easy") return ids.slice().sort((a, b) => EASY_RANK.get(a) - EASY_RANK.get(b));
+  return shuffle(ids);
+}
 
 /* ---------- ほぞん ---------- */
 function today() {
@@ -100,6 +109,7 @@ function switchUser(id) {
   const u = USERS.find((x) => x.id === id);
   if (!u || u.id === U.id) return;
   U = u;
+  useRangeSet(U.order);
   try { localStorage.setItem(USER_KEY, U.id); } catch (e) {}
   P = load();
   if (migratedFromV5 || boxesMigrated) save();
@@ -598,7 +608,7 @@ let wordlistOrder = { range: null, ids: [] };
 function renderWordlist(rangeId, reshuffle = false) {
   currentWordlistRange = rangeId;
   if (reshuffle || wordlistOrder.range !== rangeId) {
-    wordlistOrder = { range: rangeId, ids: shuffle(wordsInRange(rangeId).map((w) => w.id)) };
+    wordlistOrder = { range: rangeId, ids: orderIds(wordsInRange(rangeId).map((w) => w.id)) };
   }
   const r = RANGES[rangeId - 1];
   document.getElementById("wordlistTitle").textContent = `📋 ${r.title}`;
@@ -676,7 +686,7 @@ function shuffle(arr) {
 }
 
 function startLearn(rangeId) {
-  const ws = shuffle(wordsNotLearned(wordsInRange(rangeId).map((w) => w.id)).map((id) => WORD_BY_ID.get(id)));
+  const ws = orderIds(wordsNotLearned(wordsInRange(rangeId).map((w) => w.id))).map((id) => WORD_BY_ID.get(id));
   if (ws.length === 0) {
     advancement("この つりばは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
     show("ranges");
@@ -693,7 +703,7 @@ function startLearn(rangeId) {
 /* 曜日ボックスの ふくしゅう。おぼえてたら また 1ぴき つれる。
    わすれてたら「まだ」に もどし、また おぼえた 日の ボックスに 入りなおす。 */
 function startReview(w) {
-  const ws = shuffle(dueIds(w)).map((id) => WORD_BY_ID.get(id));
+  const ws = orderIds(dueIds(w)).map((id) => WORD_BY_ID.get(id));
   if (ws.length === 0) { advancement("この ボックスは きょう ぜんぶ ふくしゅう したよ!", "🧊", "ばっちり"); show("home"); return; }
   L = { mode: "review", range: null, box: w, words: ws, i: 0, flipped: false };
   document.getElementById("learnZoneTag").textContent = `🧊 ${WD[w]}ようボックス ふくしゅう`;
