@@ -175,14 +175,27 @@ const sfxCatch = (big) => {
   seq.forEach((f, i) => setTimeout(() => beep(f, 0.12, "triangle", 0.06), i * 85));
 };
 
-/* ---------- つりの アニメーション ----------
-   なげる → うきが ぷかぷか → 「!」 → まきあげて さかなが とびだす → けっか。
-   どこかを タップすれば すぐ けっかに とぶ(はやく つぎに すすみたい とき よう)。 */
+/* ---------- つりの ミニゲーム ----------
+   なげる → うきが ぷかぷか → 「!」 → 画面を れんだ して リールを まく → さかなが とびだす → けっか。
+   まきあげメーターが いっぱいに なったら つれる。おおものほど あばれて たくさん まく ひつようが ある。
+   タップを やめても メーターは すこし もどる だけ。しっぱいは なし(ちいさい 子でも かならず つれる)。 */
 /* スマホの たてがめんに あわせて たてながの ぶたいに する
    (よこに ひろいと 左右が きれて さおが 見えなくなる) */
 const SCENE_W = 260, SCENE_H = 520, WATER = 250;
 const ROD_BASE = { x: 22, y: 505 }, ROD_LEN = 270;
 const SPOT = { x: 196, y: WATER + 16 };
+const NEAR = { x: 92, y: WATER + 34 };            // まききった ときの さかなの いち
+/* ランクごとの てごたえ: step = 1タップで すすむ %、back = 1びょうで もどる %、
+   swim = あばれる はば、shadow = かげの おおきさ */
+const FIGHT = [
+  { step: 18,  back: 3,  swim: 14, shadow: 0.55 },
+  { step: 14,  back: 5,  swim: 18, shadow: 0.7 },
+  { step: 11,  back: 7,  swim: 24, shadow: 0.85 },
+  { step: 8.5, back: 9,  swim: 30, shadow: 1.05 },
+  { step: 7,   back: 11, swim: 36, shadow: 1.25 },
+  { step: 5.5, back: 12, swim: 42, shadow: 1.5 },
+];
+const sfxTick = () => beep(420 + Math.random() * 80, 0.035, "square", 0.035);
 
 function ensureOverlay() {
   let ov = document.getElementById("fishOverlay");
@@ -191,15 +204,16 @@ function ensureOverlay() {
   ov.id = "fishOverlay";
   ov.className = "fish-overlay hidden";
   ov.innerHTML = `
-    <svg class="fish-scene" viewBox="0 0 ${SCENE_W} ${SCENE_H}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <svg class="fish-scene" id="fsScene" viewBox="0 0 ${SCENE_W} ${SCENE_H}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc6f2"/><stop offset="1" stop-color="#d7f0ff"/></linearGradient>
         <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c8fd1"/><stop offset="1" stop-color="#0b3d6e"/></linearGradient>
       </defs>
-      <rect width="${SCENE_W}" height="${WATER}" fill="url(#skyG)"/>
+      <rect x="-60" width="${SCENE_W + 120}" height="${WATER}" fill="url(#skyG)"/>
       <circle cx="215" cy="70" r="26" fill="#ffe066"/>
       <g class="cloud"><ellipse cx="80" cy="80" rx="34" ry="13" fill="#fff" opacity=".9"/><ellipse cx="104" cy="72" rx="22" ry="12" fill="#fff" opacity=".9"/></g>
-      <rect y="${WATER}" width="${SCENE_W}" height="${SCENE_H - WATER}" fill="url(#seaG)"/>
+      <rect x="-60" y="${WATER}" width="${SCENE_W + 120}" height="${SCENE_H - WATER}" fill="url(#seaG)"/>
+      <g id="fsShadow" opacity="0"><path d="M -34 0 C -24 -13, 18 -13, 30 0 C 18 13, -24 13, -34 0 Z M 26 0 L 44 -11 L 40 0 L 44 11 Z" fill="rgba(4,22,44,.55)"/></g>
       <g class="wave w1"><path d="M -40 ${WATER} q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 V ${WATER + 14} H -40 Z" fill="#3aa6e0"/></g>
       <g class="wave w2"><path d="M -40 ${WATER + 40} q 20 -6 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/></g>
       <g id="fsRipples"></g>
@@ -208,10 +222,15 @@ function ensureOverlay() {
       <g id="fsFish"></g>
       <g id="fsSplash"></g>
       <path id="fsRod" stroke="#6b4423" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <circle id="fsReel" r="13" fill="#495057" stroke="#212529" stroke-width="3"/>
+      <g id="fsReelG"><circle id="fsReel" r="13" fill="#495057" stroke="#212529" stroke-width="3"/><line id="fsHandle" x1="0" y1="0" x2="0" y2="-13" stroke="#ffd43b" stroke-width="4" stroke-linecap="round"/></g>
       <text id="fsBang" x="${SPOT.x}" y="${WATER - 40}" text-anchor="middle" font-size="64" font-weight="900" fill="#ffd43b" stroke="#c92a2a" stroke-width="3" opacity="0">!</text>
     </svg>
-    <div class="fish-hint" id="fsHint">タップで スキップ</div>
+    <div class="fight-ui hidden" id="fsFightUI">
+      <div class="fight-label" id="fsFightLabel">まきあげ メーター</div>
+      <div class="fight-meter"><div class="fight-fill" id="fsFill"></div><span class="fight-fish" id="fsMeterFish">🐟</span></div>
+    </div>
+    <div class="tap-prompt hidden" id="fsTap">👆 タップ! タップ!<small>れんだ して リールを まこう</small></div>
+    <div class="fish-hint" id="fsHint">タップで はやおくり</div>
     <div class="catch-card hidden" id="catchCard"></div>`;
   document.body.appendChild(ov);
   return ov;
@@ -236,95 +255,147 @@ function playCatch(correct, n, caught, onDone) {
   const catchResult = rollFish(correct, n, caught);
   const { sp } = catchResult;
   const isNew = !caught[sp.id];   // よびだしがわが すぐ ずかんに きろく するので、さきに きめておく
+  const F = FIGHT[sp.tier];
   fishingBusy = true;
 
   const $ = (id) => document.getElementById(id);
-  const rod = $("fsRod"), line = $("fsLine"), bob = $("fsBobber"), fishG = $("fsFish");
-  const bang = $("fsBang"), ripples = $("fsRipples"), splash = $("fsSplash"), reel = $("fsReel");
+  const scene = $("fsScene"), rod = $("fsRod"), line = $("fsLine"), bob = $("fsBobber"), fishG = $("fsFish");
+  const bang = $("fsBang"), ripples = $("fsRipples"), splash = $("fsSplash"), reelG = $("fsReelG"), handle = $("fsHandle");
+  const shadow = $("fsShadow"), fightUI = $("fsFightUI"), fill = $("fsFill"), meterFish = $("fsMeterFish"), tapP = $("fsTap");
   const card = $("catchCard");
   card.classList.add("hidden");
+  fightUI.classList.add("hidden");
+  tapP.classList.add("hidden");
   $("fsHint").classList.remove("hidden");
+  $("fsFightLabel").textContent = sp.tier >= 3 ? "⚠️ でかい! まきあげ メーター" : "まきあげ メーター";
+  meterFish.textContent = sp.tier >= 3 ? "🐋" : "🐟";
   fishG.innerHTML = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
   fishG.setAttribute("opacity", "0");
+  shadow.setAttribute("opacity", "0");
   bob.setAttribute("opacity", "1");
   bang.setAttribute("opacity", "0");
   ripples.innerHTML = "";
   splash.innerHTML = "";
+  scene.style.transform = "";
   ov.classList.remove("hidden");
-  reel.setAttribute("cx", ROD_BASE.x + 26); reel.setAttribute("cy", ROD_BASE.y - 30);
+  const RX = ROD_BASE.x + 26, RY = ROD_BASE.y - 30;
+  reelG.setAttribute("transform", `translate(${RX} ${RY})`);
 
-  const T = { cast: 750, wait: 1450, bite: 1900, reel: 2650 };
-  const drops = Array.from({ length: 10 }, (_, i) => ({ a: Math.PI * (0.15 + 0.07 * i), v: 60 + Math.random() * 70 }));
+  // じょうたい: cast → wait → bite → fight → jump → result
+  let state = "cast", t0 = performance.now();
+  const go = (s) => { state = s; t0 = performance.now(); };
+  let progress = 0, kick = 0, shake = 0, reelRot = 0, lastTap = 0, landed = false;
+  let jumpFrom = { x: SPOT.x, y: SPOT.y };
+  const drops = Array.from({ length: 12 }, (_, i) => ({ a: Math.PI * (0.12 + 0.065 * i), v: 60 + Math.random() * 80 }));
   const played = {};
   const once = (key, fn) => { if (!played[key]) { played[key] = true; fn(); } };
-  const start = performance.now();
-  let raf = 0;
-  let finished = false;
+  let raf = 0, last = performance.now(), finished = false;
 
   function frame(now) {
-    const t = now - start;
-    let ang, bend = 0, bx, by, showBob = true;
-    let tipPos;
-    if (t < T.cast) {
-      // うしろに ふりかぶって → まえへ なげる
-      const p = t / T.cast;
-      ang = p < 0.3 ? lerp(55, 88, ease(p / 0.3)) : lerp(88, 48, ease((p - 0.3) / 0.7));   // がめんの そとに 出ない はんいで ふりかぶる
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const t = now - t0;
+    let ang = 48, bend = 0, bx = SPOT.x, by = SPOT.y, showBob = true, lineTo = null;
+
+    if (state === "cast") {
+      // ふりかぶって → まえへ なげる
+      const p = Math.min(1, t / 750);
+      ang = p < 0.3 ? lerp(55, 88, ease(p / 0.3)) : lerp(88, 48, ease((p - 0.3) / 0.7));
       bend = p < 0.3 ? 0 : -18 * Math.sin(Math.PI * (p - 0.3) / 0.7);
-      tipPos = rodPath(ang, bend).tip;
-      if (p < 0.4) { bx = tipPos.x; by = tipPos.y + 18; }
+      const tip = rodPath(ang, bend).tip;
+      if (p < 0.4) { bx = tip.x; by = tip.y + 18; }
       else {
         once("cast", sfxCast);
         const q = ease((p - 0.4) / 0.6);
-        bx = lerp(tipPos.x, SPOT.x, q);
-        by = lerp(tipPos.y, SPOT.y, q) - 150 * Math.sin(Math.PI * q);
+        bx = lerp(tip.x, SPOT.x, q);
+        by = lerp(tip.y, SPOT.y, q) - 150 * Math.sin(Math.PI * q);
       }
-    } else if (t < T.wait) {
-      once("plop", () => { sfxPlop(); addRipple(); });
-      ang = 48; bend = 0;
-      bx = SPOT.x; by = SPOT.y + 3 * Math.sin(t / 110);
-      if (t > T.cast + 350) once("rip2", addRipple);
-    } else if (t < T.bite) {
-      once("bite", () => { sfxBite(); bang.setAttribute("opacity", "1"); });
-      const p = (t - T.wait) / (T.bite - T.wait);
+      if (p >= 1) go("wait");
+    } else if (state === "wait") {
+      once("plop", () => { sfxPlop(); addRipple(SPOT.x); });
+      by = SPOT.y + 3 * Math.sin(now / 110);
+      // かげが よってくる
+      shadow.setAttribute("opacity", String(Math.min(0.8, t / 900)));
+      setShadow(SPOT.x + 50 - 50 * Math.min(1, t / 900), SPOT.y + 26, 0);
+      if (t > 400) once("rip2", () => addRipple(SPOT.x));
+      if (t > 950) go("bite");
+    } else if (state === "bite") {
+      once("bite", () => { sfxBite(); bang.setAttribute("opacity", "1"); addRipple(SPOT.x); });
+      const p = t / 550;
       bang.setAttribute("transform", `translate(${SPOT.x} ${WATER - 60}) scale(${1 + 0.25 * Math.sin(p * Math.PI * 4)}) translate(${-SPOT.x} ${-(WATER - 60)})`);
-      ang = 48 - 4 * Math.sin(p * Math.PI * 6); bend = 10;
-      bx = SPOT.x + 3 * Math.sin(t / 25); by = SPOT.y + 12 + 4 * Math.sin(t / 40);
-      once("rip3", addRipple);
-    } else if (t < T.reel) {
-      once("reel", () => { sfxReel(); bang.setAttribute("opacity", "0"); });
-      const p = (t - T.bite) / (T.reel - T.bite);
-      ang = lerp(48, 78, ease(p)); bend = 34 * Math.sin(Math.PI * Math.min(1, p * 1.2));
+      ang = 48 - 4 * Math.sin(p * Math.PI * 6); bend = 12;
+      bx = SPOT.x + 3 * Math.sin(now / 25); by = SPOT.y + 12 + 4 * Math.sin(now / 40);
+      setShadow(SPOT.x, SPOT.y + 24, Math.sin(now / 60) * 8);
+      if (t > 550) {
+        bang.setAttribute("opacity", "0");
+        $("fsHint").classList.add("hidden");
+        fightUI.classList.remove("hidden");
+        tapP.classList.remove("hidden");
+        go("fight");
+      }
+    } else if (state === "fight") {
+      // さかなが ひっぱる(すこし もどる)。タップで すすむ
+      if (!landed) progress = Math.max(0, progress - F.back * dt);
+      kick = Math.max(0, kick - dt * 4);
+      shake = Math.max(0, shake - dt * 3);
+      const q = progress / 100;
+      const swim = F.swim * (1 - q * 0.5);
+      const fx = lerp(SPOT.x, NEAR.x, q) + Math.sin(now / (260 - sp.tier * 25)) * swim;
+      const fy = lerp(SPOT.y + 24, NEAR.y, q) + Math.cos(now / 330) * 5;
+      setShadow(fx, fy, Math.cos(now / (260 - sp.tier * 25)) * 18);
+      jumpFrom = { x: fx, y: fy };
       showBob = false;
+      lineTo = { x: fx - 30 * F.shadow, y: WATER + 2 };
+      ang = 50 + 22 * q - 6 * kick; bend = 22 + 20 * kick + sp.tier * 3;
+      if (Math.random() < dt * (1.5 + sp.tier)) addRipple(fx);
+      tapP.classList.toggle("idle", now - lastTap > 1200);
+      fill.style.width = progress + "%";
+      meterFish.style.left = progress + "%";
+      if (landed) {
+        fightUI.classList.add("hidden");
+        tapP.classList.add("hidden");
+        shadow.setAttribute("opacity", "0");
+        go("jump");
+      }
+    } else if (state === "jump") {
       // さかなが うみから とびだして まんなかへ
+      once("jump", () => { sfxPlop(); spawnSplash(); });
+      const p = Math.min(1, t / 800);
       const q = ease(p);
-      const fx = lerp(SPOT.x, 130, q);
-      const fy = lerp(SPOT.y, 175, q) - 90 * Math.sin(Math.PI * q);
-      const sc = lerp(0.6, 1.5, q);
-      const rot = lerp(-40, 360 + 10, q);
+      const fx = lerp(jumpFrom.x, 130, q);
+      const fy = lerp(jumpFrom.y, 175, q) - 90 * Math.sin(Math.PI * q);
       fishG.setAttribute("opacity", "1");
-      fishG.setAttribute("transform", `translate(${fx} ${fy}) rotate(${rot}) scale(${sc})`);
-      bx = fx; by = fy;
-      if (p > 0.05) once("splash", () => { sfxPlop(); spawnSplash(); });
+      fishG.setAttribute("transform", `translate(${fx} ${fy}) rotate(${lerp(-40, 370, q)}) scale(${lerp(0.6, 1.5, q)})`);
+      showBob = false;
+      lineTo = { x: fx, y: fy };
+      ang = lerp(72, 82, q); bend = 30 * (1 - q);
       updateSplash(p);
-      reel.setAttribute("transform", `rotate(${t} ${ROD_BASE.x + 26} ${ROD_BASE.y - 30})`);
+      if (p >= 1) { showResult(); return; }
     } else {
-      showResult();
       return;
     }
+
     const r = rodPath(ang, bend);
     rod.setAttribute("d", r.d);
-    const sag = t < T.cast ? 0 : 26;
-    line.setAttribute("d", `M ${r.tip.x} ${r.tip.y} Q ${(r.tip.x + bx) / 2} ${(r.tip.y + by) / 2 + sag} ${bx} ${by}`);
+    const end = lineTo || { x: bx, y: by };
+    const sag = state === "cast" ? 0 : state === "fight" || state === "jump" ? 6 : 26;
+    line.setAttribute("d", `M ${r.tip.x} ${r.tip.y} Q ${(r.tip.x + end.x) / 2} ${(r.tip.y + end.y) / 2 + sag} ${end.x} ${end.y}`);
     bob.setAttribute("opacity", showBob ? "1" : "0");
     bob.setAttribute("transform", `translate(${bx} ${by})`);
+    handle.setAttribute("transform", `rotate(${reelRot})`);
+    scene.style.transform = shake > 0 ? `translate(${(Math.random() - 0.5) * 8 * shake}px, ${(Math.random() - 0.5) * 8 * shake}px)` : "";
     raf = requestAnimationFrame(frame);
   }
 
-  function addRipple() {
+  function setShadow(x, y, rot) {
+    shadow.setAttribute("transform", `translate(${x} ${y}) rotate(${rot}) scale(${F.shadow})`);
+  }
+  function addRipple(x) {
     const e = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-    e.setAttribute("cx", SPOT.x); e.setAttribute("cy", SPOT.y + 6);
+    e.setAttribute("cx", x); e.setAttribute("cy", WATER + 6);
     e.setAttribute("class", "ripple");
     ripples.appendChild(e);
+    if (ripples.childNodes.length > 8) ripples.removeChild(ripples.firstChild);
   }
   function spawnSplash() {
     splash.innerHTML = drops.map(() => `<circle r="4" fill="#dff3ff"/>`).join("");
@@ -333,20 +404,35 @@ function playCatch(correct, n, caught, onDone) {
     const cs = splash.querySelectorAll("circle");
     cs.forEach((c, i) => {
       const d = drops[i];
-      const tt = Math.min(1, p * 1.6);
-      c.setAttribute("cx", SPOT.x + Math.cos(d.a) * d.v * tt * (i % 2 ? 1 : -1));
-      c.setAttribute("cy", SPOT.y - Math.sin(d.a) * d.v * tt + 120 * tt * tt);
+      const tt = Math.min(1, p * 1.5);
+      c.setAttribute("cx", jumpFrom.x + Math.cos(d.a) * d.v * tt * (i % 2 ? 1 : -1));
+      c.setAttribute("cy", WATER - Math.sin(d.a) * d.v * tt + 120 * tt * tt);
       c.setAttribute("opacity", String(1 - tt));
     });
+  }
+
+  function tap(e) {
+    if (e.target.closest(".catch-card")) return;
+    e.preventDefault();
+    if (state === "fight") {
+      progress = Math.min(100, progress + F.step);
+      if (progress >= 100) landed = true;   // つぎの フレームで もどる まえに きめる
+      kick = 1;
+      reelRot += 55;
+      lastTap = performance.now();
+      if (sp.tier >= 3) shake = Math.min(1, shake + 0.35);
+      sfxTick();
+    } else if (state === "cast" || state === "wait") {
+      go("bite");                      // まちきれない ときは すぐ 「!」へ
+    }
   }
 
   function showResult() {
     if (finished) return;
     finished = true;
     cancelAnimationFrame(raf);
-    ov.removeEventListener("click", skip);
-    $("fsHint").classList.add("hidden");
-    bang.setAttribute("opacity", "0");
+    ov.removeEventListener("pointerdown", tap);
+    scene.style.transform = "";
     const big = sp.tier >= 3 || catchResult.lucky;
     sfxCatch(big);
     const tier = FISH_TIERS[sp.tier];
@@ -378,11 +464,7 @@ function playCatch(correct, n, caught, onDone) {
     }, { once: true });
   }
 
-  function skip(e) {
-    if (e.target.closest(".catch-card")) return;
-    showResult();
-  }
-  ov.addEventListener("click", skip);
+  ov.addEventListener("pointerdown", tap);
   raf = requestAnimationFrame(frame);
   return catchResult;
 }
