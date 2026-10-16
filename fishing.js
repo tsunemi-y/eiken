@@ -1,81 +1,104 @@
 /* =========================================================
    fishing.js - つりの しかけ
-   ・せいかいすう(きょう 「おぼえた」を おした かず)で つれる さかなが かわる
+   ・1かい(さいだい 10もん)の せいかいりつ で つれる さかなが きまる
+     (なんかい やっても せいかいりつが ひくいと こざかな しか つれない)
    ・つった さかなは ずかんに のこる
-   ・「おぼえた」を おすと つりの アニメが 出る
    ========================================================= */
 
-/* きょう なんもんめの せいかいか で、でる さかなの ランクが きまる。
-   1もんめから こざかな、30もんを こえると でんせつ。 */
+/* せいかいりつ で ランクが きまる。acc = この りつ いじょう、minN = この もんだいすう いじょうの 回で ないと でない
+   (2もんだけ やって 100% で でんせつ、を ふせぐ) */
 const FISH_TIERS = [
-  { at: 1,  name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
-  { at: 4,  name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
-  { at: 8,  name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
-  { at: 13, name: "おおもの",   ic: "💪", color: "#e8590c" },
-  { at: 20, name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
-  { at: 30, name: "でんせつ",   ic: "👑", color: "#b8860b" },
+  { acc: 0,    minN: 1,  name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
+  { acc: 0.4,  minN: 1,  name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
+  { acc: 0.6,  minN: 3,  name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
+  { acc: 0.75, minN: 5,  name: "おおもの",   ic: "💪", color: "#e8590c" },
+  { acc: 0.9,  minN: 7,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
+  { acc: 1,    minN: 10, name: "でんせつ",   ic: "👑", color: "#b8860b" },
 ];
+const ROUND_MAX = 10;   // 1かいの もんだいすう
 
 /* h = からだの たかさ、pat = もよう、shape = かたち */
 const FISH = [
   // こざかな
-  { id: "haze",   name: "ハゼ",       tier: 0, min: 8,  max: 15,  back: "#9c7f58", belly: "#efe4cc", fin: "#7d6444", h: 9,  pat: "spots" },
-  { id: "iwashi", name: "イワシ",     tier: 0, min: 10, max: 18,  back: "#35577f", belly: "#eef3f7", fin: "#8fa6bd", h: 9,  pat: "dots" },
-  { id: "mameaji",name: "まめアジ",   tier: 0, min: 6,  max: 12,  back: "#5f8798", belly: "#f1f4ef", fin: "#d9c46a", h: 11 },
-  { id: "kisu",   name: "キス",       tier: 0, min: 12, max: 22,  back: "#dcc79a", belly: "#fbf7ec", fin: "#e9dcb8", h: 8 },
+  { id: "haze",    name: "ハゼ",         tier: 0, min: 8,  max: 15,  back: "#9c7f58", belly: "#efe4cc", fin: "#7d6444", h: 9,  pat: "spots" },
+  { id: "iwashi",  name: "イワシ",       tier: 0, min: 10, max: 18,  back: "#35577f", belly: "#eef3f7", fin: "#8fa6bd", h: 9,  pat: "dots" },
+  { id: "mameaji", name: "まめアジ",     tier: 0, min: 6,  max: 12,  back: "#5f8798", belly: "#f1f4ef", fin: "#d9c46a", h: 11 },
+  { id: "kisu",    name: "キス",         tier: 0, min: 12, max: 22,  back: "#dcc79a", belly: "#fbf7ec", fin: "#e9dcb8", h: 8 },
+  { id: "tanago",  name: "ウミタナゴ",   tier: 0, min: 12, max: 22,  back: "#a3876b", belly: "#e9dccd", fin: "#8a6f55", h: 15 },
+  { id: "suzume",  name: "スズメダイ",   tier: 0, min: 8,  max: 14,  back: "#3b5bdb", belly: "#91a7ff", fin: "#364fc7", h: 15 },
+  { id: "bera",    name: "キュウセン",   tier: 0, min: 12, max: 24,  back: "#5c940d", belly: "#ffd8a8", fin: "#e8590c", h: 9,  pat: "hstripes" },
+  { id: "nenbutsu",name: "ネンブツダイ", tier: 0, min: 6,  max: 11,  back: "#f08c00", belly: "#ffe8cc", fin: "#e67700", h: 14, pat: "line" },
   // ちゅうもの
-  { id: "aji",    name: "アジ",       tier: 1, min: 18, max: 32,  back: "#4f7f93", belly: "#f1f4ef", fin: "#d9c46a", h: 12, pat: "line" },
-  { id: "saba",   name: "サバ",       tier: 1, min: 20, max: 38,  back: "#2a6b78", belly: "#eef3f5", fin: "#4d7f88", h: 11, pat: "wavy" },
-  { id: "kasago", name: "カサゴ",     tier: 1, min: 12, max: 26,  back: "#b4472f", belly: "#f4c9a8", fin: "#9c3a26", h: 16, pat: "spots" },
-  { id: "mebaru", name: "メバル",     tier: 1, min: 15, max: 28,  back: "#5b4c42", belly: "#d9c9b8", fin: "#4a3d35", h: 15 },
+  { id: "aji",     name: "アジ",         tier: 1, min: 18, max: 32,  back: "#4f7f93", belly: "#f1f4ef", fin: "#d9c46a", h: 12, pat: "line" },
+  { id: "saba",    name: "サバ",         tier: 1, min: 20, max: 38,  back: "#2a6b78", belly: "#eef3f5", fin: "#4d7f88", h: 11, pat: "wavy" },
+  { id: "kasago",  name: "カサゴ",       tier: 1, min: 12, max: 26,  back: "#b4472f", belly: "#f4c9a8", fin: "#9c3a26", h: 16, pat: "spots" },
+  { id: "mebaru",  name: "メバル",       tier: 1, min: 15, max: 28,  back: "#5b4c42", belly: "#d9c9b8", fin: "#4a3d35", h: 15 },
+  { id: "kawahagi",name: "カワハギ",     tier: 1, min: 15, max: 28,  back: "#a1896b", belly: "#e3d5bf", fin: "#8a7357", h: 18, pat: "spots" },
+  { id: "fugu",    name: "クサフグ",     tier: 1, min: 10, max: 20,  emoji: "🐡" },
+  { id: "sayori",  name: "サヨリ",       tier: 1, min: 20, max: 38,  back: "#5c7f99", belly: "#f4f8fa", fin: "#adb5bd", h: 5,  shape: "long" },
+  { id: "ishimochi",name: "イシモチ",    tier: 1, min: 18, max: 32,  back: "#ced4da", belly: "#f8f9fa", fin: "#adb5bd", h: 12 },
   // いいサイズ
-  { id: "chinu",  name: "チヌ",       tier: 2, min: 25, max: 50,  back: "#4f5864", belly: "#d7dde3", fin: "#3b434c", h: 17 },
-  { id: "tachiuo",name: "タチウオ",   tier: 2, min: 70, max: 120, back: "#c9d3dc", belly: "#f4f7fa", fin: "#aab7c3", h: 6, shape: "long" },
-  { id: "ika",    name: "アオリイカ", tier: 2, min: 20, max: 40,  emoji: "🦑" },
-  { id: "karei",  name: "カレイ",     tier: 2, min: 20, max: 40,  back: "#8a6d4c", belly: "#e6d8c2", fin: "#715839", h: 20, pat: "spots", shape: "flat" },
+  { id: "chinu",   name: "チヌ",         tier: 2, min: 25, max: 50,  back: "#4f5864", belly: "#d7dde3", fin: "#3b434c", h: 17 },
+  { id: "tachiuo", name: "タチウオ",     tier: 2, min: 70, max: 120, back: "#c9d3dc", belly: "#f4f7fa", fin: "#aab7c3", h: 6,  shape: "long" },
+  { id: "ika",     name: "アオリイカ",   tier: 2, min: 20, max: 40,  emoji: "🦑" },
+  { id: "karei",   name: "カレイ",       tier: 2, min: 20, max: 40,  back: "#8a6d4c", belly: "#e6d8c2", fin: "#715839", h: 20, pat: "spots", shape: "flat" },
+  { id: "ainame",  name: "アイナメ",     tier: 2, min: 25, max: 45,  back: "#8f5e2e", belly: "#e8c99b", fin: "#76491f", h: 11, pat: "spots" },
+  { id: "gure",    name: "グレ",         tier: 2, min: 25, max: 50,  back: "#2b3a42", belly: "#5a6b75", fin: "#22303a", h: 17 },
+  { id: "kamasu",  name: "カマス",       tier: 2, min: 25, max: 45,  back: "#7a8b6f", belly: "#f1f3ed", fin: "#d4b648", h: 7 },
+  { id: "isaki",   name: "イサキ",       tier: 2, min: 25, max: 45,  back: "#6b7a5a", belly: "#dfe4d3", fin: "#5a6849", h: 13, pat: "hstripes" },
   // おおもの
-  { id: "madai",  name: "マダイ",     tier: 3, min: 30, max: 70,  back: "#e2697f", belly: "#fbe3e7", fin: "#d1495f", h: 17, pat: "dots" },
-  { id: "hamachi",name: "ハマチ",     tier: 3, min: 40, max: 65,  back: "#33648a", belly: "#f1f5f8", fin: "#e3c341", h: 11, pat: "band" },
-  { id: "hirame", name: "ヒラメ",     tier: 3, min: 35, max: 75,  back: "#7a6248", belly: "#e3d6c4", fin: "#5f4b36", h: 21, pat: "spots", shape: "flat" },
-  { id: "suzuki", name: "スズキ",     tier: 3, min: 45, max: 90,  back: "#5e6f7c", belly: "#eef2f5", fin: "#4b5965", h: 12 },
+  { id: "madai",   name: "マダイ",       tier: 3, min: 30, max: 70,  back: "#e2697f", belly: "#fbe3e7", fin: "#d1495f", h: 17, pat: "dots" },
+  { id: "hamachi", name: "ハマチ",       tier: 3, min: 40, max: 65,  back: "#33648a", belly: "#f1f5f8", fin: "#e3c341", h: 11, pat: "band" },
+  { id: "hirame",  name: "ヒラメ",       tier: 3, min: 35, max: 75,  back: "#7a6248", belly: "#e3d6c4", fin: "#5f4b36", h: 21, pat: "spots", shape: "flat" },
+  { id: "suzuki",  name: "スズキ",       tier: 3, min: 45, max: 90,  back: "#5e6f7c", belly: "#eef2f5", fin: "#4b5965", h: 12 },
+  { id: "sawara",  name: "サワラ",       tier: 3, min: 50, max: 100, back: "#4a6d8c", belly: "#eef3f7", fin: "#3d5a73", h: 8,  pat: "dots" },
+  { id: "ishidai", name: "イシダイ",     tier: 3, min: 30, max: 60,  back: "#dee2e6", belly: "#f8f9fa", fin: "#343a40", h: 18, pat: "band2" },
+  { id: "magochi", name: "マゴチ",       tier: 3, min: 40, max: 70,  back: "#8c7b62", belly: "#ece4d6", fin: "#72634d", h: 7,  pat: "spots" },
+  { id: "akahata", name: "アカハタ",     tier: 3, min: 25, max: 45,  back: "#e03131", belly: "#ffc9c9", fin: "#c92a2a", h: 15, pat: "band2" },
   // かいぶつ
-  { id: "katsuo", name: "カツオ",     tier: 4, min: 45, max: 80,  back: "#1f3f68", belly: "#e9eef3", fin: "#2e5684", h: 14, pat: "belly" },
-  { id: "shiira", name: "シイラ",     tier: 4, min: 70, max: 130, back: "#2f9e5c", belly: "#f5d742", fin: "#2b8a4e", h: 15, pat: "dots", shape: "bump" },
-  { id: "kue",    name: "クエ",       tier: 4, min: 50, max: 110, back: "#6b5440", belly: "#c9b49c", fin: "#55412f", h: 18, pat: "band2" },
-  { id: "tako",   name: "マダコ",     tier: 4, min: 40, max: 80,  emoji: "🐙" },
+  { id: "katsuo",  name: "カツオ",       tier: 4, min: 45, max: 80,  back: "#1f3f68", belly: "#e9eef3", fin: "#2e5684", h: 14, pat: "belly" },
+  { id: "shiira",  name: "シイラ",       tier: 4, min: 70, max: 130, back: "#2f9e5c", belly: "#f5d742", fin: "#2b8a4e", h: 15, pat: "dots", shape: "bump" },
+  { id: "kue",     name: "クエ",         tier: 4, min: 50, max: 110, back: "#6b5440", belly: "#c9b49c", fin: "#55412f", h: 18, pat: "band2" },
+  { id: "tako",    name: "マダコ",       tier: 4, min: 40, max: 80,  emoji: "🐙" },
+  { id: "buri",    name: "ブリ",         tier: 4, min: 80, max: 110, back: "#2c5f8a", belly: "#f1f5f8", fin: "#e3c341", h: 13, pat: "band" },
+  { id: "hiramasa",name: "ヒラマサ",     tier: 4, min: 80, max: 140, back: "#3d6e8f", belly: "#f3f6f8", fin: "#f0c94a", h: 12, pat: "band" },
+  { id: "kanpachi",name: "カンパチ",     tier: 4, min: 60, max: 120, back: "#8a6b4f", belly: "#f1ece4", fin: "#b08b4f", h: 14, pat: "line" },
+  { id: "utsubo",  name: "ウツボ",       tier: 4, min: 60, max: 100, back: "#7a5c2e", belly: "#c9a66b", fin: "#5c4520", h: 7,  shape: "long", pat: "spots" },
   // でんせつ
-  { id: "maguro", name: "クロマグロ", tier: 5, min: 120, max: 260, back: "#1b3354", belly: "#dfe7ef", fin: "#f0c419", h: 15, pat: "finlets" },
-  { id: "kajiki", name: "カジキ",     tier: 5, min: 150, max: 320, back: "#26507e", belly: "#e3ebf3", fin: "#1d3f66", h: 12, shape: "bill" },
-  { id: "ryugu",  name: "リュウグウノツカイ", tier: 5, min: 200, max: 500, back: "#d6dde4", belly: "#f6f8fa", fin: "#e03131", h: 6, shape: "long", pat: "redfin" },
-  { id: "kintai", name: "おうごんの マダイ", tier: 5, min: 50, max: 90, back: "#e0a800", belly: "#fff3bf", fin: "#c68a00", h: 17, pat: "shine" },
+  { id: "maguro",  name: "クロマグロ",   tier: 5, min: 120, max: 260, back: "#1b3354", belly: "#dfe7ef", fin: "#f0c419", h: 15, pat: "finlets" },
+  { id: "kajiki",  name: "カジキ",       tier: 5, min: 150, max: 320, back: "#26507e", belly: "#e3ebf3", fin: "#1d3f66", h: 12, shape: "bill" },
+  { id: "ryugu",   name: "リュウグウノツカイ", tier: 5, min: 200, max: 500, back: "#d6dde4", belly: "#f6f8fa", fin: "#e03131", h: 6, shape: "long", pat: "redfin" },
+  { id: "kintai",  name: "おうごんの マダイ", tier: 5, min: 50, max: 90, back: "#e0a800", belly: "#fff3bf", fin: "#c68a00", h: 17, pat: "shine" },
+  { id: "coela",   name: "シーラカンス", tier: 5, min: 120, max: 200, back: "#364fc7", belly: "#748ffc", fin: "#2b3a9e", h: 15, pat: "dots" },
+  { id: "manbo",   name: "マンボウ",     tier: 5, min: 150, max: 330, back: "#868e96", belly: "#dee2e6", fin: "#6c757d", h: 24, shape: "flat" },
+  { id: "same",    name: "ホホジロザメ", tier: 5, min: 300, max: 600, emoji: "🦈" },
+  { id: "daiou",   name: "ダイオウイカ", tier: 5, min: 500, max: 1200, emoji: "🦑", glow: true },
 ];
 const FISH_BY_ID = new Map(FISH.map((f) => [f.id, f]));
 
-function tierFor(k) {
+/* 1かいの けっか(correct / n)で でる ランク */
+function tierFor(correct, n) {
+  const acc = n ? correct / n : 0;
   let t = 0;
-  FISH_TIERS.forEach((x, i) => { if (k >= x.at) t = i; });
+  FISH_TIERS.forEach((x, i) => { if (acc >= x.acc - 1e-9 && n >= x.minN) t = i; });
   return t;
 }
-/* つぎの ランクまで あと なんもん */
-function toNextTier(k) {
-  const t = tierFor(k);
-  if (t >= FISH_TIERS.length - 1) return null;
-  return { left: FISH_TIERS[t + 1].at - k, tier: FISH_TIERS[t + 1] };
-}
 
-/* k もんめの せいかいで つれる さかなを きめる。
-   ときどき(12%)ひとつ うえの ランクが かかる「ラッキー」つき。
+/* 1かいの けっかで つれる さかなを きめる。
+   ときどき(10%)ひとつ うえの ランクが かかる「ラッキー」つき。
+   せいかいりつが たかいほど、おなじ さかなでも おおきく なりやすい。
    まだ つっていない さかなが いれば、すこし でやすく して ずかんを うめやすく する。 */
-function rollFish(k, caught) {
-  let t = tierFor(k);
+function rollFish(correct, n, caught) {
+  let t = tierFor(correct, n);
   let lucky = false;
-  if (t < FISH_TIERS.length - 1 && Math.random() < 0.12) { t++; lucky = true; }
+  if (t < FISH_TIERS.length - 1 && Math.random() < 0.1) { t++; lucky = true; }
   const pool = FISH.filter((f) => f.tier === t);
   const fresh = pool.filter((f) => !caught[f.id]);
   const from = fresh.length && Math.random() < 0.5 ? fresh : pool;
   const sp = from[(Math.random() * from.length) | 0];
-  const size = Math.round(sp.min + (sp.max - sp.min) * Math.pow(Math.random(), 1.4));
-  return { sp, size, lucky };
+  const acc = n ? correct / n : 0;
+  const size = Math.round(sp.min + (sp.max - sp.min) * Math.pow(Math.random(), 1.8 - acc));
+  return { sp, size, lucky, tier: t };
 }
 
 /* ---------- さかなの え(SVG) ----------
@@ -83,7 +106,8 @@ function rollFish(k, caught) {
 let fishUid = 0;
 function fishInner(sp, sil) {
   if (sp.emoji) {
-    return `<text x="60" y="44" font-size="46" text-anchor="middle"${sil ? ' style="filter:brightness(0);opacity:.22"' : ""}>${sp.emoji}</text>`;
+    const st = sil ? "filter:brightness(0);opacity:.22" : sp.glow ? "filter:hue-rotate(160deg) saturate(1.6)" : "";
+    return `<text x="60" y="44" font-size="46" text-anchor="middle"${st ? ` style="${st}"` : ""}>${sp.emoji}</text>`;
   }
   const id = "fg" + (++fishUid);
   const H = sp.h;
@@ -123,6 +147,7 @@ function fishInner(sp, sil) {
     if (sp.pat === "wavy") for (let i = 0; i < 5; i++) g.push(`<path d="M ${30 + i * 11} ${30 - H} q 3 4 0 8 q -3 4 0 7" stroke="rgba(0,0,0,.35)" stroke-width="1.4" fill="none"/>`);
     if (sp.pat === "line") g.push(`<path d="M 32 29 Q 60 26 96 30" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/>`);
     if (sp.pat === "band") g.push(`<rect x="10" y="${28 - H * 0.15}" width="100" height="2.6" fill="#f5d742"/>`);
+    if (sp.pat === "hstripes") for (let i = 0; i < 3; i++) g.push(`<rect x="10" y="${30 - H * 0.55 + i * H * 0.4}" width="100" height="1.6" fill="rgba(0,0,0,.28)"/>`);
     if (sp.pat === "band2") for (let i = 0; i < 4; i++) g.push(`<rect x="${30 + i * 16}" y="0" width="6" height="60" fill="rgba(0,0,0,.18)"/>`);
     if (sp.pat === "belly") for (let i = 0; i < 4; i++) g.push(`<rect x="10" y="${31 + i * 3}" width="100" height="1.2" fill="rgba(31,63,104,.45)"/>`);
     if (sp.pat === "finlets") for (let i = 0; i < 5; i++) g.push(`<path d="M ${74 + i * 4} ${30 - H * 0.55} l 2 -3 l 1 3 Z" fill="#f0c419"/>`);
@@ -205,10 +230,10 @@ function rodPath(angleDeg, bend) {
 }
 
 let fishingBusy = false;
-/* k = きょう なんもんめの せいかいか。 onDone は けっかを とじた あとに よぶ */
-function playCatch(k, caught, onDone) {
+/* correct / n = この 1かいの せいかいすう / もんだいすう。onDone は けっかを とじた あとに よぶ */
+function playCatch(correct, n, caught, onDone) {
   const ov = ensureOverlay();
-  const catchResult = rollFish(k, caught);
+  const catchResult = rollFish(correct, n, caught);
   const { sp } = catchResult;
   const isNew = !caught[sp.id];   // よびだしがわが すぐ ずかんに きろく するので、さきに きめておく
   fishingBusy = true;
@@ -325,7 +350,13 @@ function playCatch(k, caught, onDone) {
     const big = sp.tier >= 3 || catchResult.lucky;
     sfxCatch(big);
     const tier = FISH_TIERS[sp.tier];
-    const nx = toNextTier(k);
+    const pct = Math.round((correct / n) * 100);
+    const nextT = FISH_TIERS[Math.min(FISH_TIERS.length - 1, tierFor(correct, n) + 1)];
+    const hint = tierFor(correct, n) >= FISH_TIERS.length - 1
+      ? "👑 パーフェクト! でんせつの うみ!"
+      : n < nextT.minN
+        ? `${nextT.minN}もん いじょうの 回で ${nextT.ic} ${nextT.name} が ねらえる`
+        : `つぎは ${Math.round(nextT.acc * 100)}% いじょうで ${nextT.ic} ${nextT.name}!`;
     card.innerHTML = `
       <div class="cc-badges">
         ${isNew ? '<span class="cc-new">NEW!</span>' : ""}
@@ -335,7 +366,8 @@ function playCatch(k, caught, onDone) {
       <div class="cc-fish">${fishSVG(sp, false, "big")}</div>
       <div class="cc-title">${sp.name} が つれた!</div>
       <div class="cc-size"><b>${catchResult.size}</b> cm</div>
-      <div class="cc-sub">きょう ${k}ひきめ${nx ? ` ・ あと <b>${nx.left}</b>もんで 「${nx.tier.ic} ${nx.tier.name}」が でるかも` : " ・ でんせつ タイム!"}</div>
+      <div class="cc-score">${n}もん ちゅう <b>${correct}</b>もん せいかい(<b>${pct}</b>%)</div>
+      <div class="cc-sub">${hint}</div>
       <button class="cc-btn" id="ccNext">つぎへ ▶</button>`;
     card.classList.remove("hidden");
     $("ccNext").addEventListener("click", (e) => {
