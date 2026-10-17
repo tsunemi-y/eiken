@@ -1,7 +1,8 @@
 /* =========================================================
    fishing.js - つりの しかけ
-   ・1かい(さいだい 10もん)の せいかいりつ で つれる さかなが きまる
-     (なんかい やっても せいかいりつが ひくいと こざかな しか つれない)
+   ・せいかい(⭕)する たびに 1ぴき つる
+   ・つれる さかなは その 回(さいだい 10もん)の ここまでの せいかいりつ で きまる
+     (まちがえずに つづけるほど おおもの。かずを かさねる だけでは おおきく ならない)
    ・つった さかなは ずかんに のこる
    ========================================================= */
 
@@ -187,13 +188,14 @@ const SPOT = { x: 196, y: WATER + 16 };
 const NEAR = { x: 92, y: WATER + 34 };            // まききった ときの さかなの いち
 /* ランクごとの てごたえ: step = 1タップで すすむ %、back = 1びょうで もどる %、
    swim = あばれる はば、shadow = かげの おおきさ */
+/* せいかい する たびに つるので、1かいの まきあげは かるめ(こざかな 約4タップ 〜 でんせつ 約14タップ) */
 const FIGHT = [
-  { step: 18,  back: 3,  swim: 14, shadow: 0.55 },
-  { step: 14,  back: 5,  swim: 18, shadow: 0.7 },
-  { step: 11,  back: 7,  swim: 24, shadow: 0.85 },
-  { step: 8.5, back: 9,  swim: 30, shadow: 1.05 },
-  { step: 7,   back: 11, swim: 36, shadow: 1.25 },
-  { step: 5.5, back: 12, swim: 42, shadow: 1.5 },
+  { step: 27, back: 3,  swim: 14, shadow: 0.55 },
+  { step: 21, back: 5,  swim: 18, shadow: 0.7 },
+  { step: 16, back: 7,  swim: 24, shadow: 0.85 },
+  { step: 13, back: 8,  swim: 30, shadow: 1.05 },
+  { step: 10, back: 9,  swim: 36, shadow: 1.25 },
+  { step: 8,  back: 10, swim: 42, shadow: 1.5 },
 ];
 const sfxTick = () => beep(420 + Math.random() * 80, 0.035, "square", 0.035);
 
@@ -437,12 +439,13 @@ function playCatch(correct, n, caught, onDone) {
     sfxCatch(big);
     const tier = FISH_TIERS[sp.tier];
     const pct = Math.round((correct / n) * 100);
-    const nextT = FISH_TIERS[Math.min(FISH_TIERS.length - 1, tierFor(correct, n) + 1)];
-    const hint = tierFor(correct, n) >= FISH_TIERS.length - 1
+    // つぎも ⭕ だったら ランクが あがるか
+    const nowT = tierFor(correct, n), ifOk = tierFor(correct + 1, n + 1);
+    const hint = nowT >= FISH_TIERS.length - 1
       ? "👑 パーフェクト! でんせつの うみ!"
-      : n < nextT.minN
-        ? `${nextT.minN}もん いじょうの 回で ${nextT.ic} ${nextT.name} が ねらえる`
-        : `つぎは ${Math.round(nextT.acc * 100)}% いじょうで ${nextT.ic} ${nextT.name}!`;
+      : ifOk > nowT
+        ? `つぎも ⭕ なら ${FISH_TIERS[ifOk].ic} ${FISH_TIERS[ifOk].name} が でるかも!`
+        : "まちがえずに つづけるほど おおものに なるよ";
     card.innerHTML = `
       <div class="cc-badges">
         ${isNew ? '<span class="cc-new">NEW!</span>' : ""}
@@ -452,7 +455,7 @@ function playCatch(correct, n, caught, onDone) {
       <div class="cc-fish">${fishSVG(sp, false, "big")}</div>
       <div class="cc-title">${sp.name} が つれた!</div>
       <div class="cc-size"><b>${catchResult.size}</b> cm</div>
-      <div class="cc-score">${n}もん ちゅう <b>${correct}</b>もん せいかい(<b>${pct}</b>%)</div>
+      <div class="cc-score">この 回 ${n}もん ちゅう <b>${correct}</b>もん せいかい(<b>${pct}</b>%)</div>
       <div class="cc-sub">${hint}</div>
       <button class="cc-btn" id="ccNext">つぎへ ▶</button>`;
     card.classList.remove("hidden");

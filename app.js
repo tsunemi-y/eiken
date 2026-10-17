@@ -143,7 +143,7 @@ function dueIds(w) {
 
 /* ---------- つり ----------
    せいかい(カードの「おぼえた」・ふくしゅうの「おぼえてた」)の たびに 1ぴき つる */
-/* 1かい おわったら、その 回の せいかいりつで 1ぴき つる */
+/* ⭕ の たびに 1ぴき つる。correct / n = この 回の ここまでの せいかいすう / こたえた かず */
 function catchFish(correct, n, onDone) {
   rollDay();
   const r = playCatch(correct, n, P.fish, () => onDone && onDone());
@@ -418,7 +418,7 @@ function renderCatchPanel() {
     </div>
     <div class="cp-right">
       <div class="cp-now">${b ? `いちばんは <span style="color:${FISH_TIERS[b.tier].color}">${FISH_TIERS[b.tier].ic} ${b.name} ${P.today.best.size}cm</span>` : "まだ つれてないよ"}</div>
-      <div class="cp-next">10もんで 1かい。<b>せいかいりつ</b>が たかいほど おおものが つれる!(100%で 👑)</div>
+      <div class="cp-next">⭕ で 1ぴき! 1かい(10もん)の なかで <b>まちがえずに つづける</b>ほど おおものが つれる(10もん ぜんぶ ⭕ で 👑)</div>
     </div>`;
 }
 
@@ -475,7 +475,7 @@ function renderBox(w) {
 /* ---------- ずかん ---------- */
 function renderZukan() {
   document.getElementById("zukanDesc").textContent =
-    `${fishKinds()} / ${FISH.length}しゅるい つったよ。1かい(10もん)の せいかいりつが たかいほど すごい さかなが でる!`;
+    `${fishKinds()} / ${FISH.length}しゅるい つったよ。⭕ で 1ぴき。1かいの なかで まちがえずに つづけるほど すごい さかなが でる!`;
   const body = document.getElementById("zukanBody");
   body.innerHTML = FISH_TIERS.map((t, ti) => {
     const cards = FISH.filter((f) => f.tier === ti).map((f) => {
@@ -487,7 +487,7 @@ function renderZukan() {
       </div>`;
     }).join("");
     return `<div class="zk-tier">
-      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>${ti === 0 ? "1かい やれば でる" : `1かいの せいかいりつ ${Math.round(t.acc * 100)}% いじょう${t.minN > 1 ? `(${t.minN}もん いじょうの 回)` : ""}`}</small></div>
+      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>${ti === 0 ? "⭕ で つれる" : `1かいの なかで ${t.minN}もん いじょう こたえて せいかいりつ ${Math.round(t.acc * 100)}% いじょう`}</small></div>
       <div class="zk-grid">${cards}</div></div>`;
   }).join("");
 }
@@ -693,10 +693,11 @@ function renderRoundBar() {
   }).join("");
   const done = L.results.length;
   const ok = L.results.filter(Boolean).length;
-  const t = FISH_TIERS[tierFor(ok + (n - done), n)];   // のこり ぜんぶ せいかい したら
+  const nx = FISH_TIERS[tierFor(ok + 1, done + 1)];          // つぎ ⭕ なら つれる ランク
+  const best = FISH_TIERS[tierFor(ok + (n - done), n)];     // のこり ぜんぶ ⭕ なら
   document.getElementById("roundBar").innerHTML =
     `<div class="rd-dots">${dots}</div>
-     <div class="rd-aim">${done === 0 ? `ぜんぶ ○ なら ${t.ic} ${t.name} が ねらえる!` : `いまから ぜんぶ ○ なら ${t.ic} ${t.name}`}</div>`;
+     <div class="rd-aim">${done >= n ? "" : `つぎ ⭕ なら ${nx.ic} ${nx.name}${best !== nx ? ` ・ さいごまで ぜんぶ ⭕ なら ${best.ic} ${best.name}` : ""}`}</div>`;
 }
 
 function visHTML(vis) {
@@ -818,13 +819,18 @@ function answerCard(ok) {
     markLearned(w.id);
   }
   L.results[L.i] = ok;
-  if (ok) sfxGraduate(); else sfxClick();
-  if (L.i < L.words.length - 1) { L.i++; renderCard(); return; }
-  // 1かい おわり → つり
   renderRoundBar();
-  const n = L.words.length;
+  const next = () => {
+    if (L.i < L.words.length - 1) { L.i++; renderCard(); return; }
+    const c = L.results.filter(Boolean).length;
+    advancement(`${L.words.length}もん ちゅう ${c}もん ⭕`, "🎣", "この 回 おわり!");
+    afterRound();
+  };
+  if (!ok) { sfxClick(); next(); return; }
+  // ⭕ の たびに 1ぴき。ランクは この 回の ここまでの せいかいりつ で きまる
+  const answered = L.results.filter((r) => r !== undefined).length;
   const correct = L.results.filter(Boolean).length;
-  catchFish(correct, n, afterRound);
+  catchFish(correct, answered, next);
 }
 document.getElementById("btnLearned").addEventListener("click", (e) => {
   if (e.currentTarget.disabled) return;
