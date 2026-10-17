@@ -143,10 +143,10 @@ function dueIds(w) {
 
 /* ---------- つり ----------
    せいかい(カードの「おぼえた」・ふくしゅうの「おぼえてた」)の たびに 1ぴき つる */
-/* ⭕ の たびに 1ぴき つる。correct / n = この 回の ここまでの せいかいすう / こたえた かず */
-function catchFish(correct, n, onDone) {
+/* 「おぼえた」の たびに 1ぴき つる。なにが つれるかは うんしだい */
+function catchFish(onDone) {
   rollDay();
-  const r = playCatch(correct, n, P.fish, () => onDone && onDone());
+  const r = playCatch(P.today.correct + 1, P.fish, () => onDone && onDone());
   const f = P.fish[r.sp.id] || { n: 0, max: 0 };
   P.fish[r.sp.id] = { n: f.n + 1, max: Math.max(f.max, r.size) };
   P.today.correct += 1;          // きょう つった かず
@@ -418,7 +418,7 @@ function renderCatchPanel() {
     </div>
     <div class="cp-right">
       <div class="cp-now">${b ? `いちばんは <span style="color:${FISH_TIERS[b.tier].color}">${FISH_TIERS[b.tier].ic} ${b.name} ${P.today.best.size}cm</span>` : "まだ つれてないよ"}</div>
-      <div class="cp-next">⭕ で 1ぴき! 1かい(10もん)の なかで <b>まちがえずに つづける</b>ほど おおものが つれる(10もん ぜんぶ ⭕ で 👑)</div>
+      <div class="cp-next">🎣 おぼえたら 1ぴき! なにが つれるかは <b>うんしだい</b>(👑 でんせつは 3%)</div>
     </div>`;
 }
 
@@ -475,7 +475,7 @@ function renderBox(w) {
 /* ---------- ずかん ---------- */
 function renderZukan() {
   document.getElementById("zukanDesc").textContent =
-    `${fishKinds()} / ${FISH.length}しゅるい つったよ。⭕ で 1ぴき。1かいの なかで まちがえずに つづけるほど すごい さかなが でる!`;
+    `${fishKinds()} / ${FISH.length}しゅるい つったよ。おぼえる たびに 1ぴき。なにが つれるかは うんしだい!`;
   const body = document.getElementById("zukanBody");
   body.innerHTML = FISH_TIERS.map((t, ti) => {
     const cards = FISH.filter((f) => f.tier === ti).map((f) => {
@@ -487,7 +487,7 @@ function renderZukan() {
       </div>`;
     }).join("");
     return `<div class="zk-tier">
-      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>${ti === 0 ? "⭕ で つれる" : `1かいの なかで ${t.minN}もん いじょう こたえて せいかいりつ ${Math.round(t.acc * 100)}% いじょう`}</small></div>
+      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>でる かくりつ ${t.rate}%</small></div>
       <div class="zk-grid">${cards}</div></div>`;
   }).join("");
 }
@@ -660,7 +660,7 @@ function startLearn(rangeId) {
     return;
   }
   logRange(rangeId);
-  L = { mode: "learn", range: rangeId, box: null, words: ws.slice(0, ROUND_MAX), i: 0, flipped: false, results: [] };
+  L = { mode: "learn", range: rangeId, box: null, words: ws, i: 0, flipped: false };
   document.getElementById("learnZoneTag").textContent = RANGES[rangeId - 1].title;
   setLearnButtons();
   show("learn");
@@ -672,7 +672,7 @@ function startLearn(rangeId) {
 function startReview(w) {
   const ws = orderIds(dueIds(w)).map((id) => WORD_BY_ID.get(id));
   if (ws.length === 0) { advancement("この ボックスは きょう ぜんぶ ふくしゅう したよ!", "🧊", "ばっちり"); show("home"); return; }
-  L = { mode: "review", range: null, box: w, words: ws.slice(0, ROUND_MAX), i: 0, flipped: false, results: [] };
+  L = { mode: "review", range: null, box: w, words: ws, i: 0, flipped: false };
   document.getElementById("learnZoneTag").textContent = `🧊 ${WD[w]}ようボックス ふくしゅう`;
   setLearnButtons();
   show("learn");
@@ -680,24 +680,8 @@ function startReview(w) {
 }
 function setLearnButtons() {
   const rv = L.mode === "review";
-  document.getElementById("learnedTitle").textContent = rv ? "⭕ おぼえてた!" : "⭕ おぼえた!";
-  document.getElementById("forgotTitle").textContent = rv ? "❌ わすれてた" : "❌ まだ";
-}
-
-/* この 回の せいかいの ようす(○×の ならび と いまの せいかいりつ) */
-function renderRoundBar() {
-  const n = L.words.length;
-  const dots = L.words.map((_, i) => {
-    const r = L.results[i];
-    return `<span class="rd ${r === true ? "ok" : r === false ? "ng" : i === L.i ? "now" : ""}">${r === true ? "○" : r === false ? "×" : ""}</span>`;
-  }).join("");
-  const done = L.results.length;
-  const ok = L.results.filter(Boolean).length;
-  const nx = FISH_TIERS[tierFor(ok + 1, done + 1)];          // つぎ ⭕ なら つれる ランク
-  const best = FISH_TIERS[tierFor(ok + (n - done), n)];     // のこり ぜんぶ ⭕ なら
-  document.getElementById("roundBar").innerHTML =
-    `<div class="rd-dots">${dots}</div>
-     <div class="rd-aim">${done >= n ? "" : `つぎ ⭕ なら ${nx.ic} ${nx.name}${best !== nx ? ` ・ さいごまで ぜんぶ ⭕ なら ${best.ic} ${best.name}` : ""}`}</div>`;
+  document.getElementById("learnedTitle").textContent = rv ? "🎣 おぼえてた!(つりあげる)" : "🎣 おぼえた!(つりあげる)";
+  document.getElementById("btnForgot").classList.toggle("hidden", !rv);
 }
 
 function visHTML(vis) {
@@ -742,7 +726,9 @@ function renderCard() {
   document.getElementById("cardFront").classList.remove("hidden");
   document.getElementById("cardBack").classList.add("hidden");
   document.getElementById("learnPos").textContent = `${L.i + 1} / ${L.words.length}`;
-  renderRoundBar();
+
+  const last = L.i === L.words.length - 1;
+  document.querySelector("#btnNext .tile-title").textContent = last ? "さいしょへ" : "つぎ →";
 
   // じどうで よみあげない。えいごを 見て 子どもが じぶんで よむのが
   //「リーディング」の れんしゅうなので、こえは 🔊ボタンを おした ときだけ 出す。
@@ -766,7 +752,7 @@ function highlightWord(ex, en) {
 let speakGen = 0;
 
 function setLearnLock(on) {
-  ["btnLearned", "btnForgot"].forEach((id) => {
+  ["btnPrev", "btnNext", "btnLearned", "btnForgot"].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.disabled = on;
@@ -802,55 +788,57 @@ document.getElementById("card").addEventListener("click", (e) => {
 document.getElementById("btnSpeak").addEventListener("click", () => speak(L.words[L.i].en));
 document.getElementById("btnSpeak2").addEventListener("click", () => speak(L.words[L.i].en));
 
-/* 1まいずつ ○(おぼえた) か ×(まだ) を きめて つぎへ。
-   10もん(のこりが すくなければ その かず) おわったら、せいかいりつで 1ぴき つる。
-   ・おぼえる: ○ → その 曜日の ボックスへ / × → まだの まま(また つぎの 回で でる)
-   ・ふくしゅう: ○ → ボックスに のこる / × → 「まだ」に もどる */
-function answerCard(ok) {
-  if (fishingBusy) return;
+document.getElementById("btnPrev").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled) return;
+  if (L.i > 0) { L.i--; sfxClick(); renderCard(); }
+});
+document.getElementById("btnNext").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled) return;
+  L.i = L.i < L.words.length - 1 ? L.i + 1 : 0;
+  sfxClick();
+  renderCard();
+});
+/* 「🎣 おぼえた」を おした 語だけが おぼえたリスト(きょうの 曜日ボックス)に 入り、1ぴき つれる。
+   おした 語は カードの れつから すぐに ぬける。 */
+document.getElementById("btnLearned").addEventListener("click", (e) => {
+  if (e.currentTarget.disabled || fishingBusy) return;
   const w = L.words[L.i];
   speakGen++;
   try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (err) {}
   if (L.mode === "review") {
     if (!P.today.reviewed.includes(w.id)) P.today.reviewed.push(w.id);
-    if (!ok) delete P.learned[w.id];
-    save();
-  } else if (ok) {
+  } else {
     markLearned(w.id);
   }
-  L.results[L.i] = ok;
-  renderRoundBar();
-  const next = () => {
-    if (L.i < L.words.length - 1) { L.i++; renderCard(); return; }
-    const c = L.results.filter(Boolean).length;
-    advancement(`${L.words.length}もん ちゅう ${c}もん ⭕`, "🎣", "この 回 おわり!");
-    afterRound();
-  };
-  if (!ok) { sfxClick(); next(); return; }
-  // ⭕ の たびに 1ぴき。ランクは この 回の ここまでの せいかいりつ で きまる
-  const answered = L.results.filter((r) => r !== undefined).length;
-  const correct = L.results.filter(Boolean).length;
-  catchFish(correct, answered, next);
-}
-document.getElementById("btnLearned").addEventListener("click", (e) => {
-  if (e.currentTarget.disabled) return;
-  answerCard(true);
+  L.words.splice(L.i, 1);
+  // さかなを つって、けっかを とじたら つぎの カードへ
+  catchFish(() => afterCardDone());
 });
 document.getElementById("btnForgot").addEventListener("click", (e) => {
-  if (e.currentTarget.disabled) return;
-  answerCard(false);
+  if (e.currentTarget.disabled || fishingBusy) return;
+  const w = L.words[L.i];
+  sfxClick();
+  // わすれてたら「まだ」に もどす。また おぼえたら、その日の ボックスに 入る
+  delete P.learned[w.id];
+  if (!P.today.reviewed.includes(w.id)) P.today.reviewed.push(w.id);
+  save();
+  L.words.splice(L.i, 1);
+  advancement(`${w.en} は また つりばで おぼえよう`, "🔁", "だいじょうぶ!");
+  afterCardDone();
 });
-function afterRound() {
-  if (L.mode === "review") {
-    const left = dueIds(L.box).length;
-    if (left) { startReview(L.box); return; }       // まだ のこって いれば つぎの 回へ
-    advancement(`${WD[L.box]}ようボックスの ふくしゅう おわり!`, "🧊", "おつかれさま");
-    show("home");
+function afterCardDone() {
+  if (L.words.length === 0) {
+    if (L.mode === "review") {
+      advancement(`${WD[L.box]}ようボックスの ふくしゅう おわり!`, "🧊", "おつかれさま");
+      show("home");
+    } else {
+      advancement("この つりばは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
+      renderWordlist(L.range, true);
+    }
     return;
   }
-  const left = wordsNotLearned(wordsInRange(L.range).map((w) => w.id)).length;
-  if (!left) advancement("この つりばは ぜんぶ おぼえたよ!", "🎉", "コンプリート!");
-  renderWordlist(L.range, true);
+  if (L.i >= L.words.length) L.i = 0;
+  renderCard();
 }
 
 /* ---------- ナビ ---------- */

@@ -1,22 +1,19 @@
 /* =========================================================
    fishing.js - つりの しかけ
-   ・せいかい(⭕)する たびに 1ぴき つる
-   ・つれる さかなは その 回(さいだい 10もん)の ここまでの せいかいりつ で きまる
-     (まちがえずに つづけるほど おおもの。かずを かさねる だけでは おおきく ならない)
+   ・「おぼえた」を おす たびに 1ぴき つる(タップで まく ミニゲーム)
+   ・なにが つれるかは うんしだい(ガチャ)。でんせつは 3%
    ・つった さかなは ずかんに のこる
    ========================================================= */
 
-/* せいかいりつ で ランクが きまる。acc = この りつ いじょう、minN = この もんだいすう いじょうの 回で ないと でない
-   (2もんだけ やって 100% で でんせつ、を ふせぐ) */
+/* rate = その ランクが でる かくりつ(%)。ごうけい 100 */
 const FISH_TIERS = [
-  { acc: 0,    minN: 1,  name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
-  { acc: 0.4,  minN: 1,  name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
-  { acc: 0.6,  minN: 3,  name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
-  { acc: 0.75, minN: 5,  name: "おおもの",   ic: "💪", color: "#e8590c" },
-  { acc: 0.9,  minN: 7,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
-  { acc: 1,    minN: 10, name: "でんせつ",   ic: "👑", color: "#b8860b" },
+  { rate: 40, name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
+  { rate: 25, name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
+  { rate: 17, name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
+  { rate: 10, name: "おおもの",   ic: "💪", color: "#e8590c" },
+  { rate: 5,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
+  { rate: 3,  name: "でんせつ",   ic: "👑", color: "#b8860b" },
 ];
-const ROUND_MAX = 10;   // 1かいの もんだいすう
 
 /* h = からだの たかさ、pat = もよう、shape = かたち */
 const FISH = [
@@ -77,29 +74,26 @@ const FISH = [
 ];
 const FISH_BY_ID = new Map(FISH.map((f) => [f.id, f]));
 
-/* 1かいの けっか(correct / n)で でる ランク */
-function tierFor(correct, n) {
-  const acc = n ? correct / n : 0;
-  let t = 0;
-  FISH_TIERS.forEach((x, i) => { if (acc >= x.acc - 1e-9 && n >= x.minN) t = i; });
-  return t;
+/* ランクを くじびき で きめる */
+function drawTier() {
+  let r = Math.random() * 100;
+  for (let i = 0; i < FISH_TIERS.length; i++) {
+    r -= FISH_TIERS[i].rate;
+    if (r < 0) return i;
+  }
+  return 0;
 }
 
-/* 1かいの けっかで つれる さかなを きめる。
-   ときどき(10%)ひとつ うえの ランクが かかる「ラッキー」つき。
-   せいかいりつが たかいほど、おなじ さかなでも おおきく なりやすい。
-   まだ つっていない さかなが いれば、すこし でやすく して ずかんを うめやすく する。 */
-function rollFish(correct, n, caught) {
-  let t = tierFor(correct, n);
-  let lucky = false;
-  if (t < FISH_TIERS.length - 1 && Math.random() < 0.1) { t++; lucky = true; }
+/* つれる さかなを きめる。まだ つっていない さかなが いれば、
+   すこし でやすく して ずかんを うめやすく する。 */
+function rollFish(caught) {
+  const t = drawTier();
   const pool = FISH.filter((f) => f.tier === t);
   const fresh = pool.filter((f) => !caught[f.id]);
   const from = fresh.length && Math.random() < 0.5 ? fresh : pool;
   const sp = from[(Math.random() * from.length) | 0];
-  const acc = n ? correct / n : 0;
-  const size = Math.round(sp.min + (sp.max - sp.min) * Math.pow(Math.random(), 1.8 - acc));
-  return { sp, size, lucky, tier: t };
+  const size = Math.round(sp.min + (sp.max - sp.min) * Math.pow(Math.random(), 1.4));
+  return { sp, size, tier: t };
 }
 
 /* ---------- さかなの え(SVG) ----------
@@ -251,10 +245,10 @@ function rodPath(angleDeg, bend) {
 }
 
 let fishingBusy = false;
-/* correct / n = この 1かいの せいかいすう / もんだいすう。onDone は けっかを とじた あとに よぶ */
-function playCatch(correct, n, caught, onDone) {
+/* k = きょう なんびきめ か。onDone は けっかを とじた あとに よぶ */
+function playCatch(k, caught, onDone) {
   const ov = ensureOverlay();
-  const catchResult = rollFish(correct, n, caught);
+  const catchResult = rollFish(caught);
   const { sp } = catchResult;
   const isNew = !caught[sp.id];   // よびだしがわが すぐ ずかんに きろく するので、さきに きめておく
   const F = FIGHT[sp.tier];
@@ -435,28 +429,19 @@ function playCatch(correct, n, caught, onDone) {
     cancelAnimationFrame(raf);
     ov.removeEventListener("pointerdown", tap);
     scene.style.transform = "";
-    const big = sp.tier >= 3 || catchResult.lucky;
+    const big = sp.tier >= 3;
     sfxCatch(big);
     const tier = FISH_TIERS[sp.tier];
-    const pct = Math.round((correct / n) * 100);
-    // つぎも ⭕ だったら ランクが あがるか
-    const nowT = tierFor(correct, n), ifOk = tierFor(correct + 1, n + 1);
-    const hint = nowT >= FISH_TIERS.length - 1
-      ? "👑 パーフェクト! でんせつの うみ!"
-      : ifOk > nowT
-        ? `つぎも ⭕ なら ${FISH_TIERS[ifOk].ic} ${FISH_TIERS[ifOk].name} が でるかも!`
-        : "まちがえずに つづけるほど おおものに なるよ";
     card.innerHTML = `
       <div class="cc-badges">
         ${isNew ? '<span class="cc-new">NEW!</span>' : ""}
-        ${catchResult.lucky ? '<span class="cc-lucky">ラッキー!</span>' : ""}
+        ${sp.tier >= 4 ? '<span class="cc-lucky">すごい!</span>' : ""}
         <span class="cc-tier" style="background:${tier.color}">${tier.ic} ${tier.name}</span>
       </div>
       <div class="cc-fish">${fishSVG(sp, false, "big")}</div>
       <div class="cc-title">${sp.name} が つれた!</div>
       <div class="cc-size"><b>${catchResult.size}</b> cm</div>
-      <div class="cc-score">この 回 ${n}もん ちゅう <b>${correct}</b>もん せいかい(<b>${pct}</b>%)</div>
-      <div class="cc-sub">${hint}</div>
+      <div class="cc-sub">きょう ${k}ひきめ${sp.tier >= 3 ? ` ・ ${tier.rate}% の おおあたり!` : ""}</div>
       <button class="cc-btn" id="ccNext">つぎへ ▶</button>`;
     card.classList.remove("hidden");
     $("ccNext").addEventListener("click", (e) => {
