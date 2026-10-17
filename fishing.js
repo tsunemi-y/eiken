@@ -1,7 +1,7 @@
 /* =========================================================
    fishing.js - つりの しかけ
    ・「おぼえた」を おす たびに 1ぴき つる(タップで まく ミニゲーム)
-   ・なにが つれるかは うんしだい(ガチャ)。でんせつは 3%
+   ・なにが つれるかは うんしだい(ガチャ)。でんせつ 2% / まぼろし 0.7% / ゴッド 0.3%
    ・つった さかなは ずかんに のこる
    ========================================================= */
 
@@ -12,7 +12,9 @@ const FISH_TIERS = [
   { rate: 17, name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
   { rate: 10, name: "おおもの",   ic: "💪", color: "#e8590c" },
   { rate: 5,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
-  { rate: 3,  name: "でんせつ",   ic: "👑", color: "#b8860b" },
+  { rate: 2,   name: "でんせつ",   ic: "👑", color: "#b8860b" },
+  { rate: 0.7, name: "まぼろし",   ic: "🌀", color: "#7048e8", rare: true },
+  { rate: 0.3, name: "ゴッド",     ic: "🌈", color: "#e64980", rare: true },
 ];
 
 /* h = からだの たかさ、pat = もよう、shape = かたち */
@@ -71,6 +73,16 @@ const FISH = [
   { id: "manbo",   name: "マンボウ",     tier: 5, min: 150, max: 330, back: "#868e96", belly: "#dee2e6", fin: "#6c757d", h: 24, shape: "flat" },
   { id: "same",    name: "ホホジロザメ", tier: 5, min: 300, max: 600, emoji: "🦈" },
   { id: "daiou",   name: "ダイオウイカ", tier: 5, min: 500, max: 1200, emoji: "🦑", glow: true },
+  // まぼろし(しんかいの めずらしい さかな)
+  { id: "anko",    name: "チョウチンアンコウ", tier: 6, min: 30, max: 60, back: "#3b2f2f", belly: "#5c4b4b", fin: "#2b2222", h: 19, pat: "lure" },
+  { id: "demenigisu", name: "デメニギス", tier: 6, min: 10, max: 18, back: "#343a40", belly: "#adb5bd", fin: "#495057", h: 10, pat: "glowhead" },
+  { id: "rabuka",  name: "ラブカ",       tier: 6, min: 120, max: 200, back: "#5c4033", belly: "#a68a73", fin: "#4a3328", h: 7, shape: "long", pat: "spots" },
+  { id: "megamouth", name: "メガマウス", tier: 6, min: 400, max: 700, back: "#3d4a5c", belly: "#cfd8e3", fin: "#2f3a4a", h: 15, pat: "mouth" },
+  // ゴッド(ゆめの さかな)
+  { id: "ryu",     name: "うみの りゅう", tier: 7, min: 800, max: 2000, emoji: "🐉" },
+  { id: "niji",    name: "にじいろ マグロ", tier: 7, min: 200, max: 350, back: "#7048e8", belly: "#fff0f6", fin: "#f76707", h: 15, pat: "rainbow" },
+  { id: "diamond", name: "ダイヤモンド フィッシュ", tier: 7, min: 40, max: 90, back: "#74c0fc", belly: "#e7f5ff", fin: "#a5d8ff", h: 17, pat: "sparkle" },
+  { id: "hoshi",   name: "ほしの さかな", tier: 7, min: 50, max: 120, back: "#1c2a6b", belly: "#4c6ef5", fin: "#ffd43b", h: 14, pat: "stars" },
 ];
 const FISH_BY_ID = new Map(FISH.map((f) => [f.id, f]));
 
@@ -133,6 +145,7 @@ function fishInner(sp, sil) {
     out += `<path d="M 58 ${30 + H * 0.8} L 64 ${30 + H + 4} L 72 ${30 + H * 0.66} Z" fill="${fin}"/>`;
   }
   if (sp.shape === "bill") out += `<path d="M 12 29 L -8 28 L 12 32 Z" fill="${back}"/>`;
+  if (sp.pat === "lure") out += `<path d="M 24 ${30 - H * 0.8} Q 18 ${30 - H - 14} 4 ${30 - H - 6}" stroke="${back}" stroke-width="1.6" fill="none"/><circle cx="4" cy="${30 - H - 6}" r="4" fill="${sil ? "#b5c2ce" : "#ffe066"}"/>`;
   out += `<path d="${body}" fill="url(#${id})"/>`;
   // もよう
   if (!sil) {
@@ -146,6 +159,11 @@ function fishInner(sp, sil) {
     if (sp.pat === "band2") for (let i = 0; i < 4; i++) g.push(`<rect x="${30 + i * 16}" y="0" width="6" height="60" fill="rgba(0,0,0,.18)"/>`);
     if (sp.pat === "belly") for (let i = 0; i < 4; i++) g.push(`<rect x="10" y="${31 + i * 3}" width="100" height="1.2" fill="rgba(31,63,104,.45)"/>`);
     if (sp.pat === "finlets") for (let i = 0; i < 5; i++) g.push(`<path d="M ${74 + i * 4} ${30 - H * 0.55} l 2 -3 l 1 3 Z" fill="#f0c419"/>`);
+    if (sp.pat === "glowhead") g.push(`<circle cx="22" cy="${30 - H * 0.35}" r="6" fill="rgba(105,219,124,.85)"/>`);
+    if (sp.pat === "mouth") g.push(`<path d="M 10 31 Q 24 37 36 31" stroke="#f1f3f5" stroke-width="2.4" fill="none"/>`);
+    if (sp.pat === "rainbow") ["#f03e3e", "#fd7e14", "#fab005", "#40c057", "#228be6", "#7048e8"].forEach((c, i) => g.push(`<rect x="10" y="${30 - H + i * (H * 2 / 6)}" width="100" height="${H * 2 / 6 + 0.3}" fill="${c}" opacity=".75"/>`));
+    if (sp.pat === "sparkle") for (let i = 0; i < 6; i++) g.push(`<path d="M ${30 + i * 11} ${30 - H * 0.4 + (i % 2) * H * 0.6} l 1.5 -4 l 1.5 4 l 4 1.5 l -4 1.5 l -1.5 4 l -1.5 -4 l -4 -1.5 Z" fill="#fff"/>`);
+    if (sp.pat === "stars") for (let i = 0; i < 7; i++) g.push(`<circle cx="${28 + i * 10}" cy="${30 - H * 0.5 + ((i * 7) % (H + 1))}" r="${i % 2 ? 1.2 : 1.8}" fill="#ffd43b"/>`);
     if (sp.pat === "shine") g.push(`<path d="M 30 ${30 - H * 0.55} Q 50 ${30 - H * 0.8} 70 ${30 - H * 0.5}" stroke="rgba(255,255,255,.75)" stroke-width="2.5" fill="none"/>`);
     out += `<g clip-path="url(#${id}c)">${g.join("")}</g>`;
     // え ら・め・くち
@@ -165,8 +183,8 @@ const sfxCast = () => { [900, 760, 620, 480, 340].forEach((f, i) => setTimeout((
 const sfxPlop = () => { beep(220, 0.12, "sine", 0.08); setTimeout(() => beep(150, 0.14, "sine", 0.06), 60); };
 const sfxBite = () => { beep(1250, 0.07, "square", 0.05); setTimeout(() => beep(1250, 0.07, "square", 0.05), 120); };
 const sfxReel = () => { for (let i = 0; i < 9; i++) setTimeout(() => beep(380 + i * 35, 0.03, "square", 0.03), i * 55); };
-const sfxCatch = (big) => {
-  const seq = big ? [523, 659, 784, 1047, 1319] : [660, 880, 1100];
+const sfxCatch = (big, rare) => {
+  const seq = rare ? [523, 659, 784, 1047, 784, 1047, 1319, 1568, 2093] : big ? [523, 659, 784, 1047, 1319] : [660, 880, 1100];
   seq.forEach((f, i) => setTimeout(() => beep(f, 0.12, "triangle", 0.06), i * 85));
 };
 
@@ -188,6 +206,8 @@ const FIGHT = [
   { step: 13, back: 8,  swim: 28, scale: 1.0 },
   { step: 10, back: 9,  swim: 34, scale: 1.18 },
   { step: 8,  back: 10, swim: 40, scale: 1.4 },
+  { step: 7,  back: 11, swim: 44, scale: 1.5 },
+  { step: 6,  back: 12, swim: 48, scale: 1.6 },
 ];
 const sfxTick = () => beep(420 + Math.random() * 80, 0.035, "square", 0.035);
 const sfxBig = () => { [110, 98, 110, 98].forEach((f, i) => setTimeout(() => beep(f, 0.22, "sawtooth", 0.05), i * 260)); };
@@ -361,7 +381,12 @@ function playCatch(k, caught, onDone) {
       hookPos = { x: FLOAT_X, y: BAIT.y + 3 * Math.sin(now / 200) };
       const tx = BAIT.x + 50 * F.scale;
       if (big) {
-        once("big", () => { sfxBig(); warn.classList.remove("hidden"); });
+        once("big", () => {
+          sfxBig();
+          warn.textContent = sp.tier >= 7 ? "🌈 うみが ひかってる…!?" : sp.tier >= 6 ? "🌀 まぼろしの けはい…!" : "⚠️ でかいのが きた!";
+          warn.classList.toggle("rare", sp.tier >= 6);
+          warn.classList.remove("hidden");
+        });
         const sp2 = Math.min(1, p / 0.55);
         shadow.setAttribute("opacity", String(0.8 * Math.min(1, sp2 * 2) * (1 - Math.max(0, (p - 0.55) / 0.2))));
         shadow.setAttribute("transform", `translate(${lerp(330, tx + 20, ease(sp2))} ${BAIT.y + 30}) scale(${F.scale})`);
@@ -433,7 +458,7 @@ function playCatch(k, caught, onDone) {
       ang = lerp(62, 74, q); bend = 26 * (1 - q); lean = -8 * (1 - q);
       updateSplash(p);
       if (p > 0.55) {
-        once("got", () => { got.setAttribute("opacity", "1"); glow.setAttribute("opacity", "1"); sfxCatch(big); });
+        once("got", () => { got.setAttribute("opacity", "1"); glow.setAttribute("opacity", "1"); sfxCatch(big, sp.tier >= 6); });
         const g = (p - 0.55) / 0.45;
         got.setAttribute("transform", `translate(130 60) scale(${0.6 + 0.5 * ease(Math.min(1, g * 2)) - 0.1 * Math.max(0, g * 2 - 1)}) translate(-130 -60)`);
         glow.setAttribute("transform", `translate(130 112) scale(${0.6 + 0.4 * Math.sin(now / 120)}) translate(-130 -100)`);
@@ -487,7 +512,7 @@ function playCatch(k, caught, onDone) {
   }
   function burstConfetti() {
     const colors = ["#ffd43b", "#ff6b6b", "#4dabf7", "#69db7c", "#f783ac", "#ffa94d"];
-    const n = big ? 60 : 30;
+    const n = sp.tier >= 6 ? 110 : big ? 60 : 30;
     confetti.innerHTML = Array.from({ length: n }, (_, i) =>
       `<i style="left:${Math.random() * 100}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 0.4).toFixed(2)}s;animation-duration:${(1.6 + Math.random()).toFixed(2)}s;transform:rotate(${(Math.random() * 360) | 0}deg)"></i>`).join("");
   }
@@ -520,13 +545,13 @@ function playCatch(k, caught, onDone) {
     cancelAnimationFrame(raf);
     ov.removeEventListener("pointerdown", tap);
     scene.style.transform = "";
-    if (!played.got) sfxCatch(big);
+    if (!played.got) sfxCatch(big, sp.tier >= 6);
     burstConfetti();
     const tier = FISH_TIERS[sp.tier];
     card.innerHTML = `
       <div class="cc-badges">
         ${isNew ? '<span class="cc-new">NEW!</span>' : ""}
-        ${sp.tier >= 4 ? '<span class="cc-lucky">すごい!</span>' : ""}
+        ${sp.tier >= 6 ? '<span class="cc-lucky">きせき!!</span>' : sp.tier >= 4 ? '<span class="cc-lucky">すごい!</span>' : ""}
         <span class="cc-tier" style="background:${tier.color}">${tier.ic} ${tier.name}</span>
       </div>
       <div class="cc-fish">${fishSVG(sp, false, "big")}</div>
@@ -534,6 +559,7 @@ function playCatch(k, caught, onDone) {
       <div class="cc-size"><b>${catchResult.size}</b> cm</div>
       <div class="cc-sub">きょう ${k}ひきめ${sp.tier >= 3 ? ` ・ ${tier.rate}% の おおあたり!` : ""}</div>
       <button class="cc-btn" id="ccNext">つぎへ ▶</button>`;
+    card.classList.toggle("rare", sp.tier >= 6);
     card.classList.remove("hidden");
     $("ccNext").addEventListener("click", (e) => {
       e.stopPropagation();

@@ -486,3 +486,8 @@ input { font-family: inherit; }
 .catch-card { z-index: 3; }
 
 .ver { text-align: center; font-family: var(--en); font-size: 10px; color: var(--ink-3); margin-top: 18px; }
+
+/* ---------- まぼろし・ゴッド ---------- */
+.big-warn.rare { text-shadow: 0 0 12px #7048e8, 0 0 24px #e64980, 0 2px 4px rgba(0,0,0,.5); }
+.catch-card.rare { border: 4px solid transparent; background: linear-gradient(#fff, #fff) padding-box, linear-gradient(90deg, #f03e3e, #fab005, #40c057, #228be6, #7048e8, #f03e3e) border-box; background-size: 100% 100%, 300% 100%; animation: popIn .38s cubic-bezier(.2,1.4,.4,1), rainbowBorder 2s linear infinite; }
+@keyframes rainbowBorder { to { background-position: 0 0, 300% 0; } }
