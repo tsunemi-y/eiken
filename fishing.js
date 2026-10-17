@@ -170,28 +170,28 @@ const sfxCatch = (big) => {
   seq.forEach((f, i) => setTimeout(() => beep(f, 0.12, "triangle", 0.06), i * 85));
 };
 
-/* ---------- つりの ミニゲーム ----------
-   なげる → うきが ぷかぷか → 「!」 → 画面を れんだ して リールを まく → さかなが とびだす → けっか。
-   まきあげメーターが いっぱいに なったら つれる。おおものほど あばれて たくさん まく ひつようが ある。
+/* ---------- つりの ミニゲーム(うみの なかが 見える ばめん) ----------
+   うえ半分=そら と さんばし(子どもが さおを もつ)、した半分=うみの なか。
+   なげる → しかけが しずむ → さかなが およいで くる(おおものは でっかい かげ)→ 「!」→
+   画面を れんだ して まく(さかなが あばれながら うえへ)→ ザバーン!と とびだす → けっか。
    タップを やめても メーターは すこし もどる だけ。しっぱいは なし(ちいさい 子でも かならず つれる)。 */
-/* スマホの たてがめんに あわせて たてながの ぶたいに する
-   (よこに ひろいと 左右が きれて さおが 見えなくなる) */
-const SCENE_W = 260, SCENE_H = 520, WATER = 250;
-const ROD_BASE = { x: 22, y: 505 }, ROD_LEN = 270;
-const SPOT = { x: 196, y: WATER + 16 };
-const NEAR = { x: 92, y: WATER + 34 };            // まききった ときの さかなの いち
+const SCENE_W = 260, SCENE_H = 520, SURF = 188;
+const HAND = { x: 58, y: 138 }, ROD_LEN = 140;     // さおの もちて
+const FLOAT_X = 182;                               // うきが おちる ところ
+const BAIT = { x: 182, y: 352 };                   // しかけ(えさ)の ふかさ
 /* ランクごとの てごたえ: step = 1タップで すすむ %、back = 1びょうで もどる %、
-   swim = あばれる はば、shadow = かげの おおきさ */
-/* せいかい する たびに つるので、1かいの まきあげは かるめ(こざかな 約4タップ 〜 でんせつ 約14タップ) */
+   swim = あばれる はば、scale = うみの なかの さかなの おおきさ */
 const FIGHT = [
-  { step: 27, back: 3,  swim: 14, shadow: 0.55 },
-  { step: 21, back: 5,  swim: 18, shadow: 0.7 },
-  { step: 16, back: 7,  swim: 24, shadow: 0.85 },
-  { step: 13, back: 8,  swim: 30, shadow: 1.05 },
-  { step: 10, back: 9,  swim: 36, shadow: 1.25 },
-  { step: 8,  back: 10, swim: 42, shadow: 1.5 },
+  { step: 27, back: 3,  swim: 12, scale: 0.62 },
+  { step: 21, back: 5,  swim: 16, scale: 0.74 },
+  { step: 16, back: 7,  swim: 22, scale: 0.86 },
+  { step: 13, back: 8,  swim: 28, scale: 1.0 },
+  { step: 10, back: 9,  swim: 34, scale: 1.18 },
+  { step: 8,  back: 10, swim: 40, scale: 1.4 },
 ];
 const sfxTick = () => beep(420 + Math.random() * 80, 0.035, "square", 0.035);
+const sfxBig = () => { [110, 98, 110, 98].forEach((f, i) => setTimeout(() => beep(f, 0.22, "sawtooth", 0.05), i * 260)); };
+const sfxSplash = () => { [300, 220, 160, 120].forEach((f, i) => setTimeout(() => beep(f, 0.12, "sine", 0.07), i * 40)); };
 
 function ensureOverlay() {
   let ov = document.getElementById("fishOverlay");
@@ -199,34 +199,70 @@ function ensureOverlay() {
   ov = document.createElement("div");
   ov.id = "fishOverlay";
   ov.className = "fish-overlay hidden";
+  const kelp = (x, h, d) => `<path class="kelp" style="animation-delay:${d}s" d="M ${x} 520 C ${x - 10} ${520 - h * 0.3}, ${x + 10} ${520 - h * 0.6}, ${x} ${520 - h}" stroke="#2f9e44" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  const bubbles = Array.from({ length: 9 }, (_, i) =>
+    `<circle class="bub" style="animation-delay:${(i * 0.7).toFixed(1)}s;animation-duration:${(4 + (i % 3)).toFixed(1)}s" cx="${20 + i * 27}" cy="515" r="${2 + (i % 3)}" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.2"/>`).join("");
+  const school = Array.from({ length: 6 }, (_, i) =>
+    `<path d="M ${i * 11} ${(i % 2) * 7} q 5 -3 9 0 q -4 3 -9 0 Z M ${i * 11 + 8} ${(i % 2) * 7} l 4 -2.5 l 0 5 Z" fill="rgba(200,230,255,.55)"/>`).join("");
   ov.innerHTML = `
     <svg class="fish-scene" id="fsScene" viewBox="0 0 ${SCENE_W} ${SCENE_H}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc6f2"/><stop offset="1" stop-color="#d7f0ff"/></linearGradient>
-        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c8fd1"/><stop offset="1" stop-color="#0b3d6e"/></linearGradient>
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fb8f0"/><stop offset="1" stop-color="#cdeeff"/></linearGradient>
+        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22a2dc"/><stop offset=".55" stop-color="#0d6aa8"/><stop offset="1" stop-color="#06345e"/></linearGradient>
+        <linearGradient id="rayG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.35)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient>
+        <radialGradient id="glowG"><stop offset="0" stop-color="rgba(255,240,150,.95)"/><stop offset="1" stop-color="rgba(255,240,150,0)"/></radialGradient>
       </defs>
-      <rect x="-60" width="${SCENE_W + 120}" height="${WATER}" fill="url(#skyG)"/>
-      <circle cx="215" cy="70" r="26" fill="#ffe066"/>
-      <g class="cloud"><ellipse cx="80" cy="80" rx="34" ry="13" fill="#fff" opacity=".9"/><ellipse cx="104" cy="72" rx="22" ry="12" fill="#fff" opacity=".9"/></g>
-      <rect x="-60" y="${WATER}" width="${SCENE_W + 120}" height="${SCENE_H - WATER}" fill="url(#seaG)"/>
-      <g id="fsShadow" opacity="0"><path d="M -34 0 C -24 -13, 18 -13, 30 0 C 18 13, -24 13, -34 0 Z M 26 0 L 44 -11 L 40 0 L 44 11 Z" fill="rgba(4,22,44,.55)"/></g>
-      <g class="wave w1"><path d="M -40 ${WATER} q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 V ${WATER + 14} H -40 Z" fill="#3aa6e0"/></g>
-      <g class="wave w2"><path d="M -40 ${WATER + 40} q 20 -6 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none"/></g>
+      <!-- そら -->
+      <rect x="-80" width="${SCENE_W + 160}" height="${SURF}" fill="url(#skyG)"/>
+      <circle cx="214" cy="52" r="22" fill="#ffe066"/><circle cx="214" cy="52" r="32" fill="rgba(255,224,102,.25)"/>
+      <g class="cloud"><ellipse cx="70" cy="60" rx="30" ry="11" fill="#fff" opacity=".95"/><ellipse cx="92" cy="53" rx="19" ry="11" fill="#fff" opacity=".95"/></g>
+      <g class="gull"><path d="M 0 0 q 5 -5 10 0 q 5 -5 10 0" stroke="#34495e" stroke-width="1.6" fill="none"/></g>
+      <path d="M -80 ${SURF - 22} L 40 ${SURF - 34} L 120 ${SURF - 24} L 340 ${SURF - 30} V ${SURF} H -80 Z" fill="#7aa5c4" opacity=".55"/>
+      <!-- うみ -->
+      <rect x="-80" y="${SURF}" width="${SCENE_W + 160}" height="${SCENE_H - SURF}" fill="url(#seaG)"/>
+      <g class="rays"><path d="M 40 ${SURF} L 70 ${SURF} L 20 520 L -30 520 Z" fill="url(#rayG)"/><path d="M 130 ${SURF} L 150 ${SURF} L 120 520 L 80 520 Z" fill="url(#rayG)"/><path d="M 220 ${SURF} L 245 ${SURF} L 230 520 L 190 520 Z" fill="url(#rayG)"/></g>
+      <g class="school" transform="translate(0 290)">${school}</g>
+      <path d="M -80 520 Q 20 488 80 500 T 200 494 T 340 504 V 530 H -80 Z" fill="#c9a66b"/>
+      <ellipse cx="226" cy="505" rx="20" ry="11" fill="#6c757d"/><ellipse cx="34" cy="508" rx="14" ry="8" fill="#868e96"/>
+      ${kelp(14, 70, 0)}${kelp(26, 95, .6)}${kelp(244, 85, .3)}${kelp(232, 60, 1)}
+      ${bubbles}
+      <g id="fsShadow" opacity="0"><ellipse rx="70" ry="24" fill="rgba(2,16,34,.55)"/><path d="M 60 0 L 92 -20 L 84 0 L 92 20 Z" fill="rgba(2,16,34,.55)"/></g>
+      <g id="fsFishU" opacity="0"></g>
+      <g id="fsHook" opacity="0"><path d="M 0 -6 V 4 a 4 4 0 0 1 -8 0" stroke="#adb5bd" stroke-width="1.6" fill="none"/><circle cx="-1" cy="2" r="3.2" fill="#f783ac"/></g>
+      <!-- なみ -->
+      <g class="wave w1"><path d="M -80 ${SURF} q 20 -7 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 V ${SURF + 9} H -80 Z" fill="#7fd0f5" opacity=".9"/></g>
       <g id="fsRipples"></g>
-      <path id="fsLine" stroke="#fff" stroke-width="1.6" fill="none" opacity=".9"/>
-      <g id="fsBobber"><circle r="8" fill="#fff"/><path d="M -8 0 A 8 8 0 0 1 8 0 Z" fill="#e03131"/><line x1="0" y1="-8" x2="0" y2="-15" stroke="#333" stroke-width="2"/></g>
-      <g id="fsFish"></g>
+      <!-- さんばし と 子ども -->
+      <rect x="-80" y="${SURF - 18}" width="150" height="9" rx="2" fill="#a0703c"/>
+      <rect x="-80" y="${SURF - 10}" width="150" height="4" fill="#7a5229"/>
+      <rect x="6" y="${SURF - 10}" width="7" height="70" fill="#7a5229"/><rect x="52" y="${SURF - 10}" width="7" height="70" fill="#7a5229"/>
+      <g id="fsKid">
+        <rect x="30" y="${SURF - 40}" width="7" height="22" rx="3" fill="#364fc7"/><rect x="40" y="${SURF - 40}" width="7" height="22" rx="3" fill="#364fc7"/>
+        <rect x="27" y="${SURF - 70}" width="23" height="33" rx="9" fill="#fd7e14"/>
+        <circle cx="38" cy="${SURF - 82}" r="12" fill="#ffd8a8"/>
+        <path d="M 25 ${SURF - 84} a 13 12 0 0 1 26 0 Z" fill="#1971c2"/><rect x="40" y="${SURF - 87}" width="16" height="4" rx="2" fill="#1971c2"/>
+        <circle cx="43" cy="${SURF - 81}" r="1.6" fill="#212529"/><path d="M 40 ${SURF - 75} q 3 2 6 0" stroke="#212529" stroke-width="1.2" fill="none"/>
+        <path id="fsArm" d="M 44 ${SURF - 62} L ${HAND.x} ${HAND.y}" stroke="#ffd8a8" stroke-width="5" stroke-linecap="round"/>
+      </g>
+      <path id="fsLineA" stroke="#fff" stroke-width="1.4" fill="none"/>
+      <path id="fsLineB" stroke="rgba(255,255,255,.55)" stroke-width="1.2" fill="none"/>
+      <g id="fsBobber"><circle r="6.5" fill="#fff"/><path d="M -6.5 0 A 6.5 6.5 0 0 1 6.5 0 Z" fill="#e03131"/><line x1="0" y1="-6" x2="0" y2="-12" stroke="#333" stroke-width="1.8"/></g>
+      <path id="fsRod" stroke="#5c3d1e" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <g id="fsReelG" transform="translate(${HAND.x - 4} ${HAND.y + 6})"><circle r="8" fill="#495057" stroke="#212529" stroke-width="2"/><line id="fsHandle" x1="0" y1="0" x2="0" y2="-8" stroke="#ffd43b" stroke-width="3" stroke-linecap="round"/></g>
+      <g id="fsFishJ" opacity="0"></g>
       <g id="fsSplash"></g>
-      <path id="fsRod" stroke="#6b4423" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <g id="fsReelG"><circle id="fsReel" r="13" fill="#495057" stroke="#212529" stroke-width="3"/><line id="fsHandle" x1="0" y1="0" x2="0" y2="-13" stroke="#ffd43b" stroke-width="4" stroke-linecap="round"/></g>
-      <text id="fsBang" x="${SPOT.x}" y="${WATER - 40}" text-anchor="middle" font-size="64" font-weight="900" fill="#ffd43b" stroke="#c92a2a" stroke-width="3" opacity="0">!</text>
+      <circle id="fsGlow" cx="130" cy="100" r="90" fill="url(#glowG)" opacity="0"/>
+      <text id="fsBang" x="${FLOAT_X}" y="${SURF - 30}" text-anchor="middle" font-size="58" font-weight="900" fill="#ffd43b" stroke="#c92a2a" stroke-width="3" opacity="0">!</text>
+      <text id="fsGot" x="130" y="60" text-anchor="middle" font-size="40" font-weight="900" fill="#fff" stroke="#e8590c" stroke-width="4" paint-order="stroke" opacity="0">つれた!</text>
     </svg>
     <div class="fight-ui hidden" id="fsFightUI">
       <div class="fight-label" id="fsFightLabel">まきあげ メーター</div>
       <div class="fight-meter"><div class="fight-fill" id="fsFill"></div><span class="fight-fish" id="fsMeterFish">🐟</span></div>
     </div>
+    <div class="big-warn hidden" id="fsWarn">⚠️ でかいのが きた!</div>
     <div class="tap-prompt hidden" id="fsTap">👆 タップ! タップ!<small>れんだ して リールを まこう</small></div>
     <div class="fish-hint" id="fsHint">タップで はやおくり</div>
+    <div class="confetti" id="fsConfetti"></div>
     <div class="catch-card hidden" id="catchCard"></div>`;
   document.body.appendChild(ov);
   return ov;
@@ -237,11 +273,10 @@ const lerp = (a, b, t) => a + (b - a) * t;
 
 function rodPath(angleDeg, bend) {
   const a = (angleDeg * Math.PI) / 180;
-  const tip = { x: ROD_BASE.x + ROD_LEN * Math.cos(a), y: ROD_BASE.y - ROD_LEN * Math.sin(a) };
-  // まんなかを すこし ずらして しなりを だす
-  const mx = (ROD_BASE.x + tip.x) / 2 + Math.sin(a) * bend;
-  const my = (ROD_BASE.y + tip.y) / 2 + Math.cos(a) * bend;
-  return { d: `M ${ROD_BASE.x} ${ROD_BASE.y} Q ${mx} ${my} ${tip.x} ${tip.y}`, tip };
+  const tip = { x: HAND.x + ROD_LEN * Math.cos(a), y: HAND.y - ROD_LEN * Math.sin(a) };
+  const mx = (HAND.x + tip.x) / 2 + Math.sin(a) * bend;
+  const my = (HAND.y + tip.y) / 2 + Math.cos(a) * bend;
+  return { d: `M ${HAND.x - 10 * Math.cos(a)} ${HAND.y + 10 * Math.sin(a)} L ${HAND.x} ${HAND.y} Q ${mx} ${my} ${tip.x} ${tip.y}`, tip };
 }
 
 let fishingBusy = false;
@@ -252,77 +287,104 @@ function playCatch(k, caught, onDone) {
   const { sp } = catchResult;
   const isNew = !caught[sp.id];   // よびだしがわが すぐ ずかんに きろく するので、さきに きめておく
   const F = FIGHT[sp.tier];
+  const big = sp.tier >= 3;
   fishingBusy = true;
 
   const $ = (id) => document.getElementById(id);
-  const scene = $("fsScene"), rod = $("fsRod"), line = $("fsLine"), bob = $("fsBobber"), fishG = $("fsFish");
-  const bang = $("fsBang"), ripples = $("fsRipples"), splash = $("fsSplash"), reelG = $("fsReelG"), handle = $("fsHandle");
-  const shadow = $("fsShadow"), fightUI = $("fsFightUI"), fill = $("fsFill"), meterFish = $("fsMeterFish"), tapP = $("fsTap");
-  const card = $("catchCard");
-  card.classList.add("hidden");
-  fightUI.classList.add("hidden");
-  tapP.classList.add("hidden");
+  const scene = $("fsScene"), rod = $("fsRod"), lineA = $("fsLineA"), lineB = $("fsLineB"), bob = $("fsBobber");
+  const hook = $("fsHook"), fishU = $("fsFishU"), fishJ = $("fsFishJ"), shadow = $("fsShadow"), kid = $("fsKid"), arm = $("fsArm");
+  const bang = $("fsBang"), got = $("fsGot"), glow = $("fsGlow"), ripples = $("fsRipples"), splash = $("fsSplash"), handle = $("fsHandle");
+  const fightUI = $("fsFightUI"), fill = $("fsFill"), meterFish = $("fsMeterFish"), tapP = $("fsTap"), warn = $("fsWarn");
+  const card = $("catchCard"), confetti = $("fsConfetti");
+  [card, fightUI, tapP, warn].forEach((el) => el.classList.add("hidden"));
   $("fsHint").classList.remove("hidden");
-  $("fsFightLabel").textContent = sp.tier >= 3 ? "⚠️ でかい! まきあげ メーター" : "まきあげ メーター";
-  meterFish.textContent = sp.tier >= 3 ? "🐋" : "🐟";
-  fishG.innerHTML = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
-  fishG.setAttribute("opacity", "0");
-  shadow.setAttribute("opacity", "0");
+  confetti.innerHTML = "";
+  $("fsFightLabel").textContent = big ? "⚠️ おおもの! まきあげ メーター" : "まきあげ メーター";
+  meterFish.textContent = big ? "🐋" : "🐟";
+  const inner = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
+  fishU.innerHTML = inner;
+  fishJ.innerHTML = inner;
+  [fishU, fishJ, shadow, hook, bang, got, glow].forEach((el) => el.setAttribute("opacity", "0"));
   bob.setAttribute("opacity", "1");
-  bang.setAttribute("opacity", "0");
   ripples.innerHTML = "";
   splash.innerHTML = "";
   scene.style.transform = "";
+  kid.setAttribute("transform", "");
   ov.classList.remove("hidden");
-  const RX = ROD_BASE.x + 26, RY = ROD_BASE.y - 30;
-  reelG.setAttribute("transform", `translate(${RX} ${RY})`);
 
-  // じょうたい: cast → wait → bite → fight → jump → result
+  // じょうたい: cast → sink → come → bite → fight → jump → result
   let state = "cast", t0 = performance.now();
-  const go = (s) => { state = s; t0 = performance.now(); };
+  const go = (st) => { state = st; t0 = performance.now(); };
   let progress = 0, kick = 0, shake = 0, reelRot = 0, lastTap = 0, landed = false;
-  let jumpFrom = { x: SPOT.x, y: SPOT.y };
-  const drops = Array.from({ length: 12 }, (_, i) => ({ a: Math.PI * (0.12 + 0.065 * i), v: 60 + Math.random() * 80 }));
+  let fishPos = { x: BAIT.x + 50 * F.scale, y: BAIT.y };
+  const drops = Array.from({ length: 16 }, (_, i) => ({ a: Math.PI * (0.1 + 0.05 * i), v: 50 + Math.random() * 90 }));
   const played = {};
   const once = (key, fn) => { if (!played[key]) { played[key] = true; fn(); } };
   let raf = 0, last = performance.now(), finished = false;
+
+  const putFish = (el, x, y, rot, sc) => el.setAttribute("transform", `translate(${x} ${y}) rotate(${rot}) scale(${sc})`);
 
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const t = now - t0;
-    let ang = 48, bend = 0, bx = SPOT.x, by = SPOT.y, showBob = true, lineTo = null;
+    let ang = 40, bend = 0, bx = FLOAT_X, by = SURF, showBob = true;
+    let hookPos = null, lineEnd = null, lean = 0;
 
     if (state === "cast") {
       // ふりかぶって → まえへ なげる
-      const p = Math.min(1, t / 750);
-      ang = p < 0.3 ? lerp(55, 88, ease(p / 0.3)) : lerp(88, 48, ease((p - 0.3) / 0.7));
-      bend = p < 0.3 ? 0 : -18 * Math.sin(Math.PI * (p - 0.3) / 0.7);
+      const p = Math.min(1, t / 800);
+      ang = p < 0.3 ? lerp(52, 76, ease(p / 0.3)) : lerp(76, 40, ease((p - 0.3) / 0.7));   // がめんの うえに はみ出さない はんいで ふりかぶる
+      bend = p < 0.3 ? 0 : -14 * Math.sin(Math.PI * (p - 0.3) / 0.7);
+      lean = p < 0.3 ? -6 * ease(p / 0.3) : lerp(-6, 4, ease((p - 0.3) / 0.7));
       const tip = rodPath(ang, bend).tip;
-      if (p < 0.4) { bx = tip.x; by = tip.y + 18; }
+      if (p < 0.4) { bx = tip.x; by = tip.y + 14; }
       else {
         once("cast", sfxCast);
         const q = ease((p - 0.4) / 0.6);
-        bx = lerp(tip.x, SPOT.x, q);
-        by = lerp(tip.y, SPOT.y, q) - 150 * Math.sin(Math.PI * q);
+        bx = lerp(tip.x, FLOAT_X, q);
+        by = lerp(tip.y, SURF, q) - 120 * Math.sin(Math.PI * q);
       }
-      if (p >= 1) go("wait");
-    } else if (state === "wait") {
-      once("plop", () => { sfxPlop(); addRipple(SPOT.x); });
-      by = SPOT.y + 3 * Math.sin(now / 110);
-      // かげが よってくる
-      shadow.setAttribute("opacity", String(Math.min(0.8, t / 900)));
-      setShadow(SPOT.x + 50 - 50 * Math.min(1, t / 900), SPOT.y + 26, 0);
-      if (t > 400) once("rip2", () => addRipple(SPOT.x));
-      if (t > 950) go("bite");
+      if (p >= 1) go("sink");
+    } else if (state === "sink") {
+      // しかけが しずんでいく
+      once("plop", () => { sfxPlop(); addRipple(FLOAT_X); });
+      const p = Math.min(1, t / 700);
+      by = SURF + 2 * Math.sin(now / 120);
+      hookPos = { x: FLOAT_X, y: lerp(SURF + 6, BAIT.y, ease(p)) };
+      if (p >= 1) go("come");
+    } else if (state === "come") {
+      // さかなが よってくる。おおものは さきに でっかい かげ
+      const dur = big ? 1500 : 1000;
+      const p = Math.min(1, t / dur);
+      by = SURF + 2 * Math.sin(now / 120);
+      hookPos = { x: FLOAT_X, y: BAIT.y + 3 * Math.sin(now / 200) };
+      const tx = BAIT.x + 50 * F.scale;
+      if (big) {
+        once("big", () => { sfxBig(); warn.classList.remove("hidden"); });
+        const sp2 = Math.min(1, p / 0.55);
+        shadow.setAttribute("opacity", String(0.8 * Math.min(1, sp2 * 2) * (1 - Math.max(0, (p - 0.55) / 0.2))));
+        shadow.setAttribute("transform", `translate(${lerp(330, tx + 20, ease(sp2))} ${BAIT.y + 30}) scale(${F.scale})`);
+        shake = 0.25;
+      }
+      const fp = big ? Math.max(0, (p - 0.45) / 0.55) : p;
+      const fx = lerp(330, tx, ease(fp));
+      const fy = BAIT.y + 10 * Math.sin(fp * Math.PI * 2);
+      fishU.setAttribute("opacity", fp > 0 ? "1" : "0");
+      putFish(fishU, fx, fy, 4 * Math.sin(now / 90), F.scale);
+      fishPos = { x: fx, y: fy };
+      if (p >= 1) { warn.classList.add("hidden"); shadow.setAttribute("opacity", "0"); go("bite"); }
     } else if (state === "bite") {
-      once("bite", () => { sfxBite(); bang.setAttribute("opacity", "1"); addRipple(SPOT.x); });
-      const p = t / 550;
-      bang.setAttribute("transform", `translate(${SPOT.x} ${WATER - 60}) scale(${1 + 0.25 * Math.sin(p * Math.PI * 4)}) translate(${-SPOT.x} ${-(WATER - 60)})`);
-      ang = 48 - 4 * Math.sin(p * Math.PI * 6); bend = 12;
-      bx = SPOT.x + 3 * Math.sin(now / 25); by = SPOT.y + 12 + 4 * Math.sin(now / 40);
-      setShadow(SPOT.x, SPOT.y + 24, Math.sin(now / 60) * 8);
-      if (t > 550) {
+      once("bite", () => { sfxBite(); bang.setAttribute("opacity", "1"); addRipple(FLOAT_X); });
+      const p = t / 600;
+      bang.setAttribute("transform", `translate(${FLOAT_X} ${SURF - 50}) scale(${1 + 0.25 * Math.sin(p * Math.PI * 4)}) translate(${-FLOAT_X} ${-(SURF - 50)})`);
+      ang = 40 - 4 * Math.sin(p * Math.PI * 6); bend = 10;
+      bx = FLOAT_X + 2 * Math.sin(now / 25); by = SURF + 8 + 3 * Math.sin(now / 40);
+      const mx = BAIT.x + 50 * F.scale - 6 * Math.sin(p * Math.PI);
+      putFish(fishU, mx, BAIT.y, 8 * Math.sin(now / 50), F.scale);
+      fishPos = { x: mx, y: BAIT.y };
+      hookPos = { x: mx - 50 * F.scale, y: BAIT.y + 1 };
+      if (t > 600) {
         bang.setAttribute("opacity", "0");
         $("fsHint").classList.add("hidden");
         fightUI.classList.remove("hidden");
@@ -330,81 +392,104 @@ function playCatch(k, caught, onDone) {
         go("fight");
       }
     } else if (state === "fight") {
-      // さかなが ひっぱる(すこし もどる)。タップで すすむ
       if (!landed) progress = Math.max(0, progress - F.back * dt);
       kick = Math.max(0, kick - dt * 4);
       shake = Math.max(0, shake - dt * 3);
       const q = progress / 100;
-      const swim = F.swim * (1 - q * 0.5);
-      const fx = lerp(SPOT.x, NEAR.x, q) + Math.sin(now / (260 - sp.tier * 25)) * swim;
-      const fy = lerp(SPOT.y + 24, NEAR.y, q) + Math.cos(now / 330) * 5;
-      setShadow(fx, fy, Math.cos(now / (260 - sp.tier * 25)) * 18);
-      jumpFrom = { x: fx, y: fy };
+      const swim = F.swim * (1 - q * 0.4);
+      const wob = Math.sin(now / (230 - sp.tier * 20));
+      const fx = lerp(BAIT.x + 50 * F.scale, 150, q) + wob * swim;
+      const fy = lerp(BAIT.y, SURF + 24, q) + Math.cos(now / 300) * 8;
+      putFish(fishU, fx, fy, wob * 14 - 10 * q, F.scale);
+      fishPos = { x: fx, y: fy };
+      const mouth = { x: fx - 50 * F.scale * Math.cos((wob * 14 - 10 * q) * Math.PI / 180), y: fy - 50 * F.scale * Math.sin((wob * 14 - 10 * q) * Math.PI / 180) };
+      hookPos = mouth;
       showBob = false;
-      lineTo = { x: fx - 30 * F.shadow, y: WATER + 2 };
-      ang = 50 + 22 * q - 6 * kick; bend = 22 + 20 * kick + sp.tier * 3;
-      if (Math.random() < dt * (1.5 + sp.tier)) addRipple(fx);
+      lineEnd = mouth;
+      ang = 44 + 18 * q - 7 * kick; bend = 18 + 16 * kick + sp.tier * 3;
+      lean = -5 - 6 * kick;
+      if (Math.random() < dt * (1.5 + sp.tier)) addRipple(lerp(FLOAT_X, 150, q) + wob * 10);
       tapP.classList.toggle("idle", now - lastTap > 1200);
       fill.style.width = progress + "%";
       meterFish.style.left = progress + "%";
       if (landed) {
         fightUI.classList.add("hidden");
         tapP.classList.add("hidden");
-        shadow.setAttribute("opacity", "0");
+        fishU.setAttribute("opacity", "0");
         go("jump");
       }
     } else if (state === "jump") {
-      // さかなが うみから とびだして まんなかへ
-      once("jump", () => { sfxPlop(); spawnSplash(); });
-      const p = Math.min(1, t / 800);
+      // ザバーン! と とびだして そらへ
+      once("jump", () => { sfxSplash(); spawnSplash(); if (big) shake = 1; });
+      shake = Math.max(0, shake - dt * 2);
+      const p = Math.min(1, t / 900);
       const q = ease(p);
-      const fx = lerp(jumpFrom.x, 130, q);
-      const fy = lerp(jumpFrom.y, 175, q) - 90 * Math.sin(Math.PI * q);
-      fishG.setAttribute("opacity", "1");
-      fishG.setAttribute("transform", `translate(${fx} ${fy}) rotate(${lerp(-40, 370, q)}) scale(${lerp(0.6, 1.5, q)})`);
+      const fx = lerp(fishPos.x, 130, q);
+      const fy = lerp(SURF + 10, 112, q) - 70 * Math.sin(Math.PI * q);
+      fishJ.setAttribute("opacity", "1");
+      putFish(fishJ, fx, fy, lerp(-30, 360, q), lerp(F.scale, Math.max(1.3, F.scale * 1.15), q));
       showBob = false;
-      lineTo = { x: fx, y: fy };
-      ang = lerp(72, 82, q); bend = 30 * (1 - q);
+      lineEnd = { x: fx - 40, y: fy };
+      ang = lerp(62, 74, q); bend = 26 * (1 - q); lean = -8 * (1 - q);
       updateSplash(p);
-      if (p >= 1) { showResult(); return; }
+      if (p > 0.55) {
+        once("got", () => { got.setAttribute("opacity", "1"); glow.setAttribute("opacity", "1"); sfxCatch(big); });
+        const g = (p - 0.55) / 0.45;
+        got.setAttribute("transform", `translate(130 60) scale(${0.6 + 0.5 * ease(Math.min(1, g * 2)) - 0.1 * Math.max(0, g * 2 - 1)}) translate(-130 -60)`);
+        glow.setAttribute("transform", `translate(130 112) scale(${0.6 + 0.4 * Math.sin(now / 120)}) translate(-130 -100)`);
+      }
+      if (p >= 1 && t > 1250) { showResult(); return; }
     } else {
       return;
     }
 
     const r = rodPath(ang, bend);
     rod.setAttribute("d", r.d);
-    const end = lineTo || { x: bx, y: by };
-    const sag = state === "cast" ? 0 : state === "fight" || state === "jump" ? 6 : 26;
-    line.setAttribute("d", `M ${r.tip.x} ${r.tip.y} Q ${(r.tip.x + end.x) / 2} ${(r.tip.y + end.y) / 2 + sag} ${end.x} ${end.y}`);
+    arm.setAttribute("d", `M 44 ${SURF - 62} L ${HAND.x} ${HAND.y}`);
+    kid.setAttribute("transform", `rotate(${lean} 38 ${SURF - 18})`);
+    // いと:さおの さき → うき(すいめん)→ しかけ / さかなの くち
+    if (lineEnd) {
+      lineA.setAttribute("d", `M ${r.tip.x} ${r.tip.y} L ${lineEnd.x} ${lineEnd.y}`);
+      lineB.setAttribute("d", "");
+    } else {
+      const sag = state === "cast" ? 0 : 18;
+      lineA.setAttribute("d", `M ${r.tip.x} ${r.tip.y} Q ${(r.tip.x + bx) / 2} ${(r.tip.y + by) / 2 + sag} ${bx} ${by}`);
+      lineB.setAttribute("d", hookPos ? `M ${bx} ${by + 6} L ${hookPos.x} ${hookPos.y - 6}` : "");
+    }
+    hook.setAttribute("opacity", hookPos && state !== "jump" ? "1" : "0");
+    if (hookPos) hook.setAttribute("transform", `translate(${hookPos.x} ${hookPos.y})`);
     bob.setAttribute("opacity", showBob ? "1" : "0");
     bob.setAttribute("transform", `translate(${bx} ${by})`);
     handle.setAttribute("transform", `rotate(${reelRot})`);
-    scene.style.transform = shake > 0 ? `translate(${(Math.random() - 0.5) * 8 * shake}px, ${(Math.random() - 0.5) * 8 * shake}px)` : "";
+    scene.style.transform = shake > 0 ? `translate(${(Math.random() - 0.5) * 9 * shake}px, ${(Math.random() - 0.5) * 9 * shake}px)` : "";
     raf = requestAnimationFrame(frame);
   }
 
-  function setShadow(x, y, rot) {
-    shadow.setAttribute("transform", `translate(${x} ${y}) rotate(${rot}) scale(${F.shadow})`);
-  }
   function addRipple(x) {
     const e = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-    e.setAttribute("cx", x); e.setAttribute("cy", WATER + 6);
+    e.setAttribute("cx", x); e.setAttribute("cy", SURF + 3);
     e.setAttribute("class", "ripple");
     ripples.appendChild(e);
     if (ripples.childNodes.length > 8) ripples.removeChild(ripples.firstChild);
   }
   function spawnSplash() {
-    splash.innerHTML = drops.map(() => `<circle r="4" fill="#dff3ff"/>`).join("");
+    splash.innerHTML = drops.map((_, i) => `<circle r="${i % 3 ? 3.5 : 5}" fill="#e3f6ff"/>`).join("");
   }
   function updateSplash(p) {
     const cs = splash.querySelectorAll("circle");
     cs.forEach((c, i) => {
       const d = drops[i];
-      const tt = Math.min(1, p * 1.5);
-      c.setAttribute("cx", jumpFrom.x + Math.cos(d.a) * d.v * tt * (i % 2 ? 1 : -1));
-      c.setAttribute("cy", WATER - Math.sin(d.a) * d.v * tt + 120 * tt * tt);
+      const tt = Math.min(1, p * 1.4);
+      c.setAttribute("cx", fishPos.x + Math.cos(d.a) * d.v * tt * (i % 2 ? 1 : -1));
+      c.setAttribute("cy", SURF - Math.sin(d.a) * d.v * tt + 130 * tt * tt);
       c.setAttribute("opacity", String(1 - tt));
     });
+  }
+  function burstConfetti() {
+    const colors = ["#ffd43b", "#ff6b6b", "#4dabf7", "#69db7c", "#f783ac", "#ffa94d"];
+    const n = big ? 60 : 30;
+    confetti.innerHTML = Array.from({ length: n }, (_, i) =>
+      `<i style="left:${Math.random() * 100}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 0.4).toFixed(2)}s;animation-duration:${(1.6 + Math.random()).toFixed(2)}s;transform:rotate(${(Math.random() * 360) | 0}deg)"></i>`).join("");
   }
 
   function tap(e) {
@@ -416,10 +501,16 @@ function playCatch(k, caught, onDone) {
       kick = 1;
       reelRot += 55;
       lastTap = performance.now();
-      if (sp.tier >= 3) shake = Math.min(1, shake + 0.35);
+      if (big) shake = Math.min(1, shake + 0.35);
       sfxTick();
-    } else if (state === "cast" || state === "wait") {
-      go("bite");                      // まちきれない ときは すぐ 「!」へ
+    } else if (state === "cast" || state === "sink" || state === "come") {
+      // まちきれない ときは すぐ 「!」へ
+      warn.classList.add("hidden"); shadow.setAttribute("opacity", "0");
+      fishU.setAttribute("opacity", "1");
+      bob.setAttribute("opacity", "1");
+      go("bite");
+    } else if (state === "jump") {
+      showResult();
     }
   }
 
@@ -429,8 +520,8 @@ function playCatch(k, caught, onDone) {
     cancelAnimationFrame(raf);
     ov.removeEventListener("pointerdown", tap);
     scene.style.transform = "";
-    const big = sp.tier >= 3;
-    sfxCatch(big);
+    if (!played.got) sfxCatch(big);
+    burstConfetti();
     const tier = FISH_TIERS[sp.tier];
     card.innerHTML = `
       <div class="cc-badges">
@@ -447,6 +538,7 @@ function playCatch(k, caught, onDone) {
     $("ccNext").addEventListener("click", (e) => {
       e.stopPropagation();
       ov.classList.add("hidden");
+      confetti.innerHTML = "";
       fishingBusy = false;
       onDone(catchResult);
     }, { once: true });

@@ -461,3 +461,26 @@ input { font-family: inherit; }
 .tap-prompt small { display: block; font-size: 13px; font-weight: 500; opacity: .9; }
 .tap-prompt.idle { animation-duration: .25s; color: #ffd43b; }
 @keyframes tapPulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+/* ---------- うみの なかの ばめん ---------- */
+.fish-scene .kelp { transform-box: fill-box; transform-origin: 50% 100%; animation: kelpSway 3.2s ease-in-out infinite alternate; }
+@keyframes kelpSway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+.fish-scene .bub { animation: bubUp 5s linear infinite; }
+@keyframes bubUp { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: .8; } 100% { transform: translateY(-320px); opacity: 0; } }
+.fish-scene .school { animation: schoolMove 9s linear infinite; }
+@keyframes schoolMove { from { transform: translate(300px, 290px); } to { transform: translate(-120px, 270px); } }
+.fish-scene .gull { animation: gullFly 11s linear infinite; }
+@keyframes gullFly { 0% { transform: translate(-40px, 95px); } 50% { transform: translate(140px, 75px); } 100% { transform: translate(320px, 90px); } }
+.fish-scene .rays { animation: raySway 6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 0; }
+@keyframes raySway { from { transform: skewX(-4deg); opacity: .7; } to { transform: skewX(4deg); opacity: 1; } }
+.big-warn {
+  position: absolute; left: 0; right: 0; top: 34%; text-align: center;
+  color: #fff; font-size: 26px; font-weight: 900; letter-spacing: .04em;
+  text-shadow: 0 0 10px #c92a2a, 0 2px 4px rgba(0,0,0,.5);
+  animation: warnBlink .45s steps(2) infinite; pointer-events: none;
+}
+@keyframes warnBlink { 50% { opacity: .35; } }
+.confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 13px; border-radius: 2px; animation: confFall 2s ease-in forwards; }
+@keyframes confFall { to { top: 105%; transform: rotate(720deg) translateX(30px); } }
+.catch-card { z-index: 3; }
