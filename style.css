@@ -484,3 +484,5 @@ input { font-family: inherit; }
 .confetti i { position: absolute; top: -12px; width: 8px; height: 13px; border-radius: 2px; animation: confFall 2s ease-in forwards; }
 @keyframes confFall { to { top: 105%; transform: rotate(720deg) translateX(30px); } }
 .catch-card { z-index: 3; }
+
+.ver { text-align: center; font-family: var(--en); font-size: 10px; color: var(--ink-3); margin-top: 18px; }
