@@ -117,7 +117,6 @@ function switchUser(id) {
   show("home");
 }
 
-const TOTAL = WORD_LIST.length;
 
 function wordsNotLearned(ids) { return ids.filter((id) => !P.learned[id]); }
 function learnedCount() { return WORD_LIST.filter((w) => P.learned[w.id]).length; }
@@ -397,7 +396,7 @@ function renderHome() {
   const pace = document.getElementById("paceMessage");
   pace.textContent = days === 0
     ? "きょうが 本番。いままで やった ぶんを 出しきろう。"
-    : `${U.name}の おぼえた 単語 ${learned} / ${TOTAL}ご`;
+    : `${U.name}の おぼえた 単語 ${learned} / ${WORD_LIST.length}ご`;
 
   renderCatchPanel();
   renderWeekBoxes();
