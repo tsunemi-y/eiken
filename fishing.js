@@ -308,6 +308,7 @@ function playCatch(k, caught, onDone) {
   const isNew = !caught[sp.id];   // よびだしがわが すぐ ずかんに きろく するので、さきに きめておく
   const F = FIGHT[sp.tier];
   const big = sp.tier >= 3;
+  const US = 0.8;   // うみの なかの かげの おおきさ(ぜんぶ おなじ)
   fishingBusy = true;
 
   const $ = (id) => document.getElementById(id);
@@ -319,11 +320,12 @@ function playCatch(k, caught, onDone) {
   [card, fightUI, tapP, warn].forEach((el) => el.classList.add("hidden"));
   $("fsHint").classList.remove("hidden");
   confetti.innerHTML = "";
-  $("fsFightLabel").textContent = big ? "⚠️ おおもの! まきあげ メーター" : "まきあげ メーター";
-  meterFish.textContent = big ? "🐋" : "🐟";
-  const inner = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
-  fishU.innerHTML = inner;
-  fishJ.innerHTML = inner;
+  /* つりあげるまで なにか わからない ように、うみの なかでは どの さかなも
+     おなじ おおきさの くろい かげ。ランクの ヒント(けいこく・ゆれ・メーターの え)も 出さない */
+  $("fsFightLabel").textContent = "まきあげ メーター";
+  meterFish.textContent = "❓";
+  fishU.innerHTML = `<g transform="translate(-60,-30)"><path d="M 10 30 C 22 16, 70 16, 98 30 C 70 44, 22 44, 10 30 Z M 95 30 L 117 18 L 110 30 L 117 42 Z" fill="rgba(4,20,40,.72)"/><circle cx="22" cy="27" r="2.6" fill="rgba(255,255,255,.55)"/></g>`;
+  fishJ.innerHTML = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
   [fishU, fishJ, shadow, hook, bang, got, glow].forEach((el) => el.setAttribute("opacity", "0"));
   bob.setAttribute("opacity", "1");
   ripples.innerHTML = "";
@@ -336,7 +338,7 @@ function playCatch(k, caught, onDone) {
   let state = "cast", t0 = performance.now();
   const go = (st) => { state = st; t0 = performance.now(); };
   let progress = 0, kick = 0, shake = 0, reelRot = 0, lastTap = 0, landed = false;
-  let fishPos = { x: BAIT.x + 50 * F.scale, y: BAIT.y };
+  let fishPos = { x: BAIT.x + 50 * US, y: BAIT.y };
   const drops = Array.from({ length: 16 }, (_, i) => ({ a: Math.PI * (0.1 + 0.05 * i), v: 50 + Math.random() * 90 }));
   const played = {};
   const once = (key, fn) => { if (!played[key]) { played[key] = true; fn(); } };
@@ -374,41 +376,29 @@ function playCatch(k, caught, onDone) {
       hookPos = { x: FLOAT_X, y: lerp(SURF + 6, BAIT.y, ease(p)) };
       if (p >= 1) go("come");
     } else if (state === "come") {
-      // さかなが よってくる。おおものは さきに でっかい かげ
-      const dur = big ? 1500 : 1000;
+      // くろい かげが よってくる(なにが かかったかは まだ ひみつ)
+      const dur = 1000;
       const p = Math.min(1, t / dur);
       by = SURF + 2 * Math.sin(now / 120);
       hookPos = { x: FLOAT_X, y: BAIT.y + 3 * Math.sin(now / 200) };
-      const tx = BAIT.x + 50 * F.scale;
-      if (big) {
-        once("big", () => {
-          sfxBig();
-          warn.textContent = sp.tier >= 7 ? "🌈 うみが ひかってる…!?" : sp.tier >= 6 ? "🌀 まぼろしの けはい…!" : "⚠️ でかいのが きた!";
-          warn.classList.toggle("rare", sp.tier >= 6);
-          warn.classList.remove("hidden");
-        });
-        const sp2 = Math.min(1, p / 0.55);
-        shadow.setAttribute("opacity", String(0.8 * Math.min(1, sp2 * 2) * (1 - Math.max(0, (p - 0.55) / 0.2))));
-        shadow.setAttribute("transform", `translate(${lerp(330, tx + 20, ease(sp2))} ${BAIT.y + 30}) scale(${F.scale})`);
-        shake = 0.25;
-      }
-      const fp = big ? Math.max(0, (p - 0.45) / 0.55) : p;
+      const tx = BAIT.x + 50 * US;
+      const fp = p;
       const fx = lerp(330, tx, ease(fp));
       const fy = BAIT.y + 10 * Math.sin(fp * Math.PI * 2);
       fishU.setAttribute("opacity", fp > 0 ? "1" : "0");
-      putFish(fishU, fx, fy, 4 * Math.sin(now / 90), F.scale);
+      putFish(fishU, fx, fy, 4 * Math.sin(now / 90), US);
       fishPos = { x: fx, y: fy };
-      if (p >= 1) { warn.classList.add("hidden"); shadow.setAttribute("opacity", "0"); go("bite"); }
+      if (p >= 1) go("bite");
     } else if (state === "bite") {
       once("bite", () => { sfxBite(); bang.setAttribute("opacity", "1"); addRipple(FLOAT_X); });
       const p = t / 600;
       bang.setAttribute("transform", `translate(${FLOAT_X} ${SURF - 50}) scale(${1 + 0.25 * Math.sin(p * Math.PI * 4)}) translate(${-FLOAT_X} ${-(SURF - 50)})`);
       ang = 40 - 4 * Math.sin(p * Math.PI * 6); bend = 10;
       bx = FLOAT_X + 2 * Math.sin(now / 25); by = SURF + 8 + 3 * Math.sin(now / 40);
-      const mx = BAIT.x + 50 * F.scale - 6 * Math.sin(p * Math.PI);
-      putFish(fishU, mx, BAIT.y, 8 * Math.sin(now / 50), F.scale);
+      const mx = BAIT.x + 50 * US - 6 * Math.sin(p * Math.PI);
+      putFish(fishU, mx, BAIT.y, 8 * Math.sin(now / 50), US);
       fishPos = { x: mx, y: BAIT.y };
-      hookPos = { x: mx - 50 * F.scale, y: BAIT.y + 1 };
+      hookPos = { x: mx - 50 * US, y: BAIT.y + 1 };
       if (t > 600) {
         bang.setAttribute("opacity", "0");
         $("fsHint").classList.add("hidden");
@@ -423,11 +413,11 @@ function playCatch(k, caught, onDone) {
       const q = progress / 100;
       const swim = F.swim * (1 - q * 0.4);
       const wob = Math.sin(now / (230 - sp.tier * 20));
-      const fx = lerp(BAIT.x + 50 * F.scale, 150, q) + wob * swim;
+      const fx = lerp(BAIT.x + 50 * US, 150, q) + wob * swim;
       const fy = lerp(BAIT.y, SURF + 24, q) + Math.cos(now / 300) * 8;
-      putFish(fishU, fx, fy, wob * 14 - 10 * q, F.scale);
+      putFish(fishU, fx, fy, wob * 14 - 10 * q, US);
       fishPos = { x: fx, y: fy };
-      const mouth = { x: fx - 50 * F.scale * Math.cos((wob * 14 - 10 * q) * Math.PI / 180), y: fy - 50 * F.scale * Math.sin((wob * 14 - 10 * q) * Math.PI / 180) };
+      const mouth = { x: fx - 50 * US * Math.cos((wob * 14 - 10 * q) * Math.PI / 180), y: fy - 50 * US * Math.sin((wob * 14 - 10 * q) * Math.PI / 180) };
       hookPos = mouth;
       showBob = false;
       lineEnd = mouth;
@@ -452,7 +442,7 @@ function playCatch(k, caught, onDone) {
       const fx = lerp(fishPos.x, 130, q);
       const fy = lerp(SURF + 10, 112, q) - 70 * Math.sin(Math.PI * q);
       fishJ.setAttribute("opacity", "1");
-      putFish(fishJ, fx, fy, lerp(-30, 360, q), lerp(F.scale, Math.max(1.3, F.scale * 1.15), q));
+      putFish(fishJ, fx, fy, lerp(-30, 360, q), lerp(US, Math.max(1.3, F.scale * 1.15), q));
       showBob = false;
       lineEnd = { x: fx - 40, y: fy };
       ang = lerp(62, 74, q); bend = 26 * (1 - q); lean = -8 * (1 - q);
@@ -526,7 +516,6 @@ function playCatch(k, caught, onDone) {
       kick = 1;
       reelRot += 55;
       lastTap = performance.now();
-      if (big) shake = Math.min(1, shake + 0.35);
       sfxTick();
     } else if (state === "cast" || state === "sink" || state === "come") {
       // まちきれない ときは すぐ 「!」へ
