@@ -320,11 +320,11 @@ function playCatch(k, caught, onDone) {
   [card, fightUI, tapP, warn].forEach((el) => el.classList.add("hidden"));
   $("fsHint").classList.remove("hidden");
   confetti.innerHTML = "";
-  /* つりあげるまで なにか わからない ように、うみの なかでは どの さかなも
-     おなじ おおきさの くろい かげ。ランクの ヒント(けいこく・ゆれ・メーターの え)も 出さない */
+  /* つりあげるまで なにか わからない ように、うみの なかでは さかなも かげも 見せない。
+     ランクの ヒント(けいこく・ゆれ・メーターの え)も 出さない。うごくのは いと と はり だけ */
   $("fsFightLabel").textContent = "まきあげ メーター";
   meterFish.textContent = "❓";
-  fishU.innerHTML = `<g transform="translate(-60,-30)"><path d="M 10 30 C 22 16, 70 16, 98 30 C 70 44, 22 44, 10 30 Z M 95 30 L 117 18 L 110 30 L 117 42 Z" fill="rgba(4,20,40,.72)"/><circle cx="22" cy="27" r="2.6" fill="rgba(255,255,255,.55)"/></g>`;
+  fishU.innerHTML = "";   // うみの なかでは かげも 出さない(つりあげた ときに はじめて 見える)
   fishJ.innerHTML = `<g transform="translate(-60,-30)">${fishInner(sp, false)}</g>`;
   [fishU, fishJ, shadow, hook, bang, got, glow].forEach((el) => el.setAttribute("opacity", "0"));
   bob.setAttribute("opacity", "1");
@@ -376,7 +376,7 @@ function playCatch(k, caught, onDone) {
       hookPos = { x: FLOAT_X, y: lerp(SURF + 6, BAIT.y, ease(p)) };
       if (p >= 1) go("come");
     } else if (state === "come") {
-      // くろい かげが よってくる(なにが かかったかは まだ ひみつ)
+      // さかなが よってくる(見えない。なにが かかったかは まだ ひみつ)
       const dur = 1000;
       const p = Math.min(1, t / dur);
       by = SURF + 2 * Math.sin(now / 120);
@@ -385,7 +385,7 @@ function playCatch(k, caught, onDone) {
       const fp = p;
       const fx = lerp(330, tx, ease(fp));
       const fy = BAIT.y + 10 * Math.sin(fp * Math.PI * 2);
-      fishU.setAttribute("opacity", fp > 0 ? "1" : "0");
+      // さかなは みせない(つりあげた ときに はじめて 見える)
       putFish(fishU, fx, fy, 4 * Math.sin(now / 90), US);
       fishPos = { x: fx, y: fy };
       if (p >= 1) go("bite");
@@ -520,7 +520,7 @@ function playCatch(k, caught, onDone) {
     } else if (state === "cast" || state === "sink" || state === "come") {
       // まちきれない ときは すぐ 「!」へ
       warn.classList.add("hidden"); shadow.setAttribute("opacity", "0");
-      fishU.setAttribute("opacity", "1");
+      // さかなは みせない
       bob.setAttribute("opacity", "1");
       go("bite");
     } else if (state === "jump") {
