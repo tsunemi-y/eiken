@@ -1,20 +1,20 @@
 /* =========================================================
    fishing.js - つりの しかけ
    ・「おぼえた」を おす たびに 1ぴき つる(タップで まく ミニゲーム)
-   ・なにが つれるかは うんしだい(ガチャ)。でんせつ 2% / まぼろし 0.7% / ゴッド 0.3%
+   ・なにが つれるかは うんしだい(ガチャ)。でんせつ 10% / まぼろし 5% / ゴッド 3%
    ・つった さかなは ずかんに のこる
    ========================================================= */
 
 /* rate = その ランクが でる かくりつ(%)。ごうけい 100 */
 const FISH_TIERS = [
-  { rate: 40, name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
-  { rate: 25, name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
-  { rate: 17, name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
-  { rate: 10, name: "おおもの",   ic: "💪", color: "#e8590c" },
-  { rate: 5,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
-  { rate: 2,   name: "でんせつ",   ic: "👑", color: "#b8860b" },
-  { rate: 0.7, name: "まぼろし",   ic: "🌀", color: "#7048e8", rare: true },
-  { rate: 0.3, name: "ゴッド",     ic: "🌈", color: "#e64980", rare: true },
+  { rate: 15, name: "こざかな",   ic: "🐟", color: "#5c7cfa" },
+  { rate: 15, name: "ちゅうもの", ic: "🐠", color: "#20a4a4" },
+  { rate: 20, name: "いいサイズ", ic: "🎣", color: "#2f9e44" },
+  { rate: 18, name: "おおもの",   ic: "💪", color: "#e8590c" },
+  { rate: 14,  name: "かいぶつ",   ic: "🔥", color: "#c92a2a" },
+  { rate: 10,   name: "でんせつ",   ic: "👑", color: "#b8860b" },
+  { rate: 5, name: "まぼろし",   ic: "🌀", color: "#7048e8", rare: true },
+  { rate: 3, name: "ゴッド",     ic: "🌈", color: "#e64980", rare: true },
 ];
 
 /* h = からだの たかさ、pat = もよう、shape = かたち */

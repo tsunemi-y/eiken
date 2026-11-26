@@ -417,7 +417,7 @@ function renderCatchPanel() {
     </div>
     <div class="cp-right">
       <div class="cp-now">${b ? `いちばんは <span style="color:${FISH_TIERS[b.tier].color}">${FISH_TIERS[b.tier].ic} ${b.name} ${P.today.best.size}cm</span>` : "まだ つれてないよ"}</div>
-      <div class="cp-next">🎣 おぼえたら 1ぴき! なにが つれるかは <b>うんしだい</b>(👑 でんせつ 2% / 🌀 まぼろし 0.7% / 🌈 ゴッド 0.3%)</div>
+      <div class="cp-next">🎣 おぼえたら 1ぴき! なにが つれるかは <b>うんしだい</b>(おおもの いじょう 50%! 👑 でんせつ 10% / 🌀 まぼろし 5% / 🌈 ゴッド 3%)</div>
     </div>`;
 }
 
