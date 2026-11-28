@@ -491,3 +491,17 @@ input { font-family: inherit; }
 .big-warn.rare { text-shadow: 0 0 12px #7048e8, 0 0 24px #e64980, 0 2px 4px rgba(0,0,0,.5); }
 .catch-card.rare { border: 4px solid transparent; background: linear-gradient(#fff, #fff) padding-box, linear-gradient(90deg, #f03e3e, #fab005, #40c057, #228be6, #7048e8, #f03e3e) border-box; background-size: 100% 100%, 300% 100%; animation: popIn .38s cubic-bezier(.2,1.4,.4,1), rainbowBorder 2s linear infinite; }
 @keyframes rainbowBorder { to { background-position: 0 0, 300% 0; } }
+
+/* ---------- いろちがい ---------- */
+.zk-dots { display: flex; justify-content: center; align-items: center; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+.zk-dot { width: 9px; height: 9px; border-radius: 50%; background: #e9eef2; border: 1px solid #d5dde4; }
+.zk-dot.on { background: var(--c); border-color: rgba(0,0,0,.15); }
+.zk-dots b { font-family: var(--en); font-size: 10px; color: var(--ink-2); margin-left: 3px; }
+.zk-card { cursor: pointer; }
+.zk-card.open { grid-column: 1 / -1; }
+.zk-vars { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; text-align: center; }
+.zk-var { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 4px; font-size: 11px; font-weight: 700; }
+.zk-var .fish-svg { width: 100%; height: 44px; }
+.zk-var small { display: block; font-size: 9.5px; font-weight: 500; color: var(--ink-2); }
+.zk-var.locked { background: #f1f5f8; color: var(--ink-3); }
+.cc-badges .cc-color { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }

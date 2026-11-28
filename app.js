@@ -155,7 +155,7 @@ function catchFish(onDone) {
   }
   save();
 }
-function fishKinds() { return FISH.filter((f) => P.fish[f.id]).length; }
+function fishKinds() { return FISH_ALL.filter((f) => P.fish[f.id]).length; }
 
 /* しけんまで あと なん日 */
 function daysLeft() {
@@ -402,7 +402,7 @@ function renderHome() {
   renderWeekBoxes();
   renderToday();
   document.getElementById("zukanSub").textContent =
-    `つった さかな ${fishKinds()} / ${FISH.length}しゅるい`;
+    `つった さかな ${fishKinds()} / ${FISH_ALL.length}しゅるい(いろちがい こみ)`;
 }
 
 function renderCatchPanel() {
@@ -472,23 +472,46 @@ function renderBox(w) {
 }
 
 /* ---------- ずかん ---------- */
+/* ずかん:1120しゅるい(112しゅ × 10いろ)。カードは さかな ごとに 1まいで、
+   したの 10この まるが いろちがいの あつめぐあい。タップすると 10いろ ぜんぶ ひらく */
+let zukanOpen = null;
 function renderZukan() {
   document.getElementById("zukanDesc").textContent =
-    `${fishKinds()} / ${FISH.length}しゅるい つったよ。おぼえる たびに 1ぴき。なにが つれるかは うんしだい!`;
+    `${fishKinds()} / ${FISH_ALL.length}しゅるい つったよ(${FISH.length}しゅ × 10いろ)。カードを タップすると いろちがいが 見られるよ!`;
   const body = document.getElementById("zukanBody");
   body.innerHTML = FISH_TIERS.map((t, ti) => {
     const cards = FISH.filter((f) => f.tier === ti).map((f) => {
-      const c = P.fish[f.id];
-      return `<div class="zk-card${c ? "" : " locked"}">
-        ${fishSVG(f, !c)}
-        <div class="zk-name">${c ? f.name : "？？？"}</div>
-        <div class="zk-rec">${c ? `${c.n}ひき ・ さいだい ${c.max}cm` : "まだ つれてない"}</div>
+      const vs = VARIANTS.map((_, vi) => (vi ? FISH_BY_ID.get(`${f.id}~${vi}`) : f));
+      const got = vs.filter((v) => P.fish[v.id]);
+      const show = got[0] || f;
+      const n = got.reduce((a, v) => a + P.fish[v.id].n, 0);
+      const max = got.reduce((a, v) => Math.max(a, P.fish[v.id].max), 0);
+      const dots = vs.map((v, vi) => `<i class="zk-dot${P.fish[v.id] ? " on" : ""}" style="--c:${VARIANTS[vi].dot}"></i>`).join("");
+      const open = zukanOpen === f.id;
+      const detail = open ? `<div class="zk-vars">${vs.map((v) => {
+        const c = P.fish[v.id];
+        return `<div class="zk-var${c ? "" : " locked"}">${fishSVG(v, !c)}<div>${c ? v.name : "？？？"}</div><small>${c ? `${c.n}ひき・${c.max}cm` : ""}</small></div>`;
+      }).join("")}</div>` : "";
+      return `<div class="zk-card${got.length ? "" : " locked"}${open ? " open" : ""}" data-id="${f.id}">
+        ${fishSVG(show, !got.length)}
+        <div class="zk-name">${got.length ? f.name : "？？？"}</div>
+        <div class="zk-rec">${got.length ? `${n}ひき ・ さいだい ${max}cm` : "まだ つれてない"}</div>
+        <div class="zk-dots">${dots}<b>${got.length}/10</b></div>
+        ${detail}
       </div>`;
     }).join("");
+    const tierGot = FISH_ALL.filter((v) => v.tier === ti && P.fish[v.id]).length;
+    const tierAll = FISH_ALL.filter((v) => v.tier === ti).length;
     return `<div class="zk-tier">
-      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>でる かくりつ ${t.rate}%</small></div>
+      <div class="zk-tier-head"><span style="background:${t.color}">${t.ic} ${t.name}</span><small>でる かくりつ ${t.rate}% ・ ${tierGot}/${tierAll}</small></div>
       <div class="zk-grid">${cards}</div></div>`;
   }).join("");
+  body.querySelectorAll(".zk-card").forEach((el) => el.addEventListener("click", () => {
+    zukanOpen = zukanOpen === el.dataset.id ? null : el.dataset.id;
+    const y = window.scrollY;
+    renderZukan();
+    window.scrollTo(0, y);
+  }));
 }
 /* まだ おわっていない はんい。
    きょう さわった はんいが あれば そこ、なければ つぎに やるべき はんい。 */

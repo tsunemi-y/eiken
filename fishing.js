@@ -150,7 +150,32 @@ const FISH = [
   { id: "ginga",    name: "ぎんがの クジラ", tier: 7, min: 2000, max: 5000, emoji: "🐋", hue: 70 },
   { id: "ouja",     name: "おうじゃの シーラカンス", tier: 7, min: 200, max: 350, back: "#e0a800", belly: "#fff3bf", fin: "#7048e8", h: 15, pat: "stars" },
 ];
-const FISH_BY_ID = new Map(FISH.map((f) => [f.id, f]));
+/* ---------- いろちがい(ずかん 10ばい:112しゅ × 10いろ = 1120) ----------
+   どの さかなにも 10いろ ある。0ばんめ(ふつう)は もとの さかな そのもの なので、
+   いままでの きろく(id)は そのまま つかえる。いろちがいの id は「もとの id~いろの ばんごう」。 */
+const VARIANTS = [
+  { key: "",        pre: "",            dot: "#adb5bd" },
+  { key: "gold",    pre: "きんいろの ",  dot: "#f0b400", back: "#e0a800", belly: "#fff3bf", fin: "#c68a00", filter: "sepia(1) saturate(4) hue-rotate(-12deg) brightness(1.1)" },
+  { key: "silver",  pre: "ぎんいろの ",  dot: "#ced4da", back: "#adb5bd", belly: "#f8f9fa", fin: "#868e96", filter: "grayscale(1) brightness(1.25)" },
+  { key: "red",     pre: "まっかな ",    dot: "#e03131", back: "#e03131", belly: "#ffc9c9", fin: "#c92a2a", filter: "sepia(1) saturate(6) hue-rotate(-50deg)" },
+  { key: "blue",    pre: "まっさおな ",  dot: "#1c7ed6", back: "#1c7ed6", belly: "#d0ebff", fin: "#1864ab", filter: "sepia(1) saturate(5) hue-rotate(170deg)" },
+  { key: "green",   pre: "みどりの ",    dot: "#2f9e44", back: "#2f9e44", belly: "#d3f9d8", fin: "#2b8a3e", filter: "sepia(1) saturate(5) hue-rotate(60deg)" },
+  { key: "purple",  pre: "むらさきの ",  dot: "#7048e8", back: "#7048e8", belly: "#e5dbff", fin: "#5f3dc4", filter: "sepia(1) saturate(5) hue-rotate(220deg)" },
+  { key: "black",   pre: "まっくろな ",  dot: "#212529", back: "#212529", belly: "#495057", fin: "#000000", filter: "brightness(.35) contrast(1.2)" },
+  { key: "white",   pre: "まっしろな ",  dot: "#f1f3f5", back: "#f1f3f5", belly: "#ffffff", fin: "#dee2e6", filter: "grayscale(1) brightness(1.7)" },
+  { key: "rainbow", pre: "にじいろの ",  dot: "linear-gradient(90deg,#f03e3e,#fab005,#40c057,#228be6,#7048e8)", back: "#7048e8", belly: "#fff0f6", fin: "#f76707", pat: "rainbow", filter: "saturate(2.2) hue-rotate(120deg)" },
+];
+/* いろちがいの でかた(%)。ふつう 30% / ほかの いろ ぜんぶで 70% */
+const VARIANT_RATE = [30, 9, 9, 8, 8, 8, 8, 8, 7, 5];
+const FISH_ALL = [];
+FISH.forEach((f) => VARIANTS.forEach((v, vi) => {
+  if (vi === 0) { f.base = f; f.vi = 0; FISH_ALL.push(f); return; }
+  const g = { ...f, id: `${f.id}~${vi}`, name: v.pre + f.name, base: f, vi };
+  if (f.emoji) g.filter = v.filter;
+  else { g.back = v.back; g.belly = v.belly; g.fin = v.fin; if (v.pat) g.pat = v.pat; }
+  FISH_ALL.push(g);
+}));
+const FISH_BY_ID = new Map(FISH_ALL.map((f) => [f.id, f]));
 
 /* ランクを くじびき で きめる */
 function drawTier() {
@@ -164,12 +189,23 @@ function drawTier() {
 
 /* つれる さかなを きめる。まだ つっていない さかなが いれば、
    すこし でやすく して ずかんを うめやすく する。 */
+function drawVariant() {
+  let r = Math.random() * 100;
+  for (let i = 0; i < VARIANT_RATE.length; i++) { r -= VARIANT_RATE[i]; if (r < 0) return i; }
+  return 0;
+}
 function rollFish(caught) {
   const t = drawTier();
-  const pool = FISH.filter((f) => f.tier === t);
-  const fresh = pool.filter((f) => !caught[f.id]);
-  const from = fresh.length && Math.random() < 0.5 ? fresh : pool;
-  const sp = from[(Math.random() * from.length) | 0];
+  let sp;
+  const fresh = FISH_ALL.filter((f) => f.tier === t && !caught[f.id]);
+  if (fresh.length && Math.random() < 0.5) {
+    sp = fresh[(Math.random() * fresh.length) | 0];   // まだ もっていない もの(いろちがい ふくむ)
+  } else {
+    const pool = FISH.filter((f) => f.tier === t);
+    const base = pool[(Math.random() * pool.length) | 0];
+    const vi = drawVariant();
+    sp = vi ? FISH_BY_ID.get(`${base.id}~${vi}`) : base;
+  }
   const size = Math.round(sp.min + (sp.max - sp.min) * Math.pow(Math.random(), 1.4));
   return { sp, size, tier: t };
 }
@@ -180,6 +216,7 @@ let fishUid = 0;
 function fishInner(sp, sil) {
   if (sp.emoji) {
     const st = sil ? "filter:brightness(0);opacity:.22"
+      : sp.filter ? `filter:${sp.filter}`
       : sp.glow ? "filter:hue-rotate(160deg) saturate(1.6)"
       : sp.hue ? `filter:hue-rotate(${sp.hue}deg) saturate(1.4)` : "";
     return `<text x="60" y="44" font-size="46" text-anchor="middle"${st ? ` style="${st}"` : ""}>${sp.emoji}</text>`;
@@ -609,6 +646,7 @@ function playCatch(k, caught, onDone) {
       <div class="cc-badges">
         ${isNew ? '<span class="cc-new">NEW!</span>' : ""}
         ${sp.tier >= 6 ? '<span class="cc-lucky">きせき!!</span>' : sp.tier >= 4 ? '<span class="cc-lucky">すごい!</span>' : ""}
+        ${sp.vi ? `<span class="cc-color" style="background:${VARIANTS[sp.vi].dot}">いろちがい!</span>` : ""}
         <span class="cc-tier" style="background:${tier.color}">${tier.ic} ${tier.name}</span>
       </div>
       <div class="cc-fish">${fishSVG(sp, false, "big")}</div>
