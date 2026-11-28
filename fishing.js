@@ -83,6 +83,72 @@ const FISH = [
   { id: "niji",    name: "にじいろ マグロ", tier: 7, min: 200, max: 350, back: "#7048e8", belly: "#fff0f6", fin: "#f76707", h: 15, pat: "rainbow" },
   { id: "diamond", name: "ダイヤモンド フィッシュ", tier: 7, min: 40, max: 90, back: "#74c0fc", belly: "#e7f5ff", fin: "#a5d8ff", h: 17, pat: "sparkle" },
   { id: "hoshi",   name: "ほしの さかな", tier: 7, min: 50, max: 120, back: "#1c2a6b", belly: "#4c6ef5", fin: "#ffd43b", h: 14, pat: "stars" },
+
+  // ===== 2026/11 ついか(ずかん 2ばい:56 → 112しゅ) =====
+  // こざかな
+  { id: "sappa",    name: "サッパ",       tier: 0, min: 10, max: 18,  back: "#5c7cfa", belly: "#f1f3f5", fin: "#adb5bd", h: 12 },
+  { id: "konoshiro",name: "コノシロ",     tier: 0, min: 12, max: 25,  back: "#4c6ef5", belly: "#f8f9fa", fin: "#ced4da", h: 13, pat: "dots" },
+  { id: "youji",    name: "ヨウジウオ",   tier: 0, min: 10, max: 25,  back: "#8f7a55", belly: "#d8c9a3", fin: "#6f5f40", h: 3,  shape: "long" },
+  { id: "ginpo",    name: "ギンポ",       tier: 0, min: 10, max: 20,  back: "#a07a4f", belly: "#e0c9a6", fin: "#7a5c3a", h: 5,  shape: "long", pat: "spots" },
+  { id: "amimehagi",name: "アミメハギ",   tier: 0, min: 5,  max: 8,   back: "#9c8f6b", belly: "#e6dcc0", fin: "#7a6f52", h: 16, pat: "spots" },
+  { id: "haokoze",  name: "ハオコゼ",     tier: 0, min: 6,  max: 10,  back: "#c0613f", belly: "#f2b8a0", fin: "#a84a2b", h: 12, pat: "spots" },
+  { id: "tenagaebi",name: "テナガエビ",   tier: 0, min: 5,  max: 12,  emoji: "🦐" },
+  { id: "ishigani", name: "イシガニ",     tier: 0, min: 6,  max: 12,  emoji: "🦀", hue: 30 },
+  // ちゅうもの
+  { id: "bora",     name: "ボラ",         tier: 1, min: 30, max: 50,  back: "#6c7a89", belly: "#e9ecef", fin: "#5a6573", h: 11, pat: "hstripes" },
+  { id: "houbou",   name: "ホウボウ",     tier: 1, min: 20, max: 40,  back: "#e8590c", belly: "#ffe8cc", fin: "#3bc9db", h: 11 },
+  { id: "umadura",  name: "ウマヅラハギ", tier: 1, min: 20, max: 30,  back: "#5f7480", belly: "#c5d0d6", fin: "#4dabf7", h: 15 },
+  { id: "sanbaso",  name: "サンバソウ",   tier: 1, min: 15, max: 25,  back: "#f8f9fa", belly: "#f8f9fa", fin: "#495057", h: 16, pat: "band2" },
+  { id: "murasoi",  name: "ムラソイ",     tier: 1, min: 15, max: 28,  back: "#5c4b3b", belly: "#a89280", fin: "#46382b", h: 14, pat: "spots" },
+  { id: "hiiragi",  name: "ヒイラギ",     tier: 1, min: 8,  max: 14,  back: "#bac8d3", belly: "#f1f3f5", fin: "#fab005", h: 18 },
+  { id: "anago",    name: "マアナゴ",     tier: 1, min: 30, max: 60,  back: "#7a6a55", belly: "#e6dccb", fin: "#5c4f3e", h: 6,  shape: "long", pat: "dots" },
+  { id: "yariika",  name: "ヤリイカ",     tier: 1, min: 20, max: 40,  emoji: "🦑", hue: 200 },
+  // いいサイズ
+  { id: "akaei",    name: "アカエイ",     tier: 2, min: 50, max: 100, back: "#8c6f56", belly: "#f3d9c4", fin: "#6f5641", h: 22, shape: "flat" },
+  { id: "hokke",    name: "ホッケ",       tier: 2, min: 25, max: 45,  back: "#7d7a5a", belly: "#ece6cf", fin: "#5f5c42", h: 10, pat: "band2" },
+  { id: "hatahata", name: "ハタハタ",     tier: 2, min: 15, max: 25,  back: "#a68a6b", belly: "#f4ede4", fin: "#8a7055", h: 9,  pat: "spots" },
+  { id: "nijimasu", name: "ニジマス",     tier: 2, min: 25, max: 50,  back: "#6b8e5a", belly: "#ffc9c9", fin: "#557046", h: 10, pat: "spots" },
+  { id: "ayu",      name: "アユ",         tier: 2, min: 15, max: 30,  back: "#8a9a5b", belly: "#f4f3e0", fin: "#fab005", h: 9 },
+  { id: "yamame",   name: "ヤマメ",       tier: 2, min: 18, max: 30,  back: "#748270", belly: "#f1ece4", fin: "#5f6b5c", h: 10, pat: "band2" },
+  { id: "gazami",   name: "ガザミ",       tier: 2, min: 15, max: 25,  emoji: "🦀", hue: 170 },
+  { id: "kurumaebi",name: "クルマエビ",   tier: 2, min: 15, max: 25,  emoji: "🦐", hue: 320 },
+  // おおもの
+  { id: "sake",     name: "サケ",         tier: 3, min: 60, max: 90,  back: "#4a5f73", belly: "#f1f3f5", fin: "#3a4b5c", h: 13, pat: "dots" },
+  { id: "bass",     name: "ブラックバス", tier: 3, min: 30, max: 60,  back: "#4f6b2f", belly: "#e9ecd0", fin: "#3d5424", h: 14, pat: "line" },
+  { id: "namazu",   name: "ナマズ",       tier: 3, min: 40, max: 70,  back: "#5a5446", belly: "#d9d2bf", fin: "#46413a", h: 10, pat: "mouth" },
+  { id: "koi",      name: "コイ",         tier: 3, min: 40, max: 80,  back: "#e8590c", belly: "#fff4e6", fin: "#d9480f", h: 15, pat: "spots" },
+  { id: "amadai",   name: "アマダイ",     tier: 3, min: 30, max: 50,  back: "#f783ac", belly: "#fff0f6", fin: "#fab005", h: 13 },
+  { id: "kinmedai", name: "キンメダイ",   tier: 3, min: 30, max: 50,  back: "#e03131", belly: "#ffa8a8", fin: "#c92a2a", h: 16, pat: "glowhead" },
+  { id: "nodoguro", name: "ノドグロ",     tier: 3, min: 20, max: 40,  back: "#f06595", belly: "#ffdeeb", fin: "#d6336c", h: 13 },
+  { id: "iseebi",   name: "イセエビ",     tier: 3, min: 20, max: 40,  emoji: "🦞" },
+  // かいぶつ
+  { id: "gt",       name: "ロウニンアジ", tier: 4, min: 80, max: 170, back: "#495057", belly: "#ced4da", fin: "#343a40", h: 18 },
+  { id: "shimaaji", name: "シマアジ",     tier: 4, min: 50, max: 100, back: "#8ca3b5", belly: "#f1f3f5", fin: "#f0c94a", h: 15, pat: "band" },
+  { id: "ohyou",    name: "オヒョウ",     tier: 4, min: 100, max: 250, back: "#5c5444", belly: "#ece4d4", fin: "#46402f", h: 22, shape: "flat", pat: "spots" },
+  { id: "itou",     name: "イトウ",       tier: 4, min: 80, max: 150, back: "#5c6b4a", belly: "#e8c9b8", fin: "#a5443a", h: 11, pat: "dots" },
+  { id: "akame",    name: "アカメ",       tier: 4, min: 80, max: 130, back: "#6c7a89", belly: "#e9ecef", fin: "#5a6573", h: 15, pat: "glowhead" },
+  { id: "kihada",   name: "キハダマグロ", tier: 4, min: 100, max: 200, back: "#1c3a5f", belly: "#e3ebf3", fin: "#fcc419", h: 15, pat: "finlets" },
+  { id: "madara",   name: "マダラ",       tier: 4, min: 60, max: 120, back: "#8a7e63", belly: "#efe9da", fin: "#6f654f", h: 13, pat: "spots" },
+  { id: "taraba",   name: "タラバガニ",   tier: 4, min: 50, max: 100, emoji: "🦀", hue: 350 },
+  // でんせつ
+  { id: "jinbei",   name: "ジンベエザメ", tier: 5, min: 800, max: 1800, back: "#3b5bdb", belly: "#dbe4ff", fin: "#364fc7", h: 15, pat: "stars" },
+  { id: "bashou",   name: "バショウカジキ", tier: 5, min: 150, max: 300, back: "#364fc7", belly: "#e7f5ff", fin: "#4263eb", h: 11, shape: "bill", pat: "dots" },
+  { id: "pirarucu", name: "ピラルク",     tier: 5, min: 200, max: 400, back: "#495057", belly: "#ffa8a8", fin: "#c92a2a", h: 12 },
+  { id: "chouzame", name: "チョウザメ",   tier: 5, min: 150, max: 400, back: "#5c6670", belly: "#dee2e6", fin: "#495057", h: 9,  shape: "long", pat: "dots" },
+  { id: "ookami",   name: "オオカミウオ", tier: 5, min: 80, max: 150, back: "#6c757d", belly: "#ced4da", fin: "#495057", h: 9,  shape: "long", pat: "spots" },
+  { id: "napoleon", name: "ナポレオンフィッシュ", tier: 5, min: 100, max: 200, back: "#12b886", belly: "#63e6be", fin: "#0ca678", h: 18, shape: "bump", pat: "wavy" },
+  { id: "shumoku",  name: "シュモクザメ", tier: 5, min: 200, max: 400, emoji: "🦈", hue: 90 },
+  { id: "zatou",    name: "ザトウクジラ", tier: 5, min: 1200, max: 1600, emoji: "🐋" },
+  // まぼろし
+  { id: "mitsukuri",name: "ミツクリザメ", tier: 6, min: 200, max: 400, emoji: "🦈", hue: 300 },
+  { id: "onikinme", name: "オニキンメ",   tier: 6, min: 10, max: 18,  back: "#212529", belly: "#495057", fin: "#343a40", h: 14, pat: "mouth" },
+  { id: "houraieso",name: "ホウライエソ", tier: 6, min: 20, max: 35,  back: "#1c2a3a", belly: "#3d4f63", fin: "#15202c", h: 8,  shape: "long", pat: "stars" },
+  { id: "fukurou",  name: "フクロウナギ", tier: 6, min: 60, max: 100, back: "#212529", belly: "#343a40", fin: "#e64980", h: 5,  shape: "long", pat: "redfin" },
+  // ゴッド
+  { id: "honoo",    name: "ほのおの さかな", tier: 7, min: 100, max: 300, back: "#e03131", belly: "#ffd43b", fin: "#f76707", h: 15, pat: "sparkle" },
+  { id: "koori",    name: "こおりの さかな", tier: 7, min: 100, max: 300, back: "#74c0fc", belly: "#ffffff", fin: "#d0ebff", h: 15, pat: "shine" },
+  { id: "ginga",    name: "ぎんがの クジラ", tier: 7, min: 2000, max: 5000, emoji: "🐋", hue: 70 },
+  { id: "ouja",     name: "おうじゃの シーラカンス", tier: 7, min: 200, max: 350, back: "#e0a800", belly: "#fff3bf", fin: "#7048e8", h: 15, pat: "stars" },
 ];
 const FISH_BY_ID = new Map(FISH.map((f) => [f.id, f]));
 
@@ -113,7 +179,9 @@ function rollFish(caught) {
 let fishUid = 0;
 function fishInner(sp, sil) {
   if (sp.emoji) {
-    const st = sil ? "filter:brightness(0);opacity:.22" : sp.glow ? "filter:hue-rotate(160deg) saturate(1.6)" : "";
+    const st = sil ? "filter:brightness(0);opacity:.22"
+      : sp.glow ? "filter:hue-rotate(160deg) saturate(1.6)"
+      : sp.hue ? `filter:hue-rotate(${sp.hue}deg) saturate(1.4)` : "";
     return `<text x="60" y="44" font-size="46" text-anchor="middle"${st ? ` style="${st}"` : ""}>${sp.emoji}</text>`;
   }
   const id = "fg" + (++fishUid);
